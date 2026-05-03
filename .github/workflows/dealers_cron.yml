@@ -14,7 +14,7 @@ on:
       threshold:
         description: "Seuil d'alerte en %"
         required: false
-        default: '50'
+        default: '15'
 
 # Évite les runs concurrents
 concurrency:
