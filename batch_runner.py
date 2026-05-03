@@ -165,7 +165,9 @@ def run_source(batch: str, source_name: str, pages: int, timeout: int):
         elif duration > timeout - 5:
             had_error, error_msg = True, 'timeout'
         elif result.returncode != 0:
-            had_error, error_msg = True, f'exit {result.returncode}'
+            # Debug: capture les 200 premiers caractères du stderr pour comprendre
+            err_preview = (result.stderr or '').strip()[:200].replace('\n', ' | ')
+            had_error, error_msg = True, f'exit {result.returncode}: {err_preview}'
 
         return {
             'name': source_name,
