@@ -1,0 +1,49 @@
+# Secrets - JAMAIS commit
+.env
+.env.*
+*.key
+*_session.json
+
+# Sessions Playwright
+.sessions/
+fb_session_*.json
+
+# Backups locaux
+*.before_*
+*.bak_*
+*.before_v3*
+*.before_v31
+*.before_excelfix
+*.before_titlefix
+
+# Debug HTML dumps (régénérés à chaque run)
+debug/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+venv/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Big files - à exclure
+*.zip
+files.zip
+filess.zip
+filessssd.zip
+filesdatabase.zip
+
+# Backups locaux supplémentaires
+*.backup
+*.bak

@@ -1,0 +1,11 @@
+# AutoRadar — Dépendances Python (production scraper)
+# ═══════════════════════════════════════════════════════════
+# Utilisé par GitHub Actions pour `pip install -r requirements.txt`
+
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+playwright>=1.40.0
+supabase>=2.0.0
+postgrest>=0.13.0
+python-dateutil>=2.8.0
