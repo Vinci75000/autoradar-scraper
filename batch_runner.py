@@ -115,7 +115,7 @@ def run_source(batch: str, source_name: str, pages: int, timeout: int):
     try:
         result = subprocess.run(
             [sys.executable, 'scraper.py', cli_arg, source_name, '--pages', str(pages)],
-            capture_output=True, text=True, timeout=timeout
+            capture_output=True, text=True, timeout=timeout, env=os.environ.copy()
         )
         duration = time.time() - start
         log = result.stdout + '\n' + result.stderr
