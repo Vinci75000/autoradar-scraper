@@ -1,0 +1,18 @@
+{
+  "batch": "green",
+  "generated_at": "2026-05-05T00:41:09.650846",
+  "runs_analyzed": 4,
+  "period_start": "2026-05-03T09:06:39.221519",
+  "period_end": "2026-05-03T22:51:37.589355",
+  "sources_total_max": 17,
+  "sources_ok_pct_avg": 5.9,
+  "sources_ok_pct_min": 0.0,
+  "sources_ok_pct_max": 11.8,
+  "cards_found_total": 989,
+  "listings_extracted_total": 0,
+  "cars_new_total": 49,
+  "duplicates_total": 42,
+  "duration_avg_sec": 429.5,
+  "alerts_triggered": 4,
+  "trend": "stable"
+}

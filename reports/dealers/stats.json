@@ -1,0 +1,18 @@
+{
+  "batch": "dealers",
+  "generated_at": "2026-05-05T00:41:09.649223",
+  "runs_analyzed": 5,
+  "period_start": "2026-05-03T08:58:49.788962",
+  "period_end": "2026-05-04T13:59:51.423424",
+  "sources_total_max": 18,
+  "sources_ok_pct_avg": 13.4,
+  "sources_ok_pct_min": 0.0,
+  "sources_ok_pct_max": 16.7,
+  "cards_found_total": 7689,
+  "listings_extracted_total": 32,
+  "cars_new_total": 2,
+  "duplicates_total": 30,
+  "duration_avg_sec": 266.0,
+  "alerts_triggered": 5,
+  "trend": "improving"
+}
