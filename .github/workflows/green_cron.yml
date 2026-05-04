@@ -78,6 +78,10 @@ jobs:
             echo "new_cars=$NEW_CARS" >> $GITHUB_OUTPUT
           fi
 
+      - name: Analyze and rotate reports
+        if: always()
+        run: python3 analyzer.py --batch green
+
       - name: Commit report to repo
         if: always()
         run: |
