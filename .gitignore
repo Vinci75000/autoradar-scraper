@@ -47,3 +47,7 @@ filesdatabase.zip
 # Backups locaux supplémentaires
 *.backup
 *.bak
+
+# Broken files (work in progress, jamais à push)
+*.broken
+*.broken_*
