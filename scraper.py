@@ -24,6 +24,7 @@ load_dotenv()
 from validation import validate_listing
 from batches import get_sources_for_batch, get_pages_for_batch, is_red_source, RED_SOURCES
 from dealers import DEALERS, get_dealer_by_name, get_dealer_names, get_active_dealers
+from make_normalizer import normalize_make_model
 
 # ── Stealth helper (works with v1.x stealth_sync and v2.x Stealth class) ──
 def _get_stealth_pw():
@@ -1359,12 +1360,20 @@ def _parse_generic_card(card, src: str, base_url: str, default_opts: list) -> Op
 
         title_el = card.select_one('h2,h3,[class*="title"],[class*="titre"],[class*="name"],[class*="heading"]')
         if not title_el: return None
-        parts = title_el.get_text(strip=True).split()
-        if not parts: return None
-        if len(parts[0]) == 4 and parts[0].isdigit() and len(parts) > 1: parts = parts[1:]
-        mk  = parts[0]
-        mod = parts[1] if len(parts) > 1 else mk
-        mo  = ' '.join(parts[:4])
+        # IMPORTANT : separator=' ' préserve les espaces entre noeuds HTML.
+        # Sans ça, "<h3>Maserati<span>LEVANTE...</span></h3>" donnerait "MaseratiLEVANTE..."
+        title_raw = title_el.get_text(separator=' ', strip=True)
+        if not title_raw: return None
+        # Retirer un préfixe année éventuel ("2018 Audi A4" → "Audi A4")
+        title_split = title_raw.split(maxsplit=1)
+        if title_split and len(title_split[0]) == 4 and title_split[0].isdigit() and len(title_split) > 1:
+            title_raw = title_split[1]
+        # Normaliser via le module dédié (mk canonique + mo nettoyé)
+        mk, mo_raw = normalize_make_model(title_raw)
+        if mk == "Inconnue":
+            return None  # rejette les annonces sans marque reconnue
+        mod = mo_raw.split()[0] if mo_raw else mk
+        mo  = mo_raw[:200] if mo_raw else mk
 
         t  = text.lower()
         yr = _extract_year(t) or 1990
