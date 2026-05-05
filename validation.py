@@ -12,6 +12,8 @@ Test rapide : python3 validation.py
 import re
 from datetime import datetime
 
+from make_normalizer import BRAND_REGISTRY
+
 CURRENT_YEAR = datetime.now().year
 
 # ─── Tiers de prix et marques admissibles ────────────────────────
@@ -101,6 +103,13 @@ SUSPICIOUS_MAKES = {
     'marketplace', 'back', 'breadcrumb', 'la', 'le', 'les',
     't-roc', 'porte-pièces',
 }
+
+# ─── Whitelist marques canoniques ────────────────────────────────
+# Source de vérité : BRAND_REGISTRY (make_normalizer.py).
+# Filet de sécurité final : tout mk arrivant en DB doit être canonique.
+# Bloque les pollutions résiduelles (Annonces, Pourquoi, hjujhhzt7u, etc.)
+# qui auraient échappé aux autres règles.
+CANONICAL_BRANDS = set(BRAND_REGISTRY.values())
 
 
 def get_listing_tier(yr_int: int, px_int: int) -> str:
@@ -192,6 +201,8 @@ def validate_listing(data) -> tuple:
         return False, f"marque parser-bug: '{mk}'"
     if re.fullmatch(r'\d{2,4}', mk.strip()):
         return False, f"marque numérique (bug parser): '{mk}'"
+    if mk not in CANONICAL_BRANDS:
+        return False, f"marque hors registry: '{mk}'"
 
     try:
         px_int = int(px)
@@ -283,8 +294,16 @@ if __name__ == "__main__":
           'yr': 2000, 'px': 577000, 'src': 'ebay-fr'}, False, "mk=Vend"),
         ({'title': 'Porsche 911 Carrera 4', 'mk': 'Porsche', 'mo': '911',
           'yr': 2002, 'px': 45000, 'km': 95000, 'src': 'lesanciennes'}, True, "Porsche 911"),
-        ({'title': 'Citroen 2CV 1990', 'mk': 'Citroen', 'mo': '2CV',
+        ({'title': 'Citroen 2CV 1990', 'mk': 'Citroën', 'mo': '2CV',
           'yr': 1990, 'px': 14500, 'km': 60000, 'src': 'lesanciennes'}, True, "2CV collector"),
+
+        # ─── Whitelist BRAND_REGISTRY (filet anti-pollution résiduelle) ───
+        ({'title': 'Annonces de voitures', 'mk': 'Annonces', 'mo': 'voitures',
+          'yr': 1980, 'px': 10000, 'src': 'goodtimers'}, False, "mk hors registry"),
+        ({'title': 'Pourquoi nous?', 'mk': 'Pourquoi', 'mo': 'nous',
+          'yr': 1985, 'px': 50000, 'src': 'moteur-sens'}, False, "Pourquoi hors registry"),
+        ({'title': 'International Harvester 1956', 'mk': 'International', 'mo': 'Harvester',
+          'yr': 1956, 'px': 80000, 'src': 'goodtimers'}, True, "International OK collector"),
 
         # ─── Tier LUXE (100k–500k€, marques premium) ───
         ({'title': 'BMW M5 CS 2022', 'mk': 'BMW', 'mo': 'M5 CS',
@@ -337,7 +356,7 @@ if __name__ == "__main__":
           'yr': 1984, 'px': 280_000, 'km': 50000, 'src': 'lesanciennes'}, True, "205 T16 collector"),
         ({'title': 'Renault Alpine A110 1972', 'mk': 'Renault', 'mo': 'Alpine A110',
           'yr': 1972, 'px': 200_000, 'km': 80000, 'src': 'lesanciennes'}, True, "Alpine collector"),
-        ({'title': 'Citroen DS 21 Pallas 1970', 'mk': 'Citroen', 'mo': 'DS 21 Pallas',
+        ({'title': 'Citroen DS 21 Pallas 1970', 'mk': 'Citroën', 'mo': 'DS 21 Pallas',
           'yr': 1970, 'px': 95_000, 'km': 120000, 'src': 'lesanciennes'}, True, "DS 21 collector"),
         ({'title': 'Toyota 2000GT 1968', 'mk': 'Toyota', 'mo': '2000GT',
           'yr': 1968, 'px': 800_000, 'km': 90000, 'src': 'rmsothebys'}, True, "2000GT collector"),

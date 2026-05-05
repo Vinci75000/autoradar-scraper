@@ -148,6 +148,7 @@ BRAND_REGISTRY = {
     "gmc":            "GMC",
     "oldsmobile":     "Oldsmobile",
     "auburn":         "Auburn",
+    "international":   "International",
 
     # ── Modernes / Électriques ──
     "tesla":          "Tesla",
