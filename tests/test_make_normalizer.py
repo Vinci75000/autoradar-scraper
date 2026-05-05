@@ -11,6 +11,10 @@ Si tout passe, on intègre dans scraper.py (A.4d).
 Si un cas casse, on ajuste le module avant intégration.
 """
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from make_normalizer import normalize_make_model
 
 # Format : (description, input, expected_mk, expected_mo)
