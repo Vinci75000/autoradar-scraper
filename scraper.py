@@ -21,10 +21,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from validation import validate_listing
+from validation import validate_listing, get_listing_tier, get_km_tier
 from batches import get_sources_for_batch, get_pages_for_batch, is_red_source, RED_SOURCES
 from dealers import DEALERS, get_dealer_by_name, get_dealer_names, get_active_dealers
 from make_normalizer import normalize_make_model
+from feature_extractor import (
+    EXTRACTOR_VERSION,
+    chips_from_features,
+    extract_features,
+    score_from_features,
+)
 
 # ── Stealth helper (works with v1.x stealth_sync and v2.x Stealth class) ──
 def _get_stealth_pw():
@@ -248,6 +254,31 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
         'status':    'active',
         'is_autoradar': False,
     }
+
+    # ─── Carnet — feature_extractor (Mission B) ─────────────────────────────
+    # Override sc et ch avec le score architecturé + ajoute les 25 feat_*.
+    # Robustesse prod NON-NÉGOCIABLE : un bug parser ne doit jamais casser
+    # une insertion. En cas d'exception, on log warning et on garde
+    # sc/ch issus de calculate_score() existant, sans poser de feat_*.
+    try:
+        listing_tier = get_listing_tier(car.yr, car.px)
+        km_tier = get_km_tier(car.km, listing_tier)
+        features = extract_features(
+            description=getattr(car, 'description', '') or '',
+            title=car.mo or '',
+            listing_tier=listing_tier,
+            km_tier=km_tier,
+        )
+        row.update(features)
+        row['sc'] = score_from_features(features, listing_tier, km_tier)
+        row['ch'] = chips_from_features(features, listing_tier, km_tier)
+        row['feat_extracted_at'] = datetime.utcnow().isoformat() + 'Z'
+        row['feat_extractor_version'] = EXTRACTOR_VERSION
+    except Exception as e:
+        log.warning(
+            f'feature_extractor failed for {car.mk} {car.mo}: {e} '
+            f'— falling back to calculate_score()'
+        )
 
     res = db.table('cars').insert(row).execute()
     if res.data:
