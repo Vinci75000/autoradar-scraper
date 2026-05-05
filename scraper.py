@@ -230,6 +230,7 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
         'mk':        car.mk,
         'mod':       car.mod,
         'mo':        car.mo,
+        'de':        getattr(car, 'de', None),
         'yr':        car.yr,
         'km':        car.km,
         'px':        car.px,
