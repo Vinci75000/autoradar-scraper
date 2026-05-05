@@ -145,6 +145,14 @@ def run_source(batch: str, source_name: str, pages: int, timeout: int):
             duplicates = int(m.group(3))
             errors = int(m.group(4))
 
+        # Fallback: green/yellow code path (run() in scraper.py) does not emit
+        # the "X listings extraits" log line that scrape_dealer() emits at line
+        # 2176. So when extracted==0 but other counts are non-zero, derive from
+        # the totals: every parsed listing ends up in exactly one of new/rej/
+        # dup/err. This keeps reports accurate without touching scraper.py.
+        if extracted == 0 and (new + rejected + duplicates + errors) > 0:
+            extracted = new + rejected + duplicates + errors
+
         if 'Parser 🎯' in log or 'Parser dédié' in log:
             parser_mode = 'dédié'
         elif 'Parser 🟡' in log or 'Parser générique' in log:
