@@ -216,7 +216,7 @@ DEALERS = [
         'country': 'Suisse',
         'city': 'Plan-les-Ouates (Genève)',
         'base_url': 'https://new.lamborghinigeneve.ch',
-        'listing_url': 'https://new.lamborghinigeneve.ch/fr/cars/used',
+        'listing_url': 'https://new.lamborghinigeneve.ch/nos-vehicules-en-stock/lamborghini-en-stock/',
         'pagination': '?page={page}',
         'max_pages': 2,
         'use_stealth': True,
