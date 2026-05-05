@@ -27,7 +27,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 # ─── Sessions persistantes par site ───
-SESSIONS_DIR = Path(os.path.expanduser('~/Desktop/autoradar-scraper/.sessions'))
+SESSIONS_DIR = Path(__file__).resolve().parent / '.sessions'
 SESSIONS_DIR.mkdir(exist_ok=True)
 
 
