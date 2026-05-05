@@ -1,14 +1,22 @@
 """
 Carnet (AutoRadar) — feature_extractor.py
 ═══════════════════════════════════════════════════════════════
-Parse les annonces scrapées et extrait 25 features factuelles
-structurées sur 7 axes (Carnet, Suivi, Garantie, Stockage, État,
-Provenance/Rareté + tier-based pour Passion/Collection).
+Parse les annonces scrapées et extrait 26 features factuelles
+(25 extraites + 1 dérivée `feat_suivi_douteux`) structurées sur
+7 axes : Carnet, Suivi, Garantie, Stockage, État, Provenance/Rareté
++ tier-based pour Passion/Collection.
 
 Alimente :
-- 25 colonnes feat_* en DB (booléens, ints, dates, strings)
-- Le score /100 architecturé (colonne sc) via score_from_features()
-- La liste de chips qualitatifs (colonne ch) via chips_from_features()
+- 26 colonnes feat_* en DB (booléens, ints, dates, strings)
+
+DORMANT en V1 hybride (réactivés en Mission B-bis quand `de` peuplée) :
+- score_from_features() : score /100 architecturé (colonne sc)
+- chips_from_features() : chips qualitatifs (colonne ch)
+
+  Raison du gel : sample empirique sur 3818 cars actives → ~99% des
+  titres `mo` ne portent aucun mot-clé descriptif (carnet, matching,
+  owner). Override de sc/ch en V1 produirait une régression visible
+  (scores chutent de ~40-70 à ~14-25). Mission B-bis débloque.
 
 Architecture :
 - V1 (option hybride) bosse sur le titre `mo` (max 121 chars).
@@ -251,16 +259,19 @@ NEGATION_TRIGGERS = [
 # ═══════════════════════════════════════════════════════════════════════════
 
 class Features(TypedDict, total=True):
+    """26 features (25 extraites + 1 dérivée `feat_suivi_douteux`)."""
     # Axe Carnet (4)
     feat_carnet_present: bool
     feat_carnet_complet: bool
     feat_factures_completes: bool
     feat_nb_proprietaires: Optional[int]
-    # Axe Suivi (4)
+    # Axe Suivi (3 extraites + 1 dérivée)
     feat_suivi_constructeur: bool
     feat_suivi_specialiste: bool
     feat_suivi_garage_name: Optional[str]
-    feat_suivi_douteux: bool
+    # Dérivée : True ssi NOT constructeur AND NOT specialiste AND garage_name IS NULL
+    # ET description non vide. Si description="" → None (pas de signal valide).
+    feat_suivi_douteux: Optional[bool]
     # Axe Garantie (3)
     feat_sous_garantie_constructeur: bool
     feat_garantie_extension: bool
@@ -295,7 +306,10 @@ def _default_features() -> Features:
         "feat_suivi_constructeur": False,
         "feat_suivi_specialiste": False,
         "feat_suivi_garage_name": None,
-        "feat_suivi_douteux": False,
+        # Dérivée : None par défaut — la valeur True/False n'a de sens que
+        # si on a effectivement scanné une description non vide. Posée par
+        # extract_features() seulement si description fournie.
+        "feat_suivi_douteux": None,
         "feat_sous_garantie_constructeur": False,
         "feat_garantie_extension": False,
         "feat_garantie_fin_date": None,
@@ -472,25 +486,31 @@ def extract_carnet(text: str) -> dict:
 
 
 def extract_suivi(text: str) -> dict:
-    """4 features : suivi constructeur, spécialiste, garage_name, douteux (dérivé)."""
+    """
+    3 features extraites + 1 dérivée :
+    suivi_constructeur, suivi_specialiste, garage_name, douteux (dérivé).
+
+    Note importante : `feat_suivi_douteux` calculé ici est un brut
+    `NOT constructeur AND NOT specialiste AND garage_name IS NULL`.
+    extract_features() le réécrit en None si description vide (pivot
+    post-sample : sur titre seul, "douteux=True" est un faux positif
+    systémique).
+    """
     suivi_const = _has_any(text, SUIVI_CONSTRUCTEUR_KW)
     suivi_spec = _has_any(text, SUIVI_SPECIALISTE_KW)
     garage_name = _extract_first_group(text, SUIVI_GARAGE_PATTERN)
     if garage_name:
-        # On veut conserver une casse propre — mais le text est lowercase ici.
-        # On laisse en lowercase, le frontend pourra title-caser si besoin.
         garage_name = garage_name.strip()
-        # Refus si trop court ou contient un trigger de négation
         if len(garage_name) < 3 or any(t in garage_name for t in ["sans", "aucun"]):
             garage_name = None
 
-    suivi_douteux = (not suivi_const) and (not suivi_spec) and (garage_name is None)
+    suivi_douteux_raw = (not suivi_const) and (not suivi_spec) and (garage_name is None)
 
     return {
         "feat_suivi_constructeur": suivi_const,
         "feat_suivi_specialiste": suivi_spec,
         "feat_suivi_garage_name": garage_name,
-        "feat_suivi_douteux": suivi_douteux,
+        "feat_suivi_douteux": suivi_douteux_raw,
     }
 
 
@@ -569,6 +589,7 @@ def extract_features(
     """
     full_text = f"{title or ''} {description or ''}"
     text_clean = _clean_text(full_text)
+    has_description = bool(description and description.strip())
 
     features: Features = _default_features()
     if not text_clean:
@@ -581,15 +602,34 @@ def extract_features(
     features.update(extract_garantie(text_clean))
     features.update(extract_etat(text_clean))
 
+    # ─── Garde-fou pivot V1 hybride ────────────────────────────────────
+    # `feat_suivi_douteux` est dérivé : il n'a de sens que si on a
+    # effectivement scanné une description non vide. Sur titre seul
+    # (V1 hybride, sample empirique : ~99% des titres sans mot-clé
+    # de suivi), la dérivation produirait un faux positif systémique.
+    # On force None si la description est absente.
+    if not has_description:
+        features["feat_suivi_douteux"] = None
+
     return features
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# SCORING — pondérations brief, taggées TODO Sergio si à valider
+# SCORING — DORMANT en V1 hybride (réactivé en Mission B-bis quand `de` peuplée)
 # ═══════════════════════════════════════════════════════════════════════════
-
+# Ces fonctions ne sont plus appelées par scraper.py:insert_car() ni par
+# scripts/backfill_features.py. Elles restent dans le module pour :
+#   - Ne pas perdre l'architecture pondérée pensée en Mission B
+#   - Permettre le test isolé du scoring quand on aura de la description
+#   - Faciliter la réactivation en Mission B-bis (rebrancher + re-tester)
+#
+# Raison du gel V1 :
+#   Sample empirique sur 3818 cars actives → ~99% des titres `mo` ne portent
+#   aucun mot-clé descriptif. Override de sc/ch en V1 produit une régression
+#   visible (scores chutent ~40-70 → ~14-25) sans gain d'information réel.
+#
 # Pondérations totales : 100 pts
-# TODO: validate weights with Sergio after sample 50 cars review
+# TODO: validate weights with Sergio when reactivated in Mission B-bis
 WEIGHTS = {
     "passion": 15,        # tier-based : hypercar > supercar > luxury > collector > standard
     "collection": 20,     # km_tier + matching_numbers + first_owner

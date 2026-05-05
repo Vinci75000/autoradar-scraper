@@ -298,11 +298,12 @@ check("multi: peinture_origine", f["feat_peinture_origine"], True)
 
 # Cas 2 : texte vide
 f = extract_features(title="", description="", listing_tier="standard", km_tier="moderate")
-check("vide: 25 clés présentes", len(f), 26)  # 26 = 25 features (carnet axis count à part)
-# total=True : 25 features + nb_proprietaires + revision date/km + garage_name → 26 total
-# Recompte : carnet=4, suivi=4, garantie=3, stockage=3, etat=8, provenance=4 = 26
+check("vide: 26 clés présentes", len(f), 26)  # 25 extraites + 1 dérivée (feat_suivi_douteux)
+# Recompte par axe : carnet=4, suivi=4, garantie=3, stockage=3, etat=8, provenance=4 = 26
 check("vide: tout False", f["feat_carnet_present"], False)
 check("vide: nb_proprietaires None", f["feat_nb_proprietaires"], None)
+# Pivot V1 hybride : sans description, suivi_douteux n'a pas de signal valide → None
+check("vide: suivi_douteux None (pas de description)", f["feat_suivi_douteux"], None)
 
 # Cas 3 : HTML inline
 f = extract_features(title="Voiture <strong>magnifique</strong>, carnet complet",
@@ -319,6 +320,26 @@ check("casse haute: carnet_complet", f["feat_carnet_complet"], True)
 f = extract_features(title="Le carnet de chèques est tombé",
                      listing_tier="standard", km_tier="moderate")
 check("faux positif évité: carnet_present", f["feat_carnet_present"], False)
+
+# Cas 6 : pivot V1 hybride — suivi_douteux dépend de la présence de description
+# Sans description (V1 hybride sur titre seul) → None systématique
+f = extract_features(title="Voiture lambda sans signal", description="",
+                     listing_tier="standard", km_tier="moderate")
+check("pivot V1: suivi_douteux=None sur titre seul", f["feat_suivi_douteux"], None)
+
+# Avec description non vide et aucun signal de suivi → True (vraie dérivation)
+f = extract_features(title="BMW M3",
+                     description="Voiture vendue tel quel, peu d'historique connu.",
+                     listing_tier="luxury", km_tier="moderate")
+check("pivot V1: suivi_douteux=True si description scannée et rien trouvé",
+      f["feat_suivi_douteux"], True)
+
+# Avec description non vide ET suivi_constructeur trouvé → False
+f = extract_features(title="BMW M3",
+                     description="Suivi constructeur depuis l'origine, BMW Classic.",
+                     listing_tier="luxury", km_tier="moderate")
+check("pivot V1: suivi_douteux=False si suivi_constructeur True",
+      f["feat_suivi_douteux"], False)
 
 
 # ═════════════════════════════════════════════════════════════════

@@ -13,7 +13,7 @@
 Brief B = créer `feature_extractor.py` qui parse les annonces et extrait 25-26 features factuelles structurées sur 7 axes (Carnet, Suivi, Garantie, Stockage, État, Provenance/Rareté + tier-based pour Passion/Collection).
 
 Le module produit :
-- 25 colonnes `feat_*` en DB (booléens, ints, dates, strings)
+- 26 colonnes `feat_*` en DB — 25 extraites + 1 dérivée `feat_suivi_douteux` (booléens, ints, dates, strings)
 - Un score `/100` pondéré par axe
 - Une liste de chips qualitatifs ("Carnet complet", "Matching numbers", "Zéro km") pour l'affichage frontend
 
@@ -117,7 +117,7 @@ Inspection DB Supabase mai 2026 :
 | # | Tâche | Estimation |
 |---|---|---|
 | 5.1 | `~/Code/autoradar/scraper/docs/sql/feat_columns_migration.sql` | 15 min |
-| 5.2 | 25 colonnes `feat_*` + 2 méta (`feat_extracted_at`, `feat_extractor_version`) + **colonne `de` text** (option hybride) | inline |
+| 5.2 | 26 colonnes `feat_*` (25 extraites + 1 dérivée) + 2 méta (`feat_extracted_at`, `feat_extractor_version`) + **colonne `de` text** (option hybride) | inline |
 | 5.3 | Idempotente via `IF NOT EXISTS` | inline |
 
 **Critère de validation phase 5** : Sergio exécute dans Supabase Dashboard, no error, re-run no error.

@@ -40,7 +40,7 @@ Cette mission B s'occupe **uniquement** de la branche scrapée.
 Créer un module Python `feature_extractor.py` dans le repo `Vinci75000/autoradar-scraper` qui :
 
 1. Parse les descriptions/titres des annonces scrapées
-2. Extrait ~25 features structurées en booléens, chaînes ou dates
+2. Extrait 26 features structurées en booléens, chaînes ou dates (25 extraites + 1 dérivée `feat_suivi_douteux`)
 3. Les écrit dans de nouvelles colonnes structurées de la table `cars` en DB Supabase
 4. Calcule un score `/100` pondéré par axe (les pondérations sont à proposer, Sergio validera)
 5. Génère la liste des `chips` qualitatifs à afficher (alimente la colonne `ch` existante)
@@ -69,7 +69,7 @@ Avec :
 
 ## 4. SPECS FONCTIONNELLES
 
-### 4.1 Features cibles (25 features sur 7 axes)
+### 4.1 Features cibles (26 features sur 7 axes — 25 extraites + 1 dérivée)
 
 **Axe Carnet d'entretien**
 
