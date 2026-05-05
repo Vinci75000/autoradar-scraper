@@ -48,6 +48,16 @@ filesdatabase.zip
 *.backup
 *.bak
 
+# Snapshots DB pré-backfill (Mission B — garde-fou, restent locaux)
+snapshot_pre_backfill_*.csv
+snapshot_*.csv
+
+# Logs de backfill (régénérés à chaque run, gros, restent locaux)
+backfill_*.log
+
+# Archives locales (snapshots historiques, audits, sha256 de référence)
+_archives/
+
 # Broken files (work in progress, jamais à push)
 *.broken
 *.broken_*
