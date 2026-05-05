@@ -3,7 +3,8 @@
 -- Migration : ajout des colonnes feat_* à la table `cars` + colonne `de`
 --
 -- Goal :
---   1. Ajouter 25 colonnes feat_* alimentées par feature_extractor.py
+--   1. Ajouter 26 colonnes feat_* (25 extraites + 1 dérivée
+--      `feat_suivi_douteux`) alimentées par feature_extractor.py
 --   2. Ajouter 2 colonnes méta (feat_extracted_at, feat_extractor_version)
 --   3. Ajouter colonne `de` (description longue) — option hybride, future-proof
 --      pour Mission B-bis (scraping descriptions complètes)
@@ -28,7 +29,7 @@ ALTER TABLE public.cars ADD COLUMN IF NOT EXISTS feat_carnet_complet       BOOLE
 ALTER TABLE public.cars ADD COLUMN IF NOT EXISTS feat_factures_completes   BOOLEAN DEFAULT NULL;
 ALTER TABLE public.cars ADD COLUMN IF NOT EXISTS feat_nb_proprietaires     INTEGER DEFAULT NULL;
 
--- ─── Axe Suivi (4 features) ─────────────────────────────────────────────────
+-- ─── Axe Suivi (3 extraites + 1 dérivée `feat_suivi_douteux`) ──────────────
 ALTER TABLE public.cars ADD COLUMN IF NOT EXISTS feat_suivi_constructeur   BOOLEAN DEFAULT NULL;
 ALTER TABLE public.cars ADD COLUMN IF NOT EXISTS feat_suivi_specialiste    BOOLEAN DEFAULT NULL;
 ALTER TABLE public.cars ADD COLUMN IF NOT EXISTS feat_suivi_garage_name    TEXT    DEFAULT NULL;
@@ -83,8 +84,8 @@ COMMIT;
 --      AND (column_name LIKE 'feat_%' OR column_name = 'de')
 --    ORDER BY column_name;
 --
--- Devrait retourner 28 lignes :
---   - 25 feat_<axe>_* (booléens, ints, dates, strings)
+-- Devrait retourner 29 lignes :
+--   - 26 feat_<axe>_* (25 extraites + 1 dérivée feat_suivi_douteux)
 --   - 2 méta (feat_extracted_at, feat_extractor_version)
 --   - 1 de (text)
 -- ═══════════════════════════════════════════════════════════════════════════

@@ -2,16 +2,27 @@
 """
 Carnet (AutoRadar) — backfill_features.py
 ═══════════════════════════════════════════════════════════════
-Backfill des colonnes feat_* + sc + ch pour toutes les annonces
+Backfill des colonnes feat_* + méta pour toutes les annonces
 existantes en DB Supabase.
+
+⚠️  PIVOT V1 hybride — NE TOUCHE PAS sc/ch/ve/ss :
+   Sample empirique 3818 cars → ~99% des titres `mo` sans mot-clé
+   descriptif. Override de sc/ch produirait une régression visible.
+   Le backfill peuple SEULEMENT les 26 feat_* + feat_extracted_at +
+   feat_extractor_version. sc et ch restent ceux issus de l'ancien
+   calculate_score() côté scraper.py. Réactivation en Mission B-bis.
 
 Architecture :
 - Pagine la table `cars` par batches de 500 (cap Supabase 999/1000)
-- Pour chaque car : extract_features() sur (mo, de) → score + chips
-- UPDATE la ligne (sauf en mode --dry-run)
+- Pour chaque car : extract_features() sur (mo, de)
+- UPDATE feat_* + méta uniquement (sauf en mode --dry-run)
 - Idempotent : re-run écrase proprement
 - Continue malgré les exceptions individuelles (log warning)
 - Logs de progression toutes les 100 cars
+
+Le score/chips architecturé est calculé en mémoire pour les stats
+finales du rapport, mais N'EST PAS écrit en DB. Permet de mesurer
+"ce que serait sc V1" sans régression utilisateur.
 
 Usage :
   cd ~/Code/autoradar/scraper
@@ -108,10 +119,16 @@ def fetch_page(db, *, status_filter: str | None, offset: int, limit: int) -> lis
         raise
 
 
-def compute_for_car(car: dict) -> dict | None:
+def compute_for_car(car: dict) -> tuple[dict, int, list[dict]] | None:
     """
-    Calcule features + score + chips pour une car. Retourne le payload UPDATE
-    (les 25 feat_* + sc + ch + meta) ou None en cas d'erreur fatale.
+    Calcule features pour une car.
+
+    Retourne :
+        (payload, sc_dormant, chips_dormant) ou None si yr/px manquants.
+
+    - `payload` : dict UPDATE → 26 feat_* + 2 méta. NE CONTIENT PAS sc/ch.
+    - `sc_dormant`, `chips_dormant` : score V1 architecturé calculé en
+      mémoire pour les stats du rapport. NE SONT PAS écrits en DB.
     """
     yr = car.get("yr")
     px = car.get("px")
@@ -137,15 +154,15 @@ def compute_for_car(car: dict) -> dict | None:
         listing_tier=listing_tier,
         km_tier=km_tier,
     )
-    sc = score_from_features(features, listing_tier, km_tier)
-    chips = chips_from_features(features, listing_tier, km_tier)
+    # Calcul "dormant" : juste pour les stats du rapport, pas écrit en DB
+    sc_dormant = score_from_features(features, listing_tier, km_tier)
+    chips_dormant = chips_from_features(features, listing_tier, km_tier)
 
-    payload = dict(features)  # copy
-    payload["sc"] = sc
-    payload["ch"] = chips
+    payload = dict(features)  # 26 feat_* keys
     payload["feat_extracted_at"] = datetime.utcnow().isoformat() + "Z"
     payload["feat_extractor_version"] = EXTRACTOR_VERSION
-    return payload
+    # PAS de sc/ch dans le payload — pivot V1 hybride
+    return payload, sc_dormant, chips_dormant
 
 
 def run(
@@ -180,27 +197,28 @@ def run(
         for car in page:
             stats["scanned"] += 1
             try:
-                payload = compute_for_car(car)
+                result = compute_for_car(car)
             except Exception as e:
                 stats["errors"] += 1
                 log.warning(f"compute failed for car {car.get('id')}: {e}")
                 continue
 
-            if payload is None:
+            if result is None:
                 stats["skipped_invalid"] += 1
                 continue
 
-            stats["chips_total"] += len(payload["ch"])
-            sc = payload["sc"]
-            stats["score_sum"] += sc
-            stats["score_min"] = min(stats["score_min"], sc)
-            stats["score_max"] = max(stats["score_max"], sc)
+            payload, sc_dormant, chips_dormant = result
+
+            stats["chips_total"] += len(chips_dormant)
+            stats["score_sum"] += sc_dormant
+            stats["score_min"] = min(stats["score_min"], sc_dormant)
+            stats["score_max"] = max(stats["score_max"], sc_dormant)
 
             if len(sample_logs) < verbose_sample:
-                labels = [c["label"] for c in payload["ch"]]
+                labels = [c["label"] for c in chips_dormant]
                 sample_logs.append(
                     f"  {car.get('mk', '?'):<15} {car.get('mo', '?')[:50]:<50}"
-                    f" sc={sc:>3}  chips={labels}"
+                    f" sc_dormant={sc_dormant:>3}  chips={labels}"
                 )
 
             if not dry_run:
@@ -276,11 +294,14 @@ def main() -> int:
     log.info("─" * 70)
     log.info(f"Résultat — duration {stats['duration_sec']}s")
     log.info(f"  scanned         : {stats['scanned']}")
-    log.info(f"  updated         : {stats['updated']}{' (DRY-RUN: 0 forced)' if args.dry_run else ''}")
+    log.info(f"  updated         : {stats['updated']} (feat_* + méta only — NOT sc/ch)"
+             + (' (DRY-RUN: 0 forced)' if args.dry_run else ''))
     log.info(f"  skipped (yr/px) : {stats['skipped_invalid']}")
     log.info(f"  errors          : {stats['errors']}")
-    log.info(f"  score min/avg/max : {stats['score_min']} / {stats['score_avg']} / {stats['score_max']}")
-    log.info(f"  chips total     : {stats['chips_total']} ({stats['chips_total'] / max(stats['scanned'], 1):.1f}/car)")
+    log.info(f"  sc_dormant min/avg/max : {stats['score_min']} / {stats['score_avg']} / {stats['score_max']}"
+             f"  ⚠ NOT written to DB (V1 hybrid)")
+    log.info(f"  chips_dormant total : {stats['chips_total']} ({stats['chips_total'] / max(stats['scanned'], 1):.1f}/car)"
+             f"  ⚠ NOT written to DB")
     log.info("─" * 70)
 
     if stats["errors"] > 0:

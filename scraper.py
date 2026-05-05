@@ -27,9 +27,7 @@ from dealers import DEALERS, get_dealer_by_name, get_dealer_names, get_active_de
 from make_normalizer import normalize_make_model
 from feature_extractor import (
     EXTRACTOR_VERSION,
-    chips_from_features,
     extract_features,
-    score_from_features,
 )
 
 # ── Stealth helper (works with v1.x stealth_sync and v2.x Stealth class) ──
@@ -255,11 +253,20 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
         'is_autoradar': False,
     }
 
-    # ─── Carnet — feature_extractor (Mission B) ─────────────────────────────
-    # Override sc et ch avec le score architecturé + ajoute les 25 feat_*.
-    # Robustesse prod NON-NÉGOCIABLE : un bug parser ne doit jamais casser
-    # une insertion. En cas d'exception, on log warning et on garde
-    # sc/ch issus de calculate_score() existant, sans poser de feat_*.
+    # ─── Carnet — feature_extractor (Mission B, V1 hybride) ─────────────────
+    # Peuple les 26 colonnes feat_* + 2 méta. NE TOUCHE PAS à sc/ch (qui
+    # restent issus de calculate_score()).
+    #
+    # Pivot post-sample : tant que la description longue n'est pas scrapée
+    # (Mission B-bis → colonne `de`), le titre seul ne porte quasi aucun
+    # signal descriptif (~99% de cars sans mot-clé carnet/matching/owner).
+    # Override de sc/ch en V1 = régression visible. Score architecturé
+    # `score_from_features()` et `chips_from_features()` resteront dormants
+    # dans le module feature_extractor jusqu'à Mission B-bis.
+    #
+    # Robustesse prod : try/except — un bug parser ne doit jamais casser
+    # une insertion. En cas d'exception, on log warning, aucune feat_*
+    # n'est posée, sc/ch restent intouchés.
     try:
         listing_tier = get_listing_tier(car.yr, car.px)
         km_tier = get_km_tier(car.km, listing_tier)
@@ -270,14 +277,12 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
             km_tier=km_tier,
         )
         row.update(features)
-        row['sc'] = score_from_features(features, listing_tier, km_tier)
-        row['ch'] = chips_from_features(features, listing_tier, km_tier)
         row['feat_extracted_at'] = datetime.utcnow().isoformat() + 'Z'
         row['feat_extractor_version'] = EXTRACTOR_VERSION
     except Exception as e:
         log.warning(
             f'feature_extractor failed for {car.mk} {car.mo}: {e} '
-            f'— falling back to calculate_score()'
+            f'— skipping feat_* (sc/ch preserved from calculate_score)'
         )
 
     res = db.table('cars').insert(row).execute()
