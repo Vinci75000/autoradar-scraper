@@ -176,6 +176,18 @@ def geocode(city: str, country: str) -> tuple[Optional[float], Optional[float]]:
 
 # ── Deduplication check ─────────────────────────────────────────────────────
 def is_duplicate(db: Client, car: CarListing) -> bool:
+    # L1 — URL match : rapide (index idx_cars_src_url), robuste aux changements
+    # de parsing (mk/mo). Catch les rescrapes du même site même si le parser
+    # canonise le mk différemment.
+    if car.src_url:
+        url_check = (db.table('cars')
+                       .select('id')
+                       .eq('src_url', car.src_url)
+                       .limit(1)
+                       .execute())
+        if url_check.data:
+            return True
+    # L2 — fingerprint match : dedup cross-source (même car sur 2 sites différents)
     fp = car.fingerprint()
     res = db.table('car_fingerprints').select('id').eq('fp_hash', fp).execute()
     return len(res.data) > 0
