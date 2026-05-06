@@ -142,7 +142,42 @@ def test_extract_features_v2_returns_dict(
     for every fixture. Expected keys : the 26 feat_* booleans defined
     in the v1 module (carnet_complet, matching_numbers, first_owner, etc.),
     plus optional v2-specific keys (highlights, concerns, summary)."""
-    pytest.skip('Awaiting extract_features v2 implementation (step 2)')
+    from extractors.feature_extractor_v2 import (
+        NON_BOOLEAN_FEATURES,
+        extract_features_v2,
+    )
+    from extractors.keywords_multilang import BOOLEAN_FEATURES_BY_AXIS
+
+    de = load_fixture(name)
+    result = extract_features_v2(de)
+
+    assert isinstance(result, dict), (
+        f'Fixture {name!r}: expected dict, got {type(result).__name__}'
+    )
+
+    expected_bools = {
+        feat for axis_feats in BOOLEAN_FEATURES_BY_AXIS.values()
+        for feat in axis_feats
+    }
+    missing_bools = expected_bools - set(result.keys())
+    assert not missing_bools, (
+        f'Fixture {name!r}: missing booleans {missing_bools}'
+    )
+    for feat in expected_bools:
+        assert isinstance(result[feat], bool), (
+            f'Fixture {name!r}: {feat} should be bool, '
+            f'got {type(result[feat]).__name__}'
+        )
+
+    missing_non_bool = set(NON_BOOLEAN_FEATURES) - set(result.keys())
+    assert not missing_non_bool, (
+        f'Fixture {name!r}: missing non-bool {missing_non_bool}'
+    )
+
+    feat_keys = {k for k in result if k.startswith('feat_')}
+    assert len(feat_keys) >= 26, (
+        f'Fixture {name!r}: expected >=26 feat_* keys, got {len(feat_keys)}'
+    )
 
 
 @pytest.mark.parametrize(
