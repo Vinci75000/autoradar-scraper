@@ -109,3 +109,51 @@ def test_html_in_description_does_not_crash():
         description="<p>Belle voiture <b>carnet d'entretien</b> complet</p>",
     )
     assert isinstance(result, dict)
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Integration v1+v2 (added in step 4b.3)
+# ──────────────────────────────────────────────────────────────────────
+
+def test_v2_nl_signal_enriches_v1():
+    """A NL signal that v1 alone wouldn't catch (no NL keywords in v1
+    dictionaries) must be picked up by the v2 multilingual layer."""
+    result = extract_features(
+        title="Mercedes",
+        description="Het voertuig is dealer onderhouden bij merkdealer.",
+    )
+    assert result['feat_suivi_constructeur'] is True, (
+        'v2 NL pattern should set feat_suivi_constructeur=True '
+        f'on "dealer onderhouden", got {result["feat_suivi_constructeur"]!r}'
+    )
+
+
+def test_v2_fr_garage_chauffe_with_intermediate_word():
+    """v2 FR pattern is permissive on intermediate words. v1 strict
+    pattern would miss 'garage interieur chauffe'; the integration
+    ensures v2 catches it."""
+    result = extract_features(
+        title="BMW",
+        description="Toujours conserve dans un garage interieur chauffe.",
+    )
+    assert result['feat_garage_chauffe'] is True
+
+
+def test_v2_failure_silently_falls_back_to_v1(monkeypatch):
+    """If extract_features_v2 raises, v1 must continue and return a
+    valid dict (try/except + silent fallback contract)."""
+    import extractors.feature_extractor_v2 as v2_mod
+
+    def boom(*args, **kwargs):
+        raise RuntimeError('Simulated v2 failure')
+
+    monkeypatch.setattr(v2_mod, 'extract_features_v2', boom)
+
+    result = extract_features(
+        title="Mercedes avec carnet d'entretien",
+        description="Description non vide pour activer la branche v2",
+    )
+    assert isinstance(result, dict), 'v2 failure must not break v1 return type'
+    assert result['feat_carnet_present'] is True, (
+        'v1 signal lost despite silent v2 fallback'
+    )
