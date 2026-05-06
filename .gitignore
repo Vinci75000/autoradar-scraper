@@ -62,3 +62,6 @@ _archives/
 *.broken
 *.broken_*
 backup_de_*.json
+
+# Phase 3 LLM dry-run results (JSONL, ne pas committer -- contient prompts + raw_response)
+reports/llm_dryrun/
