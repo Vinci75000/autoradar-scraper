@@ -61,3 +61,4 @@ _archives/
 # Broken files (work in progress, jamais à push)
 *.broken
 *.broken_*
+backup_de_*.json
