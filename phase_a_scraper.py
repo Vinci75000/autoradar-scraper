@@ -366,6 +366,7 @@ def dict_to_carlisting(d: dict):
         opts=d.get("opts") or [],
         lat=d.get("lat"),
         lng=d.get("lng"),
+        de=d.get("de"),
     )
 
 
@@ -528,6 +529,7 @@ class SourceScraper:
             "fu":  normalize_fuel(v.get("fuelType")),
             "ge":  normalize_gear(v.get("vehicleTransmission")),
             "ow":  parse_int(v.get("numberOfPreviousOwners")) or 1,
+            "de":  (v.get("description") or "").strip() or None,
             "opts": [],
         }
 

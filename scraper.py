@@ -85,6 +85,7 @@ class CarListing:
     opts:      list = None
     lat:       float = None
     lng:       float = None
+    de:        Optional[str] = None  # description longue (B-quinquies)
 
     def fingerprint(self) -> str:
         """Deduplicate: same car on multiple sources"""
