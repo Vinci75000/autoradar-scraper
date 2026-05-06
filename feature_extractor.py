@@ -602,6 +602,27 @@ def extract_features(
     features.update(extract_garantie(text_clean))
     features.update(extract_etat(text_clean))
 
+    # ─── V2 multilingual enrichment ────────────────────────────────────
+    # Enrichit les 20 features booléennes via les patterns multilingues
+    # (NL/FR/DE/IT/EN). v2 travaille sur la description ORIGINALE (non
+    # lowercased, flags emoji préservés) pour permettre la détection de
+    # langue par segments. Merge en OR sur les booléens uniquement ; les 6
+    # features non-booléennes (int/str/date/derived) restent sous
+    # l'autorité de v1 (cf NON_BOOLEAN_FEATURES dans feature_extractor_v2).
+    #
+    # Robustesse prod : try/except + import lazy. Un bug v2 (regex,
+    # import...) ne casse jamais v1 ; v1 continue avec ses signaux déjà
+    # collectés via les 6 sub-extractors.
+    if has_description:
+        try:
+            from extractors.feature_extractor_v2 import extract_features_v2
+            v2_features = extract_features_v2(de=description, mo=title or '')
+            for key, v2_value in v2_features.items():
+                if isinstance(v2_value, bool) and v2_value:
+                    features[key] = True
+        except Exception:
+            pass  # silent fallback — v1 result intact
+
     # ─── Garde-fou pivot V1 hybride ────────────────────────────────────
     # `feat_suivi_douteux` est dérivé : il n'a de sens que si on a
     # effectivement scanné une description non vide. Sur titre seul

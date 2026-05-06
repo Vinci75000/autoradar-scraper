@@ -280,7 +280,7 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
         listing_tier = get_listing_tier(car.yr, car.px)
         km_tier = get_km_tier(car.km, listing_tier)
         features = extract_features(
-            description=getattr(car, 'description', '') or '',
+            description=getattr(car, 'de', '') or '',
             title=car.mo or '',
             listing_tier=listing_tier,
             km_tier=km_tier,

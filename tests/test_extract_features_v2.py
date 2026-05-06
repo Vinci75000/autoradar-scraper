@@ -18,7 +18,10 @@ Run :
 """
 from __future__ import annotations
 
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
 
@@ -139,7 +142,42 @@ def test_extract_features_v2_returns_dict(
     for every fixture. Expected keys : the 26 feat_* booleans defined
     in the v1 module (carnet_complet, matching_numbers, first_owner, etc.),
     plus optional v2-specific keys (highlights, concerns, summary)."""
-    pytest.skip('Awaiting extract_features v2 implementation (step 2)')
+    from extractors.feature_extractor_v2 import (
+        NON_BOOLEAN_FEATURES,
+        extract_features_v2,
+    )
+    from extractors.keywords_multilang import BOOLEAN_FEATURES_BY_AXIS
+
+    de = load_fixture(name)
+    result = extract_features_v2(de)
+
+    assert isinstance(result, dict), (
+        f'Fixture {name!r}: expected dict, got {type(result).__name__}'
+    )
+
+    expected_bools = {
+        feat for axis_feats in BOOLEAN_FEATURES_BY_AXIS.values()
+        for feat in axis_feats
+    }
+    missing_bools = expected_bools - set(result.keys())
+    assert not missing_bools, (
+        f'Fixture {name!r}: missing booleans {missing_bools}'
+    )
+    for feat in expected_bools:
+        assert isinstance(result[feat], bool), (
+            f'Fixture {name!r}: {feat} should be bool, '
+            f'got {type(result[feat]).__name__}'
+        )
+
+    missing_non_bool = set(NON_BOOLEAN_FEATURES) - set(result.keys())
+    assert not missing_non_bool, (
+        f'Fixture {name!r}: missing non-bool {missing_non_bool}'
+    )
+
+    feat_keys = {k for k in result if k.startswith('feat_')}
+    assert len(feat_keys) >= 26, (
+        f'Fixture {name!r}: expected >=26 feat_* keys, got {len(feat_keys)}'
+    )
 
 
 @pytest.mark.parametrize(
@@ -153,26 +191,79 @@ def test_extract_features_v2_detects_language(
     """The v2 parser correctly identifies the dominant language of each
     fixture (NL / FR / DE / IT / EN) and routes to the appropriate
     keyword dictionary."""
-    pytest.skip('Awaiting extract_features v2 implementation (step 2)')
+    from extractors.lang_detect import detect_dominant_language
+    de = load_fixture(name)
+    detected = detect_dominant_language(de)
+    assert detected == expected_lang_hint, (
+        f'Fixture {name!r}: expected lang {expected_lang_hint!r}, '
+        f'got {detected!r}'
+    )
 
 
-def test_extract_features_v2_nl_options_signals_dealer_history():
-    """The Skoda Octavia SW fixture mentions 'Onderhoudsboekjes : Aanwezig
-    (dealer onderhouden)' — should map to feat_carnet_complet=True or
-    feat_dealer_history=True via the NL keyword dictionary."""
-    pytest.skip('Awaiting extract_features v2 implementation (step 2)')
+def test_extract_features_v2_multilang_be_signals_dealer_history():
+    """The multilang_be fixture (Mercedes) contains 'Onderhoudsboekjes:
+    Aanwezig (dealer onderhouden)' in the 🇳🇱 section AND
+    'entretien concessionnaire' in the 🇫🇷 section. Either should map to
+    feat_suivi_constructeur=True via the NL or FR keyword dictionary.
+
+    Note: docstring originally pointed to nl_options (Skoda) but that
+    fixture does not contain the exact phrase. The signal 'dealer
+    onderhouden / entretien concessionnaire' is in multilang_be, so the
+    test was relocated there (Option B, session 6/5/26)."""
+    from extractors.feature_extractor_v2 import extract_features_v2
+    de = load_fixture('multilang_be')
+    result = extract_features_v2(de)
+    assert result['feat_suivi_constructeur'] is True, (
+        'Expected feat_suivi_constructeur=True via "dealer onderhouden" (NL) '
+        'or "entretien concessionnaire" (FR) in multilang_be fixture, '
+        f'got {result["feat_suivi_constructeur"]!r}'
+    )
 
 
 def test_extract_features_v2_fr_editorial_signals_premium_state():
-    """The Alpina B5 fixture mentions garage chauffé, low km, état
-    quasi-neuf — should map to multiple positive feat_* signals."""
-    pytest.skip('Awaiting extract_features v2 implementation (step 2)')
-
+    """The Alpina B5 fixture (fr_editorial) mentions 'garage interieur
+    chauffe' and 'Exemplaire d origine, non modifie selon le vendeur'.
+    These map respectively to feat_garage_chauffe=True and
+    feat_etat_origine=True via the FR keyword dictionary."""
+    from extractors.feature_extractor_v2 import extract_features_v2
+    de = load_fixture('fr_editorial')
+    result = extract_features_v2(de)
+    assert result['feat_garage_chauffe'] is True, (
+        'Expected feat_garage_chauffe=True via "garage [intermediate] chauffe", '
+        f'got {result["feat_garage_chauffe"]!r}'
+    )
+    assert result['feat_etat_origine'] is True, (
+        'Expected feat_etat_origine=True via "exemplaire d origine" / '
+        f'"non modifie" patterns, got {result["feat_etat_origine"]!r}'
+    )
 
 def test_extract_features_v2_multilang_segments_by_flag():
-    """The Mercedes multi-language fixture has 🇳🇱/🇫🇷/🇩🇪 flag sections.
-    The v2 parser should detect the segments and apply the right
-    keyword dictionary to each, OR run all dictionaries on the full
-    text if global multilang is the chosen strategy. To be decided
-    in step 2."""
-    pytest.skip('Awaiting extract_features v2 implementation (step 2)')
+    """The Mercedes multi-language fixture has flag-emoji sections.
+    Strategy chosen step 2 (6 May 2026): flag-segmented when emoji
+    flags present, global stop-words detection otherwise.
+
+    Verifies:
+    1. detect_language_segments returns 2 segments in order [nl, fr]
+    2. extract_features_v2 picks up cross-segment signal
+       (feat_suivi_constructeur via NL "dealer onderhouden" or
+        FR "entretien concessionnaire")."""
+    from extractors.feature_extractor_v2 import extract_features_v2
+    from extractors.lang_detect import detect_language_segments
+
+    de = load_fixture('multilang_be')
+    segments = detect_language_segments(de)
+    assert len(segments) == 2, (
+        f'Expected 2 flag-segments (NL/FR), got {len(segments)}: '
+        f'{[lang for lang, _ in segments]}'
+    )
+    langs = [lang for lang, _ in segments]
+    assert langs == ['nl', 'fr'], (
+        f'Expected order [nl, fr], got {langs}'
+    )
+
+    result = extract_features_v2(de)
+    assert result['feat_suivi_constructeur'] is True, (
+        'Expected cross-segment signal feat_suivi_constructeur=True '
+        '(NL "dealer onderhouden" or FR "entretien concessionnaire"), '
+        f'got {result["feat_suivi_constructeur"]!r}'
+    )
