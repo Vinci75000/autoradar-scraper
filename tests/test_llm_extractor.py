@@ -1,10 +1,12 @@
-"""Tests pour extractors/llm_extractor.py.
+"""Tests pour extractors/llm_extractor.py (v2.0).
 
-15 tests organises en 3 sections :
+17 tests organises en 4 sections :
 
 1. Helpers prives (10 tests) :
    - _compute_de_hash : determinisme, distinction, UTF-8 safe
-   - _build_prompt : contient les feature names + le `de`
+   - _build_system_prompt : contient feature names, ne contient PAS
+     de donnees user (gage de cachabilite)
+   - _build_user_message : contient le `de` verbatim
    - _parse_response : strip fences, JSON malforme, cles manquantes,
      types invalides
 
@@ -16,6 +18,10 @@
    - JSON malforme : non-JSON -> json.JSONDecodeError remonte
    - Timeout : anthropic.APITimeoutError remonte
    - API error : anthropic.APIError remonte
+
+4. Architecture v2 (2 tests) :
+   - Le call API utilise system=[{cache_control: ephemeral}]
+   - Le user message contient le de mais pas le system prompt
 
 Aucun appel reseau reel : `anthropic.Anthropic` est patche via
 unittest.mock.patch dans tous les tests qui en ont besoin.
@@ -60,7 +66,6 @@ def _valid_response_text() -> str:
         for feat in axis_feats
     ]
     features = {feat: False for feat in boolean_features}
-    # On force quelques features a True pour les assertions
     if 'feat_carnet_complet' in features:
         features['feat_carnet_complet'] = True
     if 'feat_first_owner' in features:
@@ -105,21 +110,20 @@ def test_compute_de_hash_utf8_safe():
     from extractors.llm_extractor import _compute_de_hash
     h = _compute_de_hash('description avec epave et a restaurer')
     assert len(h) == 64
-    # Avec accents
     h_acc = _compute_de_hash('voiture epave a restaurer ongeval Unfall')
     assert len(h_acc) == 64
 
 
 # ===========================================================================
-# Tests helpers prives -- _build_prompt
+# Tests helpers prives -- _build_system_prompt (v2)
 # ===========================================================================
 
-def test_build_prompt_contains_feature_names():
-    """Le prompt liste tous les feature names depuis BOOLEAN_FEATURES_BY_AXIS."""
+def test_build_system_prompt_contains_feature_names():
+    """Le system prompt liste tous les feature names depuis BOOLEAN_FEATURES_BY_AXIS."""
     from extractors.keywords_multilang import BOOLEAN_FEATURES_BY_AXIS
-    from extractors.llm_extractor import _build_prompt
+    from extractors.llm_extractor import _build_system_prompt
 
-    prompt = _build_prompt('texte de description test')
+    prompt = _build_system_prompt()
 
     boolean_features = [
         feat
@@ -127,15 +131,66 @@ def test_build_prompt_contains_feature_names():
         for feat in axis_feats
     ]
     for feat in boolean_features:
-        assert feat in prompt, f'Feature {feat!r} missing from prompt'
+        assert feat in prompt, f'Feature {feat!r} missing from system prompt'
 
 
-def test_build_prompt_contains_de():
-    """Le prompt contient bien la description fournie verbatim."""
-    from extractors.llm_extractor import _build_prompt
+def test_build_system_prompt_is_invariant():
+    """Le system prompt est strictement invariant entre 2 appels --
+    condition necessaire pour le caching Anthropic."""
+    from extractors.llm_extractor import _build_system_prompt
+    p1 = _build_system_prompt()
+    p2 = _build_system_prompt()
+    assert p1 == p2
+
+
+def test_build_system_prompt_does_not_leak_user_data():
+    """Le system prompt ne doit JAMAIS contenir de donnees user --
+    sinon le caching est inefficace (chaque user invalide le cache).
+
+    Verifie qu'aucun nom de marque ou modele typique ne s'y trouve.
+    """
+    from extractors.llm_extractor import _build_system_prompt
+    prompt = _build_system_prompt()
+    # Marques courantes qui ne doivent jamais apparaitre dans le system
+    forbidden_user_data = [
+        'PORSCHE', 'Ferrari', 'Audi', 'BMW', 'Mercedes',
+        'GT3 RS', 'V10 Plus', 'carnet complet depuis',
+    ]
+    for forbidden in forbidden_user_data:
+        assert forbidden not in prompt, (
+            f'System prompt contains user-like data: {forbidden!r} -- '
+            'this would break caching'
+        )
+
+
+# ===========================================================================
+# Tests helpers prives -- _build_user_message (v2)
+# ===========================================================================
+
+def test_build_user_message_contains_de():
+    """Le user message contient bien la description fournie verbatim."""
+    from extractors.llm_extractor import _build_user_message
     de_input = 'PORSCHE 911 GT3 RS, carnet complet, premiere main'
-    prompt = _build_prompt(de_input)
-    assert de_input in prompt
+    msg = _build_user_message(de_input)
+    assert de_input in msg
+
+
+def test_build_user_message_does_not_contain_system_prompt():
+    """Le user message ne doit pas dupliquer le system prompt --
+    sinon on paie 2x les tokens de consigne."""
+    from extractors.llm_extractor import _build_system_prompt, _build_user_message
+    user_msg = _build_user_message('description test')
+    # Quelques marqueurs uniques au system prompt
+    system_markers = [
+        'AUCUN markdown',
+        'feat_carnet_complet',
+        'Reponds UNIQUEMENT',
+    ]
+    for marker in system_markers:
+        assert marker not in user_msg, (
+            f'User message contains system-prompt marker: {marker!r} -- '
+            'duplication would double the input tokens'
+        )
 
 
 # ===========================================================================
@@ -299,3 +354,88 @@ def test_extract_features_via_llm_api_error(mock_anthropic_cls):
 
     with pytest.raises(anthropic.APIError):
         extract_features_via_llm('Description test', api_key='fake-key')
+
+
+# ===========================================================================
+# Architecture v2 -- prompt caching (2 tests)
+# ===========================================================================
+
+@patch('anthropic.Anthropic')
+def test_extract_features_via_llm_passes_system_with_cache_control(mock_anthropic_cls):
+    """v2 : verifier que le call API utilise system=[{...cache_control: ephemeral}].
+
+    C'est la condition NECESSAIRE pour activer le caching cote Anthropic.
+    Si le minimum de tokens cachables n'est pas atteint, le cache est
+    silencieusement ignore -- mais ce parametre doit AU MOINS etre
+    transmis dans la requete pour qu'Anthropic ait une chance de cacher.
+    """
+    from extractors.llm_extractor import extract_features_via_llm
+
+    mock_client = MagicMock()
+    mock_client.messages.create = MagicMock(
+        return_value=_mock_message_response(_valid_response_text())
+    )
+    mock_anthropic_cls.return_value = mock_client
+
+    extract_features_via_llm(
+        'Description suffisamment longue pour test',
+        api_key='fake-key',
+    )
+
+    # Inspecter les kwargs du call
+    call_kwargs = mock_client.messages.create.call_args.kwargs
+
+    # System present sous forme de liste (pas de string)
+    assert 'system' in call_kwargs
+    assert isinstance(call_kwargs['system'], list)
+    assert len(call_kwargs['system']) >= 1
+
+    # 1er bloc : type=text + cache_control ephemeral
+    first_block = call_kwargs['system'][0]
+    assert first_block['type'] == 'text'
+    assert first_block.get('cache_control') == {'type': 'ephemeral'}
+
+    # Le bloc system contient les consignes (verification minimale)
+    assert 'features' in first_block['text']
+    assert 'highlights' in first_block['text']
+
+
+@patch('anthropic.Anthropic')
+def test_extract_features_via_llm_user_message_only_contains_de(mock_anthropic_cls):
+    """v2 : le user message ne contient QUE la description, pas les
+    consignes. C'est la separation system/user qui rend le caching
+    efficace -- si les consignes etaient dupliquees dans le user
+    message, on paierait 2x les tokens.
+    """
+    from extractors.llm_extractor import extract_features_via_llm
+
+    mock_client = MagicMock()
+    mock_client.messages.create = MagicMock(
+        return_value=_mock_message_response(_valid_response_text())
+    )
+    mock_anthropic_cls.return_value = mock_client
+
+    de_marker = 'PORSCHE_TEST_MARKER_xyz789'
+    extract_features_via_llm(
+        f'Description avec {de_marker} pour traceabilite',
+        api_key='fake-key',
+    )
+
+    call_kwargs = mock_client.messages.create.call_args.kwargs
+
+    # Messages doit contenir 1 user message
+    assert 'messages' in call_kwargs
+    assert len(call_kwargs['messages']) == 1
+    assert call_kwargs['messages'][0]['role'] == 'user'
+
+    user_content = call_kwargs['messages'][0]['content']
+
+    # Le user message contient le marker (donc le `de`)
+    assert de_marker in user_content
+
+    # Le user message ne contient PAS les consignes du system
+    forbidden_in_user = ['AUCUN markdown', 'feat_carnet_complet']
+    for marker in forbidden_in_user:
+        assert marker not in user_content, (
+            f'User message duplicates system content: {marker!r}'
+        )

@@ -155,6 +155,184 @@ def select_sample_stratified(client) -> dict[str, list[dict]]:
     }
 
 
+def select_sample_from_jsonl(client, jsonl_path: str) -> dict[str, list[dict]]:
+    """Reproduit un sample en re-fetchant les car_ids d'un JSONL precedent.
+
+    Permet une comparaison apples-to-apples V1 vs V2 sur exactement les
+    memes cars. Le `de` actuel est re-fetche depuis la DB (peut avoir
+    change si scraper a refresh entre les runs).
+
+    Skip avec WARN les cars qui :
+    - n'existent plus (deleted)
+    - ne sont plus active (status changed)
+    - ont une `de` plus assez longue (DE_LEN_MIN)
+
+    L'ordre original premium-puis-mainstream du JSONL est preserve
+    dans le dict retourne.
+    """
+    print(f'Loading sample from previous run: {jsonl_path}')
+
+    path = Path(jsonl_path)
+    if not path.exists():
+        raise FileNotFoundError(f'JSONL file not found: {jsonl_path}')
+
+    car_id_order: list[tuple[str, str]] = []  # [(strate, car_id), ...]
+    seen_ids: set[str] = set()
+    with open(path, 'r', encoding='utf-8') as f:
+        for line in f:
+            if not line.strip():
+                continue
+            r = json.loads(line)
+            cid = r.get('car_id')
+            strate = r.get('strate')
+            if not cid or strate not in ('premium', 'mainstream'):
+                continue
+            if cid in seen_ids:
+                continue  # dedup au cas ou
+            seen_ids.add(cid)
+            car_id_order.append((strate, cid))
+
+    n_premium_in = sum(1 for s, _ in car_id_order if s == 'premium')
+    n_mainstream_in = sum(1 for s, _ in car_id_order if s == 'mainstream')
+    print(
+        f'  Loaded: {n_premium_in} premium + {n_mainstream_in} mainstream '
+        f'car_ids from JSONL'
+    )
+
+    # Re-fetch les cars depuis Supabase. Deux paths selon le format
+    # des car_ids dans le JSONL :
+    #   - UUID complet (36 chars) : fetch direct via .in_('id', [...])
+    #     [path normal pour les JSONL produits par le runner v2+]
+    #   - tronques (< 36 chars) : fetch all active + match par prefix
+    #     UUID + disambiguation par mk+mo+yr+px du record JSONL
+    #     [path legacy pour les JSONL V1 anterieurs au fix car_id]
+    all_ids = [cid for _, cid in car_id_order]
+    cols = 'id,mk,mo,yr,km,px,de,feat_chips,src,status'
+    UUID_LEN = 36
+    has_truncated = any(len(cid) < UUID_LEN for cid in all_ids)
+
+    if not has_truncated:
+        # Path normal : fetch direct
+        res = client.table('cars').select(cols).in_('id', all_ids).execute()
+        cars_by_id = {c['id']: c for c in (res.data or [])}
+        # Mapping cid (qui est deja l'UUID complet) -> car
+        # Pas besoin de reverse-lookup
+    else:
+        # Path legacy : fetch toutes les active cars + match par prefix
+        print(
+            '  Note: legacy JSONL with truncated car_ids detected, '
+            'using prefix match + disambiguation by mk+mo+yr+px'
+        )
+        # Pagination : par defaut Supabase plafonne a 1000 par page.
+        # On boucle jusqu'a obtenir une page < PAGE_SIZE (signal de fin).
+        all_active: list[dict] = []
+        for page in range(MAX_PAGES):
+            offset = page * PAGE_SIZE
+            page_res = (
+                client.table('cars').select(cols)
+                .eq('status', 'active')
+                .range(offset, offset + PAGE_SIZE - 1)
+                .execute()
+            )
+            rows = page_res.data or []
+            all_active.extend(rows)
+            if len(rows) < PAGE_SIZE:
+                break
+        else:
+            print(
+                f'  WARN: pagination hit MAX_PAGES={MAX_PAGES}, '
+                f'stopping at {len(all_active)} active cars'
+            )
+        print(f'  Fetched {len(all_active)} active cars total')
+
+        # Lire les records JSONL pour acces aux champs mk/mo/yr/px
+        # (utiles pour disambiguer un short_id qui matche plusieurs UUIDs)
+        records_by_short_id: dict[str, dict] = {}
+        with open(path, 'r', encoding='utf-8') as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                r = json.loads(line)
+                if r.get('car_id'):
+                    records_by_short_id[r['car_id']] = r
+
+        # Pour chaque short_id, trouver la car correspondante
+        cars_by_id = {}
+        for short_id in all_ids:
+            candidates = [c for c in all_active if c['id'].startswith(short_id)]
+            if not candidates:
+                # Pas de match -- car probablement deleted ou status changed
+                continue
+            if len(candidates) == 1:
+                cars_by_id[short_id] = candidates[0]
+                continue
+            # Plusieurs cars matchent le prefix -- disambiguer
+            ref_r = records_by_short_id.get(short_id, {})
+            exact = [
+                c for c in candidates
+                if c.get('mk') == ref_r.get('mk')
+                and c.get('mo') == ref_r.get('mo')
+                and c.get('yr') == ref_r.get('yr')
+                and c.get('px') == ref_r.get('px')
+            ]
+            if len(exact) == 1:
+                cars_by_id[short_id] = exact[0]
+            elif exact:
+                print(
+                    f'  WARN: short_id {short_id} has {len(exact)} '
+                    'disambiguation matches, taking first'
+                )
+                cars_by_id[short_id] = exact[0]
+            else:
+                print(
+                    f'  WARN: short_id {short_id} has {len(candidates)} prefix '
+                    'matches but none with exact mk+mo+yr+px (data drift?)'
+                )
+
+    # Reconstruire dans l'ordre + filtrer
+    out_premium: list[dict] = []
+    out_mainstream: list[dict] = []
+    n_missing = 0
+    n_inactive = 0
+    n_de_too_short = 0
+
+    for strate, cid in car_id_order:
+        car = cars_by_id.get(cid)
+        if car is None:
+            n_missing += 1
+            print(f'  WARN: car_id {cid[:8]} not found in DB (deleted?)')
+            continue
+        if car.get('status') != 'active':
+            n_inactive += 1
+            print(
+                f'  WARN: car_id {cid[:8]} no longer active '
+                f'(status={car.get("status")!r})'
+            )
+            continue
+        if not car.get('de') or len(car['de']) <= DE_LEN_MIN:
+            n_de_too_short += 1
+            print(f'  WARN: car_id {cid[:8]} de missing or too short now')
+            continue
+
+        if strate == 'premium':
+            out_premium.append(car)
+        else:
+            out_mainstream.append(car)
+
+    n_kept = len(out_premium) + len(out_mainstream)
+    print(
+        f'  Sample reconstructed: {len(out_premium)} premium + '
+        f'{len(out_mainstream)} mainstream = {n_kept} cars'
+    )
+    if n_missing or n_inactive or n_de_too_short:
+        print(
+            f'  Skipped: {n_missing} missing + {n_inactive} inactive + '
+            f'{n_de_too_short} de-too-short (out of {len(car_id_order)} original)'
+        )
+
+    return {'premium': out_premium, 'mainstream': out_mainstream}
+
+
 # ===========================================================================
 # Display
 # ===========================================================================
@@ -228,12 +406,20 @@ def process_one_car(car: dict, strate: str) -> dict:
 
     Returns a dict shaped for JSONL persistence with all metrics.
     Imports llm_extractor lazily so the module is mockable in tests.
+
+    Resilience: retries up to RETRY_DELAYS_SEC times on transient
+    network errors (APIConnectionError, APITimeoutError) with exponential
+    backoff. Non-transient errors (auth, parse, validation) fail
+    immediately since retrying won't help.
     """
     from extractors import llm_extractor
+    import anthropic  # for catching specific exceptions
 
-    car_id = _truncate_id(car.get('id'))
+    RETRY_DELAYS_SEC = [2.0, 4.0]  # 2 retries with 2s then 4s backoff
+
+    car_id_full = car.get('id') or ''
     record: dict = {
-        'car_id': car_id,
+        'car_id': car_id_full,  # UUID complet pour reproductibilite via --sample-from
         'strate': strate,
         'mk': car.get('mk'),
         'mo': car.get('mo'),
@@ -256,49 +442,80 @@ def process_one_car(car: dict, strate: str) -> dict:
         'result': None,
     }
 
-    t0 = time.perf_counter()
-    try:
-        result = llm_extractor.extract_features_via_llm(
-            de=car['de'],
-            model=LLM_MODEL,
-            api_key=os.environ.get('ANTHROPIC_API_KEY'),
-        )
-        latency_ms = (time.perf_counter() - t0) * 1000
+    last_exc: Exception | None = None
+    for attempt in range(len(RETRY_DELAYS_SEC) + 1):
+        if attempt > 0:
+            delay = RETRY_DELAYS_SEC[attempt - 1]
+            print(
+                f'    retry {attempt}/{len(RETRY_DELAYS_SEC)} after '
+                f'{delay}s ({type(last_exc).__name__})'
+            )
+            time.sleep(delay)
 
-        usage = (result.get('raw_response', {}) or {}).get('usage', {}) or {}
-        tokens_in = int(usage.get('input_tokens', 0) or 0)
-        tokens_out = int(usage.get('output_tokens', 0) or 0)
-        n_highlights = len(result.get('highlights') or [])
-        n_concerns = len(result.get('concerns') or [])
-        summary_len = len(result.get('summary') or '')
-        features_dict = result.get('features') or {}
-        n_features_true = sum(1 for v in features_dict.values() if v is True)
+        t0 = time.perf_counter()
+        try:
+            result = llm_extractor.extract_features_via_llm(
+                de=car['de'],
+                model=LLM_MODEL,
+                api_key=os.environ.get('ANTHROPIC_API_KEY'),
+            )
+            latency_ms = (time.perf_counter() - t0) * 1000
 
-        record.update({
-            'success': True,
-            'latency_ms': round(latency_ms, 1),
-            'tokens_input': tokens_in,
-            'tokens_output': tokens_out,
-            'cost_eur': round(compute_cost_eur(tokens_in, tokens_out), 6),
-            'json_parse_ok': True,
-            'n_highlights': n_highlights,
-            'n_concerns': n_concerns,
-            'summary_len': summary_len,
-            'n_features_true': n_features_true,
-            'result': result,
-        })
-    except Exception as e:
-        latency_ms = (time.perf_counter() - t0) * 1000
-        is_parse_error = isinstance(e, (json.JSONDecodeError, ValueError))
-        record.update({
-            'success': False,
-            'error': f'{type(e).__name__}: {e}',
-            'latency_ms': round(latency_ms, 1),
-            'json_parse_ok': not is_parse_error,
-        })
-    finally:
-        record['ended_at'] = datetime.now(timezone.utc).isoformat()
+            usage = (result.get('raw_response', {}) or {}).get('usage', {}) or {}
+            tokens_in = int(usage.get('input_tokens', 0) or 0)
+            tokens_out = int(usage.get('output_tokens', 0) or 0)
+            n_highlights = len(result.get('highlights') or [])
+            n_concerns = len(result.get('concerns') or [])
+            summary_len = len(result.get('summary') or '')
+            features_dict = result.get('features') or {}
+            n_features_true = sum(1 for v in features_dict.values() if v is True)
 
+            record.update({
+                'success': True,
+                'latency_ms': round(latency_ms, 1),
+                'tokens_input': tokens_in,
+                'tokens_output': tokens_out,
+                'cost_eur': round(compute_cost_eur(tokens_in, tokens_out), 6),
+                'json_parse_ok': True,
+                'n_highlights': n_highlights,
+                'n_concerns': n_concerns,
+                'summary_len': summary_len,
+                'n_features_true': n_features_true,
+                'result': result,
+            })
+            break  # success -> exit retry loop
+
+        except (anthropic.APIConnectionError, anthropic.APITimeoutError) as e:
+            # Transient network errors -> retry if budget remains
+            last_exc = e
+            if attempt < len(RETRY_DELAYS_SEC):
+                continue  # next iteration triggers retry
+            # All retries exhausted, record final failure
+            latency_ms = (time.perf_counter() - t0) * 1000
+            record.update({
+                'success': False,
+                'error': (
+                    f'{type(e).__name__}: {e} '
+                    f'(after {len(RETRY_DELAYS_SEC)} retries)'
+                ),
+                'latency_ms': round(latency_ms, 1),
+                'json_parse_ok': True,  # not a parse error
+            })
+            break
+
+        except Exception as e:
+            # Non-transient (auth, parse, validation) -> no retry
+            latency_ms = (time.perf_counter() - t0) * 1000
+            is_parse_error = isinstance(e, (json.JSONDecodeError, ValueError))
+            record.update({
+                'success': False,
+                'error': f'{type(e).__name__}: {e}',
+                'latency_ms': round(latency_ms, 1),
+                'json_parse_ok': not is_parse_error,
+            })
+            break
+
+    record['ended_at'] = datetime.now(timezone.utc).isoformat()
     return record
 
 
@@ -543,6 +760,14 @@ def main():
         '--report', type=str, metavar='PATH',
         help='Re-print report from existing JSONL file (no API call)',
     )
+    parser.add_argument(
+        '--sample-from', type=str, metavar='PATH',
+        help=(
+            'Reproduce sample from a previous JSONL run for '
+            'apples-to-apples V1-vs-V2 comparison. '
+            'Compatible with --run and --dry-list.'
+        ),
+    )
     args = parser.parse_args()
 
     if args.report:
@@ -552,7 +777,10 @@ def main():
 
     if args.run:
         client = get_supabase_client()
-        sample = select_sample_stratified(client)
+        if args.sample_from:
+            sample = select_sample_from_jsonl(client, args.sample_from)
+        else:
+            sample = select_sample_stratified(client)
         print()
         print(format_dry_list(sample))
         print()
@@ -571,7 +799,10 @@ def main():
 
     # Default to --dry-list
     client = get_supabase_client()
-    sample = select_sample_stratified(client)
+    if args.sample_from:
+        sample = select_sample_from_jsonl(client, args.sample_from)
+    else:
+        sample = select_sample_stratified(client)
     print()
     print(format_dry_list(sample))
 
