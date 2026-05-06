@@ -28,6 +28,8 @@ from make_normalizer import normalize_make_model
 from feature_extractor import (
     EXTRACTOR_VERSION,
     extract_features,
+    score_from_features,
+    chips_from_features,
 )
 
 # ── Stealth helper (works with v1.x stealth_sync and v2.x Stealth class) ──
@@ -254,16 +256,21 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
         'is_autoradar': False,
     }
 
-    # ─── Carnet — feature_extractor (Mission B, V1 hybride) ─────────────────
-    # Peuple les 26 colonnes feat_* + 2 méta. NE TOUCHE PAS à sc/ch (qui
-    # restent issus de calculate_score()).
+    # ─── Carnet — feature_extractor (Mission B + B-quater) ──────────────────
+    # Peuple les 26 colonnes feat_* + 2 méta + 2 scores agrégés
+    # (feat_score, feat_chips). NE TOUCHE PAS à sc/ch legacy (qui restent
+    # issus de calculate_score() — autorité actuelle du frontend).
     #
-    # Pivot post-sample : tant que la description longue n'est pas scrapée
-    # (Mission B-bis → colonne `de`), le titre seul ne porte quasi aucun
-    # signal descriptif (~99% de cars sans mot-clé carnet/matching/owner).
-    # Override de sc/ch en V1 = régression visible. Score architecturé
-    # `score_from_features()` et `chips_from_features()` resteront dormants
-    # dans le module feature_extractor jusqu'à Mission B-bis.
+    # Mission B (5 mai 2026)       : extraction des 26 features individuelles
+    #                                depuis titre + description.
+    # Mission B-quater (6 mai 2026): réactivation de score_from_features() et
+    #                                chips_from_features() — pré-requis `de`
+    #                                >50% atteint à 88% via B-bis. Les scores
+    #                                agrégés sont posés dans des colonnes
+    #                                parallèles (feat_score INT, feat_chips
+    #                                JSONB) sans toucher au scoring legacy.
+    #                                Migration frontend vers le nouveau
+    #                                scoring : décision séparée, à plat.
     #
     # Robustesse prod : try/except — un bug parser ne doit jamais casser
     # une insertion. En cas d'exception, on log warning, aucune feat_*
@@ -278,6 +285,8 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
             km_tier=km_tier,
         )
         row.update(features)
+        row['feat_score'] = score_from_features(features, listing_tier, km_tier)
+        row['feat_chips'] = chips_from_features(features, listing_tier, km_tier)
         row['feat_extracted_at'] = datetime.utcnow().isoformat() + 'Z'
         row['feat_extractor_version'] = EXTRACTOR_VERSION
     except Exception as e:
