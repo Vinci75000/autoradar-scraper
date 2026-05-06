@@ -18,7 +18,10 @@ Run :
 """
 from __future__ import annotations
 
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
 
@@ -153,7 +156,13 @@ def test_extract_features_v2_detects_language(
     """The v2 parser correctly identifies the dominant language of each
     fixture (NL / FR / DE / IT / EN) and routes to the appropriate
     keyword dictionary."""
-    pytest.skip('Awaiting extract_features v2 implementation (step 2)')
+    from extractors.lang_detect import detect_dominant_language
+    de = load_fixture(name)
+    detected = detect_dominant_language(de)
+    assert detected == expected_lang_hint, (
+        f'Fixture {name!r}: expected lang {expected_lang_hint!r}, '
+        f'got {detected!r}'
+    )
 
 
 def test_extract_features_v2_nl_options_signals_dealer_history():
