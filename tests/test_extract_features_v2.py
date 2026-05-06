@@ -221,15 +221,49 @@ def test_extract_features_v2_multilang_be_signals_dealer_history():
 
 
 def test_extract_features_v2_fr_editorial_signals_premium_state():
-    """The Alpina B5 fixture mentions garage chauffé, low km, état
-    quasi-neuf — should map to multiple positive feat_* signals."""
-    pytest.skip('Awaiting extract_features v2 implementation (step 2)')
-
+    """The Alpina B5 fixture (fr_editorial) mentions 'garage interieur
+    chauffe' and 'Exemplaire d origine, non modifie selon le vendeur'.
+    These map respectively to feat_garage_chauffe=True and
+    feat_etat_origine=True via the FR keyword dictionary."""
+    from extractors.feature_extractor_v2 import extract_features_v2
+    de = load_fixture('fr_editorial')
+    result = extract_features_v2(de)
+    assert result['feat_garage_chauffe'] is True, (
+        'Expected feat_garage_chauffe=True via "garage [intermediate] chauffe", '
+        f'got {result["feat_garage_chauffe"]!r}'
+    )
+    assert result['feat_etat_origine'] is True, (
+        'Expected feat_etat_origine=True via "exemplaire d origine" / '
+        f'"non modifie" patterns, got {result["feat_etat_origine"]!r}'
+    )
 
 def test_extract_features_v2_multilang_segments_by_flag():
-    """The Mercedes multi-language fixture has 🇳🇱/🇫🇷/🇩🇪 flag sections.
-    The v2 parser should detect the segments and apply the right
-    keyword dictionary to each, OR run all dictionaries on the full
-    text if global multilang is the chosen strategy. To be decided
-    in step 2."""
-    pytest.skip('Awaiting extract_features v2 implementation (step 2)')
+    """The Mercedes multi-language fixture has flag-emoji sections.
+    Strategy chosen step 2 (6 May 2026): flag-segmented when emoji
+    flags present, global stop-words detection otherwise.
+
+    Verifies:
+    1. detect_language_segments returns 2 segments in order [nl, fr]
+    2. extract_features_v2 picks up cross-segment signal
+       (feat_suivi_constructeur via NL "dealer onderhouden" or
+        FR "entretien concessionnaire")."""
+    from extractors.feature_extractor_v2 import extract_features_v2
+    from extractors.lang_detect import detect_language_segments
+
+    de = load_fixture('multilang_be')
+    segments = detect_language_segments(de)
+    assert len(segments) == 2, (
+        f'Expected 2 flag-segments (NL/FR), got {len(segments)}: '
+        f'{[lang for lang, _ in segments]}'
+    )
+    langs = [lang for lang, _ in segments]
+    assert langs == ['nl', 'fr'], (
+        f'Expected order [nl, fr], got {langs}'
+    )
+
+    result = extract_features_v2(de)
+    assert result['feat_suivi_constructeur'] is True, (
+        'Expected cross-segment signal feat_suivi_constructeur=True '
+        '(NL "dealer onderhouden" or FR "entretien concessionnaire"), '
+        f'got {result["feat_suivi_constructeur"]!r}'
+    )

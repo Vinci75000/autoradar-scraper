@@ -72,8 +72,9 @@ BOOLEAN_FEATURES_BY_AXIS: dict[str, list[str]] = {
 KEYWORDS_NL: dict[str, dict[str, list[str]]] = {
     'carnet': {
         'feat_carnet_present': [
-            r'onderhoudsboekje[s]?\s+aanwezig',
+            r'onderhoudsboekje[s]?[:\s]+aanwezig',
             r'service[\s\-]?historie',
+            r'instructieboekjes?\s+aanwezig',
         ],
         'feat_carnet_complet': [
             r'onderhoudsboekje[s]?\s+volledig',
@@ -116,34 +117,62 @@ KEYWORDS_FR: dict[str, dict[str, list[str]]] = {
     },
     'stockage': {
         'feat_garage_chauffe': [
-            r'garage\s+chauff[ée]',
+            r'garage[^.\n]{0,30}chauff[ée]',
         ],
     },
-    # TODO étape 3 : garantie / etat / origine + complétion carnet/stockage/suivi
+    'etat': {
+        'feat_etat_origine': [
+            r"exemplaire\s+d['\u2019]origine",
+            r'non[\s\-]+modifi[ée]',
+            r"[ée]tat\s+d['\u2019]origine",
+        ],
+    },
+    # TODO étape 3 : garantie / origine + complétion carnet/stockage/suivi
 }
 
 KEYWORDS_DE: dict[str, dict[str, list[str]]] = {
     'carnet': {
+        'feat_carnet_present': [
+            r'serviceheft\s+vorhanden',
+            r'scheckheft\s+(?:vorhanden|gepflegt)',
+        ],
         'feat_carnet_complet': [
             r'scheckheftgepflegt',
             r'serviceheft\s+(?:vollst[äa]ndig|komplett)',
         ],
+        'feat_first_owner': [
+            r'erstbesitzer',
+            r'erste\s+hand',
+        ],
     },
-    # TODO étape 3 : couverture complète
+    'etat': {
+        'feat_etat_origine': [r'originalzustand'],
+    },
 }
 
 KEYWORDS_IT: dict[str, dict[str, list[str]]] = {
     'carnet': {
+        'feat_carnet_present': [
+            r'libretto\s+(?:di\s+)?manutenzione',
+            r'libretto\s+tagliandi',
+        ],
         'feat_carnet_complet': [
             r'libretto\s+tagliandi(?:\s+completo)?',
             r'tagliandi\s+regolari',
         ],
+        'feat_first_owner': [
+            r'primo\s+proprietario',
+            r'prima\s+mano',
+        ],
     },
-    # TODO étape 3 : couverture complète
 }
 
 KEYWORDS_EN: dict[str, dict[str, list[str]]] = {
     'carnet': {
+        'feat_carnet_present': [
+            r'service\s+history',
+            r'service\s+book',
+        ],
         'feat_carnet_complet': [
             r'full\s+service\s+history',
             r'\bfsh\b',
@@ -153,7 +182,6 @@ KEYWORDS_EN: dict[str, dict[str, list[str]]] = {
             r'first\s+owner',
         ],
     },
-    # TODO étape 3 : couverture complète
 }
 
 
