@@ -63,7 +63,7 @@ def main(dry_run: bool, limit: int | None) -> int:
 
     print(f'Backfill scope : {len(rows)} cars (dry_run={dry_run}, limit={limit})')
 
-    stats = {'ok': 0, 'skip_no_url': 0, 'skip_404': 0, 'skip_short': 0, 'error': 0}
+    stats = {'ok': 0, 'skip_no_url': 0, 'skip_404': 0, 'skip_410': 0, 'skip_short': 0, 'error': 0}
     with open(ERRORS_LOG, 'a', encoding='utf-8') as errlog:
         errlog.write(f'\n=== Run started at {time.strftime("%Y-%m-%d %H:%M:%S")} (dry_run={dry_run}) ===\n')
 
@@ -77,8 +77,19 @@ def main(dry_run: bool, limit: int | None) -> int:
                 continue
             try:
                 r = requests.get(row['src_url'], headers=UA_HEADERS, timeout=REQUEST_TIMEOUT_S)
+                # 404 Not Found and 410 Gone both indicate a permanently removed
+                # listing — not a scraping error. We isolate them in dedicated
+                # buckets so the `error` counter only reflects real network /
+                # parsing failures, and the 10% alert threshold stays meaningful.
+                # The errlog lines also provide a ready-to-use list of zombie
+                # car IDs for downstream cleanup (status='inactive' migration).
                 if r.status_code == 404:
                     stats['skip_404'] += 1
+                    errlog.write(f"{row['id']}\t{row['src_url']}\tskip_404\n")
+                    continue
+                if r.status_code == 410:
+                    stats['skip_410'] += 1
+                    errlog.write(f"{row['id']}\t{row['src_url']}\tskip_410\n")
                     continue
                 r.raise_for_status()
 
@@ -105,7 +116,7 @@ def main(dry_run: bool, limit: int | None) -> int:
 
     print(f"\nFINAL {stats}")
     print(f"Total processed : {len(rows)} | OK : {stats['ok']} | skipped no_url : {stats['skip_no_url']} | "
-          f"skipped 404 : {stats['skip_404']} | skipped short : {stats['skip_short']} | errors : {stats['error']}")
+          f"skipped 404 : {stats['skip_404']} | skipped 410 : {stats['skip_410']} | skipped short : {stats['skip_short']} | errors : {stats['error']}")
     if stats['error'] > len(rows) * 0.1:
         print(f"⚠️  Error rate >10% — investigate {ERRORS_LOG}")
     return 0
