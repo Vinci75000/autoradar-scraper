@@ -10,3 +10,6 @@ supabase>=2.0.0
 postgrest>=0.13.0
 python-dateutil>=2.8.0
 python-dotenv>=1.0.0
+
+# LLM Haiku 4.5 fallback (extract_features v2 step 3 -- brief: docs/brief_extract_features_v2.md)
+anthropic>=0.40.0
