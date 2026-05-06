@@ -200,11 +200,24 @@ def test_extract_features_v2_detects_language(
     )
 
 
-def test_extract_features_v2_nl_options_signals_dealer_history():
-    """The Skoda Octavia SW fixture mentions 'Onderhoudsboekjes : Aanwezig
-    (dealer onderhouden)' — should map to feat_carnet_complet=True or
-    feat_dealer_history=True via the NL keyword dictionary."""
-    pytest.skip('Awaiting extract_features v2 implementation (step 2)')
+def test_extract_features_v2_multilang_be_signals_dealer_history():
+    """The multilang_be fixture (Mercedes) contains 'Onderhoudsboekjes:
+    Aanwezig (dealer onderhouden)' in the 🇳🇱 section AND
+    'entretien concessionnaire' in the 🇫🇷 section. Either should map to
+    feat_suivi_constructeur=True via the NL or FR keyword dictionary.
+
+    Note: docstring originally pointed to nl_options (Skoda) but that
+    fixture does not contain the exact phrase. The signal 'dealer
+    onderhouden / entretien concessionnaire' is in multilang_be, so the
+    test was relocated there (Option B, session 6/5/26)."""
+    from extractors.feature_extractor_v2 import extract_features_v2
+    de = load_fixture('multilang_be')
+    result = extract_features_v2(de)
+    assert result['feat_suivi_constructeur'] is True, (
+        'Expected feat_suivi_constructeur=True via "dealer onderhouden" (NL) '
+        'or "entretien concessionnaire" (FR) in multilang_be fixture, '
+        f'got {result["feat_suivi_constructeur"]!r}'
+    )
 
 
 def test_extract_features_v2_fr_editorial_signals_premium_state():

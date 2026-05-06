@@ -78,10 +78,17 @@ KEYWORDS_NL: dict[str, dict[str, list[str]]] = {
         'feat_carnet_complet': [
             r'onderhoudsboekje[s]?\s+volledig',
             r'compleet\s+onderhouden',
-            r'dealer\s+onderhouden',
         ],
     },
-    # TODO étape 3 : suivi / garantie / stockage / etat / origine
+    'suivi': {
+        'feat_suivi_constructeur': [
+            r'dealer\s+onderhouden',
+            r'dealeronderhoudshistorie',
+            r'merkdealer',
+            r'bij\s+(?:de\s+)?(?:officiele|merk)?dealer',
+        ],
+    },
+    # TODO étape 3 : garantie / stockage / etat / origine + complétion carnet
 }
 
 KEYWORDS_FR: dict[str, dict[str, list[str]]] = {
@@ -99,12 +106,20 @@ KEYWORDS_FR: dict[str, dict[str, list[str]]] = {
             r'1[èeé]re\s+main',
         ],
     },
+    'suivi': {
+        'feat_suivi_constructeur': [
+            r'entretien\s+concessionnaire',
+            r'suivi\s+(?:en\s+)?concession',
+            r'chez\s+(?:le\s+)?concessionnaire',
+            r'historique\s+(?:d\'?\s*)?entretien\s+concession',
+        ],
+    },
     'stockage': {
         'feat_garage_chauffe': [
             r'garage\s+chauff[ée]',
         ],
     },
-    # TODO étape 3 : suivi / garantie / etat / origine + complétion carnet/stockage
+    # TODO étape 3 : garantie / etat / origine + complétion carnet/stockage/suivi
 }
 
 KEYWORDS_DE: dict[str, dict[str, list[str]]] = {
