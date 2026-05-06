@@ -48,10 +48,15 @@ ERRORS_LOG = ROOT / 'backfill_de_autoscout24_errors.log'
 def main(dry_run: bool, limit: int | None) -> int:
     sb = create_client(os.environ['SUPABASE_URL'], os.environ['SUPABASE_SERVICE_KEY'])
 
-    # Pull cars that need a backfill : AutoScout24 source, de empty/null.
+    # Pull cars that need a backfill : AutoScout24 source, status active,
+    # de empty/null. The status='active' filter is essential at scale —
+    # it avoids re-fetching cars already marked 'removed' (HTTP 404/410
+    # zombies cleaned up by previous A.3 passes), saving ~5-30% of the
+    # network calls on large datasets. Critical for North Star 148k.
     query = (sb.table('cars')
              .select('id, src_url')
              .eq('src', 'AutoScout24')
+             .eq('status', 'active')
              .or_('de.is.null,de.eq.""'))
     if limit is not None:
         query = query.limit(limit)

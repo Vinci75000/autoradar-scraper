@@ -55,10 +55,16 @@ ERRORS_LOG = ROOT / 'backfill_de_lesanciennes_errors.log'
 def main(dry_run: bool, limit: int | None) -> int:
     sb = create_client(os.environ['SUPABASE_URL'], os.environ['SUPABASE_SERVICE_KEY'])
 
-    # Pull cars that need a backfill : LesAnciennes source, de empty/null.
+    # Pull cars that need a backfill : LesAnciennes source, status active,
+    # de empty/null. The status='active' filter is essential at scale —
+    # it avoids re-fetching cars already marked 'removed' (HTTP 404/410
+    # zombies and soft 404s cleaned up by previous passes), saving ~5-30%
+    # of the network calls on large datasets. Critical for North Star 148k
+    # and the LesAnciennes 100% coverage objective (~51 800 listings).
     query = (sb.table('cars')
              .select('id, src_url')
              .eq('src', 'LesAnciennes')
+             .eq('status', 'active')
              .or_('de.is.null,de.eq.""'))
     if limit is not None:
         query = query.limit(limit)
