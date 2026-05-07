@@ -27,6 +27,7 @@ from bs4 import BeautifulSoup
 from scraper_sources import SOURCES as _SOURCES_BASE
 from dedup import DedupCache
 from make_normalizer import normalize_make_model
+from extractors.extract_segond import extract_segond_listing
 
 # ═══════════════════════════════════════════════════════════════════════════
 # RECON_V2 PATCHES
@@ -114,11 +115,11 @@ PATCHES: dict[str, dict] = {
         "listings_url":     "https://www.segond-automobiles.com/vehicules/",
         "sitemap_url":      "https://www.segond-automobiles.com/nc_vehicule-sitemap.xml",
         "sitemap_is_index": False,
-        "url_pattern":      r"/vehicules/[^/]+/[^/]+/?$",
-        "extraction":       "selectors",
+        "url_pattern":      r"/vehicules/[a-z0-9-]+/\d+-",
+        "extraction":       "custom_segond",
         "selectors":        {},
-        "status":           "manual_inspect",
-        "notes_recon":      "GROS DEALER : 441 URLs (FR+EN versions, ~220 uniques) sitemap nc_vehicule. Distributeur officiel Porsche/Bugatti/Lamborghini/Audi/Fiat/Alfa Romeo/Abarth/Jeep/Suzuki/Devinci en Principaute + Cote Azur. Custom WP theme avec class 'nc-fiche-vehicule', 'nc-vehicule-prix', 'bloc-info-prix'. Pas de Product JSON-LD. Bugatti Divo testee = 'Prix sur demande' (probable pour exotiques). Designer selectors custom + valider ratio 'Prix sur demande' vs prix expose sur 5+ fiches diverses (Audi, Fiat = exposes / Bugatti, Lambo = sur demande).",
+        "status":           "ready",
+        "notes_recon":      "Extracteur custom in extractors/extract_segond.py — WP theme netconcept_V6 (selectors .nc-fiche-vehicule, .main-carac.*, .carac-tech.*, .bloc-diaporama-produit). Sitemap nc_vehicule-sitemap.xml = 144 fiches uniques. Multi-concessions Monaco/Antibes (Lambo/Fiat/Jeep Monaco, Porsche Antibes, Luxe Occasions Antibes) mapped via BRANCH_TO_LOCATION dict. Condition new/demo/used detected via km cascade + badge, serialized as preamble in `de` (CarListing perd condition/dealer_branch/nb_vit/couleur, on les pousse en metadata enrichi).",
     },
     "car-legendary-monaco": {
         "listings_url":     "https://carlegendary.com/nos-vehicules-haut-de-gamme/",
@@ -582,6 +583,8 @@ class SourceScraper:
             car = self._extract_jsonld(r.text)
         elif method == "selectors":
             car = self._extract_selectors(r.text)
+        elif method == "custom_segond":
+            car = extract_segond_listing(r.text, url)
         else:
             return None
 
@@ -852,6 +855,8 @@ class SourceScraper:
                     car = self._extract_jsonld(r.text)
                 elif method == "selectors":
                     car = self._extract_selectors(r.text)
+                elif method == "custom_segond":
+                    car = extract_segond_listing(r.text, url)
                 else:
                     car = None
 
