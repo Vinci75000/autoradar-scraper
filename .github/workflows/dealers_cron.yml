@@ -53,6 +53,12 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          # Phase 6 canary -- LLM hook enabled on dealers cron only.
+          # Hook se declenche selon SoT (collector OR px>=60k) sur les
+          # nouvelles cars insertees pendant ce cron. Cap budget global
+          # protege par le tarif Haiku ~0.18c/call apres L1.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AUTORADAR_LLM_HOOK_ENABLED: "true"
         run: |
           python3 batch_runner.py \
             --batch dealers \
