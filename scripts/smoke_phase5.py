@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from extractors.feature_extractor import extract_features
+from feature_extractor import extract_features
 
 EXPECTED_LLM_KEYS = {
     'feat_llm_highlights',

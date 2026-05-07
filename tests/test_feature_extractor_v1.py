@@ -26,11 +26,11 @@ def test_returns_dict():
     assert isinstance(result, dict)
 
 
-def test_returns_26_feat_keys():
-    """The Features TypedDict has 26 feat_* keys (cf _default_features)."""
+def test_returns_33_feat_keys():
+    """The Features TypedDict has 33 feat_* keys: 26 V1 + 7 LLM (cf _default_features)."""
     result = extract_features()
     feat_keys = {k for k in result if k.startswith('feat_')}
-    assert len(feat_keys) == 26, f'Expected 26 feat_* keys, got {len(feat_keys)}: {sorted(feat_keys)}'
+    assert len(feat_keys) == 33, f'Expected 33 feat_* keys (26 V1 + 7 LLM), got {len(feat_keys)}: {sorted(feat_keys)}'
 
 
 # ──────────────────────────────────────────────────────────────────────

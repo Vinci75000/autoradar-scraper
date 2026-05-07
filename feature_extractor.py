@@ -34,12 +34,44 @@ Test rapide :
 
 from __future__ import annotations
 
+import os
 import re
 from datetime import date, datetime
-from typing import Optional, TypedDict
+from typing import Any, Optional, TypedDict
+
+from extractors.llm_eligibility import is_eligible_for_llm
 
 
 EXTRACTOR_VERSION = "1.0.0"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# LLM HOOK (Phase 4) — feature flag, OFF par défaut
+# ═══════════════════════════════════════════════════════════════════════════
+# Quand activé via env var AUTORADAR_LLM_HOOK_ENABLED=true, le LLM Haiku 4.5
+# enrichit l'extraction quand v1+v2 ne capture aucun signal qualitatif ET
+# que la description est suffisamment longue pour être analysable.
+#
+# Économies (cache via feat_de_hash) : si le caller passe `cached_de_hash`
+# et qu'il matche le hash de la description courante, on skip l'appel LLM
+# entièrement (la description n'a pas changé depuis la dernière extraction).
+#
+# Le hook suit le même pattern de robustesse que le bloc v2 (ligne ~617) :
+# import lazy, try/except silencieux. Une exception LLM ne casse jamais
+# l'extraction v1+v2 ; on continue avec ce qu'on a déjà.
+
+LLM_HOOK_DE_LEN_MIN = 800  # description trop courte = pas la peine d'appeler
+
+
+def _is_llm_hook_enabled() -> bool:
+    """Lit AUTORADAR_LLM_HOOK_ENABLED env var à chaque call.
+
+    Implémenté comme fonction (et non constante au module-load) pour
+    permettre aux tests de patcher l'environnement dynamiquement sans
+    avoir à reload le module entier. En prod, le coût est négligeable
+    (lecture d'un dict os.environ).
+    """
+    return os.environ.get('AUTORADAR_LLM_HOOK_ENABLED', 'false').lower() == 'true'
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -294,6 +326,14 @@ class Features(TypedDict, total=True):
     feat_certificat_constructeur: bool
     feat_serie_limitee: bool
     feat_first_owner: bool
+    # ─── LLM enrichment (Phase 4, optional, None when hook OFF or skipped) ──
+    feat_llm_highlights: Optional[list[str]]
+    feat_llm_concerns: Optional[list[str]]
+    feat_llm_summary: Optional[str]
+    feat_llm_raw_response: Optional[dict[str, Any]]
+    feat_llm_model: Optional[str]
+    feat_llm_extracted_at: Optional[datetime]
+    feat_de_hash: Optional[str]
 
 
 def _default_features() -> Features:
@@ -328,6 +368,17 @@ def _default_features() -> Features:
         "feat_certificat_constructeur": False,
         "feat_serie_limitee": False,
         "feat_first_owner": False,
+        # LLM enrichment : None par défaut (hook OFF ou skipped).
+        # Posées par extract_features() seulement si le hook tourne et
+        # que les conditions sont réunies (description longue, v1+v2
+        # vides, hash cache miss).
+        "feat_llm_highlights": None,
+        "feat_llm_concerns": None,
+        "feat_llm_summary": None,
+        "feat_llm_raw_response": None,
+        "feat_llm_model": None,
+        "feat_llm_extracted_at": None,
+        "feat_de_hash": None,
     }
 
 
@@ -568,6 +619,9 @@ def extract_features(
     title: str = "",
     listing_tier: str = "standard",
     km_tier: str = "moderate",
+    year: Optional[int] = None,
+    price: Optional[int] = None,
+    cached_de_hash: Optional[str] = None,
 ) -> Features:
     """
     Extrait toutes les features factuelles d'une annonce.
@@ -577,10 +631,15 @@ def extract_features(
         title: titre de l'annonce (champ `mo` en DB, max 121 chars).
         listing_tier: déjà calculé via validation.get_listing_tier().
         km_tier: déjà calculé via validation.get_km_tier().
+        cached_de_hash: hash sha256 de la description telle qu'elle était
+            lors du dernier appel LLM (lu en DB par le caller). Si fourni
+            et identique au hash courant, le hook LLM skip pour ne pas
+            re-payer un appel API. None = pas de cache, appeler le LLM
+            si les autres conditions sont réunies.
 
     Returns:
-        Features (TypedDict total=True) — toutes les 25 clés sont posées,
-        valeurs par défaut = False (bool) ou None (int|date|str).
+        Features (TypedDict total=True) — toutes les 33 clés sont posées,
+        valeurs par défaut = False (bool) ou None (int|date|str|llm).
 
     Note:
         listing_tier et km_tier ne sont pas utilisés ici, mais conservés dans
@@ -623,6 +682,78 @@ def extract_features(
         except Exception:
             pass  # silent fallback — v1 result intact
 
+    # ─── LLM enrichment (Phase 4, OFF by default) ──────────────────────
+    # Hook conditionnel vers Claude Haiku 4.5 quand v1+v2 (rules-based)
+    # n'ont rien capté ET que la description est assez longue. Filet de
+    # sécurité, pas parser principal. Désactivé par défaut via env var
+    # AUTORADAR_LLM_HOOK_ENABLED=true.
+    #
+    # Conditions cumulatives :
+    #   1. Hook activé via env var
+    #   2. has_description (description non vide)
+    #   3. len(description) > LLM_HOOK_DE_LEN_MIN (assez de matière)
+    #   4. Aucun booléen v1+v2 à True (rules ont rien trouvé)
+    #
+    # Cache via feat_de_hash : si cached_de_hash matche le hash courant,
+    # skip l'appel API (description inchangée depuis le dernier LLM run).
+    #
+    # Robustesse identique au bloc v2 : try/except + import lazy + silent
+    # fallback. Toute exception (network, auth, parse) → features v1+v2
+    # restent intactes, le scraper continue.
+    # Phase 6 : eligibilite via SoT extractors/llm_eligibility (cohérent
+    # avec le backfill 5-bis). is_eligible_for_llm() agrege :
+    #   - len(description) > 800
+    #   - aucun feat_* boolean positif (hors feat_suivi_douteux dérivé)
+    #   - feat_de_hash IS NULL (mais ici on passe None -- cache hash check
+    #     gere separement ci-dessous, concern orthogonal)
+    #   - yr et px castables
+    #   - (collector >=25 ans OU px >= 60_000 EUR)
+    # La SoT est partagee avec scripts/backfill_llm.py pour eviter tout
+    # drift entre routage backfill et routage live.
+    if _is_llm_hook_enabled():
+        eligibility_row = {
+            'de': description,
+            'yr': year,
+            'px': price,
+            'feat_de_hash': None,  # cache hash check ci-dessous, pas SoT
+            **features,
+        }
+        if is_eligible_for_llm(eligibility_row):
+            try:
+                from extractors.llm_extractor import (
+                    extract_features_via_llm,
+                    _compute_de_hash,
+                )
+                current_hash = _compute_de_hash(description)
+                if cached_de_hash == current_hash:
+                    # Cache hit : description identique à celle déjà LLM'isée.
+                    # On stocke le hash dans le retour (le caller peut l'écrire
+                    # en DB pour traçabilité) mais on skip l'appel API.
+                    features['feat_de_hash'] = current_hash
+                else:
+                    # Cache miss ou pas de cache : appeler le LLM.
+                    llm_result = extract_features_via_llm(de=description)
+                    # Merge des booléens LLM dans features (OR logique).
+                    # Note v2.1 (Phase 5-bis L1) : llm_result['features'] = {}
+                    # par defaut (LLM ne les emet plus pour économie tokens).
+                    # Boucle conservée pour backwards compat / future use ;
+                    # les tests mockent encore des booleans dans 'features'
+                    # pour valider la mecanique.
+                    llm_features = llm_result.get('features') or {}
+                    for key, llm_value in llm_features.items():
+                        if isinstance(llm_value, bool) and llm_value and key in features:
+                            features[key] = True
+                    # Champs LLM-spécifiques (le caller les écrira en DB)
+                    features['feat_llm_highlights'] = llm_result.get('highlights')
+                    features['feat_llm_concerns'] = llm_result.get('concerns')
+                    features['feat_llm_summary'] = llm_result.get('summary')
+                    features['feat_llm_raw_response'] = llm_result.get('raw_response')
+                    features['feat_llm_model'] = llm_result.get('model')
+                    features['feat_llm_extracted_at'] = llm_result.get('extracted_at')
+                    features['feat_de_hash'] = llm_result.get('de_hash') or current_hash
+            except Exception:
+                pass  # silent fallback — v1+v2 features intactes
+
     # ─── Garde-fou pivot V1 hybride ────────────────────────────────────
     # `feat_suivi_douteux` est dérivé : il n'a de sens que si on a
     # effectivement scanné une description non vide. Sur titre seul
@@ -633,6 +764,28 @@ def extract_features(
         features["feat_suivi_douteux"] = None
 
     return features
+
+
+def _has_any_bool_true(features: dict[str, Any]) -> bool:
+    """True si au moins un signal qualitatif POSITIF a ete detecte par v1+v2.
+
+    Utilise par le hook LLM pour decider de skip ou non. Exclusions :
+    - feat_llm_* / feat_de_hash : champs LLM, jamais des bool de detection v1/v2
+    - feat_suivi_douteux : signal DERIVE NEGATIF, True quand v1+v2 n'ont rien
+      capte sur l'axe Suivi. Le compter comme "signal present" inverserait
+      la logique du hook : on skip-erait le LLM exactement quand on veut
+      l'appeler (description longue, aucun signal positif). Bug detecte
+      par les tests Phase 4 le 7 mai 2026.
+    """
+    EXCLUDED_KEYS = {'feat_suivi_douteux'}
+    for key, value in features.items():
+        if key.startswith('feat_llm_') or key == 'feat_de_hash':
+            continue
+        if key in EXCLUDED_KEYS:
+            continue
+        if isinstance(value, bool) and value is True:
+            return True
+    return False
 
 
 # ═══════════════════════════════════════════════════════════════════════════

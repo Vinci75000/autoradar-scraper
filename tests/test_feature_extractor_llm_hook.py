@@ -120,7 +120,7 @@ def test_llm_hook_disabled_no_call(monkeypatch):
     monkeypatch.delenv('AUTORADAR_LLM_HOOK_ENABLED', raising=False)
 
     with patch('extractors.llm_extractor.extract_features_via_llm') as mock_llm:
-        from extractors.feature_extractor import extract_features
+        from feature_extractor import extract_features
         result = extract_features(
             description=_long_description(),
             title="Test",
@@ -140,7 +140,7 @@ def test_llm_hook_disabled_explicit_false(monkeypatch):
     monkeypatch.setenv('AUTORADAR_LLM_HOOK_ENABLED', 'false')
 
     with patch('extractors.llm_extractor.extract_features_via_llm') as mock_llm:
-        from extractors.feature_extractor import extract_features
+        from feature_extractor import extract_features
         extract_features(
             description=_long_description(),
             title="Test",
@@ -159,7 +159,7 @@ def test_llm_hook_no_description_no_call(monkeypatch):
     monkeypatch.setenv('AUTORADAR_LLM_HOOK_ENABLED', 'true')
 
     with patch('extractors.llm_extractor.extract_features_via_llm') as mock_llm:
-        from extractors.feature_extractor import extract_features
+        from feature_extractor import extract_features
         result = extract_features(
             description="",
             title="Test title",
@@ -180,7 +180,7 @@ def test_llm_hook_description_too_short_no_call(monkeypatch):
     monkeypatch.setenv('AUTORADAR_LLM_HOOK_ENABLED', 'true')
 
     with patch('extractors.llm_extractor.extract_features_via_llm') as mock_llm:
-        from extractors.feature_extractor import extract_features
+        from feature_extractor import extract_features
         extract_features(
             description=_short_description(),
             title="Test",
@@ -202,7 +202,7 @@ def test_llm_hook_v1_signal_detected_no_call(monkeypatch):
     monkeypatch.setenv('AUTORADAR_LLM_HOOK_ENABLED', 'true')
 
     with patch('extractors.llm_extractor.extract_features_via_llm') as mock_llm:
-        from extractors.feature_extractor import extract_features
+        from feature_extractor import extract_features
         result = extract_features(
             description=_description_with_v1_signal(),
             title="Test",
@@ -233,7 +233,7 @@ def test_llm_hook_cache_hit_skips_api(monkeypatch):
     expected_hash = _compute_de_hash(description)
 
     with patch('extractors.llm_extractor.extract_features_via_llm') as mock_llm:
-        from extractors.feature_extractor import extract_features
+        from feature_extractor import extract_features
         result = extract_features(
             description=description,
             title="Test",
@@ -263,7 +263,7 @@ def test_llm_hook_cache_miss_calls_and_merges(monkeypatch):
     with patch('extractors.llm_extractor.extract_features_via_llm') as mock_llm:
         mock_llm.return_value = _mock_llm_result()
 
-        from extractors.feature_extractor import extract_features
+        from feature_extractor import extract_features
         result = extract_features(
             description=_long_description(),
             title="Test",
@@ -291,7 +291,7 @@ def test_llm_hook_cache_miss_with_different_hash_calls(monkeypatch):
     with patch('extractors.llm_extractor.extract_features_via_llm') as mock_llm:
         mock_llm.return_value = _mock_llm_result()
 
-        from extractors.feature_extractor import extract_features
+        from feature_extractor import extract_features
         result = extract_features(
             description=_long_description(),
             title="Test",
@@ -318,7 +318,7 @@ def test_llm_hook_exception_silent_fallback(monkeypatch):
     with patch('extractors.llm_extractor.extract_features_via_llm') as mock_llm:
         mock_llm.side_effect = RuntimeError("Mock LLM connection failure")
 
-        from extractors.feature_extractor import extract_features
+        from feature_extractor import extract_features
         # Ne doit pas raise -- silent fallback
         result = extract_features(
             description=_long_description(),
@@ -352,7 +352,7 @@ def test_llm_hook_standard_low_tier_no_call(monkeypatch):
     monkeypatch.setenv('AUTORADAR_LLM_HOOK_ENABLED', 'true')
 
     with patch('extractors.llm_extractor.extract_features_via_llm') as mock_llm:
-        from extractors.feature_extractor import extract_features
+        from feature_extractor import extract_features
         extract_features(
             description=_long_description(),
             title="Test",
@@ -372,7 +372,7 @@ def test_llm_hook_collector_low_price_calls(monkeypatch):
     with patch('extractors.llm_extractor.extract_features_via_llm') as mock_llm:
         mock_llm.return_value = _mock_llm_result()
 
-        from extractors.feature_extractor import extract_features
+        from feature_extractor import extract_features
         extract_features(
             description=_long_description(),
             title="Test",
@@ -391,7 +391,7 @@ def test_llm_hook_no_yr_px_no_call(monkeypatch):
     monkeypatch.setenv('AUTORADAR_LLM_HOOK_ENABLED', 'true')
 
     with patch('extractors.llm_extractor.extract_features_via_llm') as mock_llm:
-        from extractors.feature_extractor import extract_features
+        from feature_extractor import extract_features
         extract_features(
             description=_long_description(),
             title="Test",
