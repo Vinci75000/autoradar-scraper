@@ -73,6 +73,23 @@ PATCHES: dict[str, dict] = {
         "status":           "ready",
         "notes_recon":      "WooCommerce + Yoast SEO, 77 produits. Product JSON-LD avec brand+name+offers.priceSpecification. Year/km extraits via regex sur description plain text.",
     },
+    "mz-motors-monaco": {
+        "listings_url":     "https://www.mzmotors.fr/occasion",
+        "sitemap_url":      None,
+        "sitemap_is_index": False,
+        "url_pattern":      r"/annonce-[^/]+-\d+$",
+        "extraction":       "selectors",
+        "selectors": {
+            "title": 'h1[itemprop="name"]',
+            "price": "#prix span:first-of-type",
+            "year":  "#caracteristiques table tr:nth-of-type(3) td:nth-of-type(5)",
+            "km":    "#caracteristiques table tr:nth-of-type(3) td:nth-of-type(2)",
+            "fuel":  "#caracteristiques table tr:nth-of-type(4) td:nth-of-type(5)",
+            "gear":  "#caracteristiques table tr:nth-of-type(7) td:nth-of-type(2)",
+        },
+        "status":           "ready",
+        "notes_recon":      "Site jQuery custom, ~19 fiches, sitemap insuffisant donc listings-page discovery via /occasion. HTML <table> propre + microdata Schema.org Product (itemprop name/brand/model/mpn). Prix dans #prix span format '141.900' (point = separateur milliers).",
+    },
     "auto-selection": {
         "listings_url":     "https://www.auto-selection.com/voiture-occasion",
         "sitemap_url":      "https://www.auto-selection.com/sitemap.xml",
