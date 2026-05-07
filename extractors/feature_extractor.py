@@ -39,6 +39,8 @@ import re
 from datetime import date, datetime
 from typing import Any, Optional, TypedDict
 
+from extractors.llm_eligibility import is_eligible_for_llm
+
 
 EXTRACTOR_VERSION = "1.0.0"
 
@@ -617,6 +619,8 @@ def extract_features(
     title: str = "",
     listing_tier: str = "standard",
     km_tier: str = "moderate",
+    year: Optional[int] = None,
+    price: Optional[int] = None,
     cached_de_hash: Optional[str] = None,
 ) -> Features:
     """
@@ -696,43 +700,59 @@ def extract_features(
     # Robustesse identique au bloc v2 : try/except + import lazy + silent
     # fallback. Toute exception (network, auth, parse) → features v1+v2
     # restent intactes, le scraper continue.
-    if (
-        _is_llm_hook_enabled()
-        and has_description
-        and len(description) > LLM_HOOK_DE_LEN_MIN
-        and not _has_any_bool_true(features)
-    ):
-        try:
-            from extractors.llm_extractor import (
-                extract_features_via_llm,
-                _compute_de_hash,
-            )
-            current_hash = _compute_de_hash(description)
-            if cached_de_hash == current_hash:
-                # Cache hit : description identique à celle déjà extraite.
-                # On stocke le hash dans le retour (le caller peut l'écrire
-                # en DB pour traçabilité) mais on skip l'appel API.
-                features['feat_de_hash'] = current_hash
-            else:
-                # Cache miss ou pas de cache : appeler le LLM.
-                llm_result = extract_features_via_llm(de=description)
-                # Merge des 20 booléens LLM dans features (OR logique).
-                # Au point où on est, tous les booléens v1+v2 sont False
-                # par construction (condition d'entrée du hook).
-                llm_features = llm_result.get('features') or {}
-                for key, llm_value in llm_features.items():
-                    if isinstance(llm_value, bool) and llm_value and key in features:
-                        features[key] = True
-                # Champs LLM-spécifiques (le caller les écrira en DB)
-                features['feat_llm_highlights'] = llm_result.get('highlights')
-                features['feat_llm_concerns'] = llm_result.get('concerns')
-                features['feat_llm_summary'] = llm_result.get('summary')
-                features['feat_llm_raw_response'] = llm_result.get('raw_response')
-                features['feat_llm_model'] = llm_result.get('model')
-                features['feat_llm_extracted_at'] = llm_result.get('extracted_at')
-                features['feat_de_hash'] = llm_result.get('de_hash') or current_hash
-        except Exception:
-            pass  # silent fallback — v1+v2 features intactes
+    # Phase 6 : eligibilite via SoT extractors/llm_eligibility (cohérent
+    # avec le backfill 5-bis). is_eligible_for_llm() agrege :
+    #   - len(description) > 800
+    #   - aucun feat_* boolean positif (hors feat_suivi_douteux dérivé)
+    #   - feat_de_hash IS NULL (mais ici on passe None -- cache hash check
+    #     gere separement ci-dessous, concern orthogonal)
+    #   - yr et px castables
+    #   - (collector >=25 ans OU px >= 60_000 EUR)
+    # La SoT est partagee avec scripts/backfill_llm.py pour eviter tout
+    # drift entre routage backfill et routage live.
+    if _is_llm_hook_enabled():
+        eligibility_row = {
+            'de': description,
+            'yr': year,
+            'px': price,
+            'feat_de_hash': None,  # cache hash check ci-dessous, pas SoT
+            **features,
+        }
+        if is_eligible_for_llm(eligibility_row):
+            try:
+                from extractors.llm_extractor import (
+                    extract_features_via_llm,
+                    _compute_de_hash,
+                )
+                current_hash = _compute_de_hash(description)
+                if cached_de_hash == current_hash:
+                    # Cache hit : description identique à celle déjà LLM'isée.
+                    # On stocke le hash dans le retour (le caller peut l'écrire
+                    # en DB pour traçabilité) mais on skip l'appel API.
+                    features['feat_de_hash'] = current_hash
+                else:
+                    # Cache miss ou pas de cache : appeler le LLM.
+                    llm_result = extract_features_via_llm(de=description)
+                    # Merge des booléens LLM dans features (OR logique).
+                    # Note v2.1 (Phase 5-bis L1) : llm_result['features'] = {}
+                    # par defaut (LLM ne les emet plus pour économie tokens).
+                    # Boucle conservée pour backwards compat / future use ;
+                    # les tests mockent encore des booleans dans 'features'
+                    # pour valider la mecanique.
+                    llm_features = llm_result.get('features') or {}
+                    for key, llm_value in llm_features.items():
+                        if isinstance(llm_value, bool) and llm_value and key in features:
+                            features[key] = True
+                    # Champs LLM-spécifiques (le caller les écrira en DB)
+                    features['feat_llm_highlights'] = llm_result.get('highlights')
+                    features['feat_llm_concerns'] = llm_result.get('concerns')
+                    features['feat_llm_summary'] = llm_result.get('summary')
+                    features['feat_llm_raw_response'] = llm_result.get('raw_response')
+                    features['feat_llm_model'] = llm_result.get('model')
+                    features['feat_llm_extracted_at'] = llm_result.get('extracted_at')
+                    features['feat_de_hash'] = llm_result.get('de_hash') or current_hash
+            except Exception:
+                pass  # silent fallback — v1+v2 features intactes
 
     # ─── Garde-fou pivot V1 hybride ────────────────────────────────────
     # `feat_suivi_douteux` est dérivé : il n'a de sens que si on a

@@ -284,6 +284,8 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
             title=car.mo or '',
             listing_tier=listing_tier,
             km_tier=km_tier,
+            year=car.yr,
+            price=car.px,
         )
         row.update(features)
         row['feat_score'] = score_from_features(features, listing_tier, km_tier)
