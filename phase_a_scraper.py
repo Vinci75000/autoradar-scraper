@@ -101,6 +101,7 @@ PATCHES: dict[str, dict] = {
         "notes_recon":      "Site Next.js SSR sans JSON-LD. ~6 hypercars by appointment only (Veyron 2.29M, Aventador SV, 812 GTS, 911 992 ST, AMG GT Black Series, Huracan Tecnica). Specs Annee/Km/Prix visibles dans HTML rendu mais structure Tailwind 'class=font-semibold' sans labels CSS distinctifs (text-context-based). ROI faible vs effort parser custom. Iteration future possible avec selecteur basé sur sibling text matching.",
     },
     "monaco-infinity-luxury": {
+        "base_url":         "https://monacoinfinityluxury.mc",
         "listings_url":     "https://monacoinfinityluxury.mc/product-category/vehicules/",
         "sitemap_url":      None,
         "sitemap_is_index": False,
