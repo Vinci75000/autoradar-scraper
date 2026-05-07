@@ -64,6 +64,15 @@ PATCHES: dict[str, dict] = {
         "status":           "ready",
         "notes_recon":      "Sitemap 46 URLs, HTML statique, h1 schema.org. Tableau caracteristiques 8x5 cells (legend/value/separator/legend/value). Marque dans cell separee mais on utilise h1 + normalize_make_model pour le split robuste.",
     },
+    "rs-monaco": {
+        "listings_url":     "https://www.rs-monaco.com/categorie-produit/vehicules-en-stock/",
+        "sitemap_url":      "https://www.rs-monaco.com/product-sitemap.xml",
+        "sitemap_is_index": False,
+        "url_pattern":      r"/produit/[^/]+/?$",
+        "extraction":       "jsonld",
+        "status":           "ready",
+        "notes_recon":      "WooCommerce + Yoast SEO, 77 produits. Product JSON-LD avec brand+name+offers.priceSpecification. Year/km extraits via regex sur description plain text.",
+    },
     "auto-selection": {
         "listings_url":     "https://www.auto-selection.com/voiture-occasion",
         "sitemap_url":      "https://www.auto-selection.com/sitemap.xml",
@@ -510,6 +519,7 @@ class SourceScraper:
 
     def _extract_jsonld(self, html):
         soup = BeautifulSoup(html, "html.parser")
+        # First pass: prefer Vehicle/Car schema (richer, structured data)
         for script in soup.find_all("script", {"type": "application/ld+json"}):
             try:
                 data = json.loads(script.string or "{}")
@@ -517,6 +527,14 @@ class SourceScraper:
                 continue
             v = self._find_vehicle(data)
             if v: return self._vehicle_to_car(v)
+        # Second pass: fallback to Product schema (WooCommerce/Yoast sites)
+        for script in soup.find_all("script", {"type": "application/ld+json"}):
+            try:
+                data = json.loads(script.string or "{}")
+            except (json.JSONDecodeError, TypeError):
+                continue
+            p = self._find_product(data)
+            if p: return self._product_to_car(p)
         return None
 
     def _find_vehicle(self, data):
@@ -563,6 +581,109 @@ class SourceScraper:
             "ge":  normalize_gear(v.get("vehicleTransmission")),
             "ow":  parse_int(v.get("numberOfPreviousOwners")) or 1,
             "de":  (v.get("description") or "").strip() or None,
+            "opts": [],
+        }
+
+
+    def _find_product(self, data):
+        """Recursive search for schema.org/Product (WooCommerce/Yoast)."""
+        if isinstance(data, dict):
+            t = data.get("@type")
+            if isinstance(t, list): t = t[0] if t else None
+            if t == "Product": return data
+            for v in data.values():
+                r = self._find_product(v)
+                if r: return r
+        elif isinstance(data, list):
+            for item in data:
+                r = self._find_product(item)
+                if r: return r
+        return None
+
+    def _product_to_car(self, p):
+        """Convert schema.org/Product to car dict (WooCommerce/WordPress sites).
+
+        Product schema is less structured than Vehicle:
+        - brand from Product.brand (string or {name})
+        - price from Product.offers[].priceSpecification[].price
+        - year/km parsed from Product.description plain text
+        - fuel/gear typically not available
+        """
+        # Brand
+        brand_obj = p.get("brand")
+        if isinstance(brand_obj, list):
+            brand_obj = brand_obj[0] if brand_obj else None
+        brand_name = None
+        if isinstance(brand_obj, dict):
+            brand_name = brand_obj.get("name")
+        elif isinstance(brand_obj, str):
+            brand_name = brand_obj
+
+        name = p.get("name", "") or ""
+        if isinstance(name, dict):
+            name = name.get("name", "") or ""
+        name = str(name).strip()
+
+        # Price from offers (Product schema variant)
+        price_val = None
+        offers = p.get("offers") or {}
+        if isinstance(offers, list):
+            offers = offers[0] if offers else {}
+        if isinstance(offers, dict):
+            spec = offers.get("priceSpecification")
+            if isinstance(spec, list):
+                spec = spec[0] if spec else {}
+            if isinstance(spec, dict):
+                price_val = spec.get("price")
+            if price_val is None:
+                price_val = offers.get("price")
+
+        # Parse price as decimal-aware (Product schema uses "255000.00" string format)
+        # parse_int() would strip the dot and produce 25500000 (x100). Use float first.
+        if price_val is not None:
+            try:
+                px = int(float(str(price_val).replace(",", ".").replace("\u00a0", "").replace(" ", "")))
+            except (ValueError, TypeError):
+                px = parse_int(price_val)
+        else:
+            px = None
+
+        # Parse description for year and km (plain text patterns)
+        description = p.get("description", "") or ""
+        if isinstance(description, dict):
+            description = description.get("@value") or ""
+        description = str(description).strip()
+
+        # Year: prefer DD/MM/YYYY pattern in description, fallback to parse_year
+        import re as _re
+        yr_match = _re.search(r"(\d{1,2})/(\d{1,2})/(20\d{2}|19\d{2})", description)
+        yr = int(yr_match.group(3)) if yr_match else parse_year(description)
+
+        # Km: look for "Kilométrage" or similar
+        km_match = _re.search(r"[Kk]ilom[éeè]trage\s*:?\s*([\d\s\u00a0\.]+)", description)
+        km = parse_int(km_match.group(1)) if km_match else None
+
+        # Build full title for normalize_make_model (need brand prefix)
+        if brand_name and not name.lower().startswith(str(brand_name).lower()):
+            full_title = f"{brand_name} {name}"
+        else:
+            full_title = name
+
+        mk_canonical, mo_full = normalize_make_model(full_title)
+        brand = mk_canonical if mk_canonical and mk_canonical != "Inconnue" else None
+        mod_short = mo_full.split()[0] if mo_full else ""
+
+        return {
+            "mk":  brand,
+            "mod": mod_short,
+            "mo":  mo_full,
+            "yr":  yr,
+            "km":  km,
+            "px":  px,
+            "fu":  None,  # not available in standard Product schema
+            "ge":  None,
+            "ow":  1,
+            "de":  description or None,
             "opts": [],
         }
 
