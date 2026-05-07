@@ -1,0 +1,89 @@
+name: AutoRadar Phase A — Premium FR/EU dealers
+
+# Cron Phase A : scrape les dealers premium "ready" via phase_a_scraper.py
+# Pipe directement dans insert_car() de scraper.py → hook LLM Phase 6 actif
+# automatiquement sur les listings éligibles (description >800 + premium/collector).
+#
+# Aujourd'hui : 1 seul dealer ready (auto-selection, JSON-LD).
+# À mesure des migrations manual_inspect → ready, scrape-all-ready couvrira
+# automatiquement les nouveaux dealers sans modif du yaml.
+
+on:
+  schedule:
+    # 08:00 UTC = 09:00 Paris hiver / 10:00 Paris été
+    # Entre yellow_cron (04h UTC) et dealers_cron (12h UTC) : pas de chevauchement.
+    - cron: '0 8 * * *'
+
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: "Slug du dealer à scraper (vide = scrape-all-ready)"
+        required: false
+        default: ''
+      limit:
+        description: "Nombre max de cars à insérer (0 ou vide = pas de limite)"
+        required: false
+        default: ''
+
+jobs:
+  phase_a_scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Print Phase A status (BEFORE)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          python -u phase_a_scraper.py status || true
+
+      - name: Run Phase A scrape
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          # Phase 6 LLM hook : ON par défaut (cohérent avec dealers_cron canary).
+          # Active l'extraction LLM Haiku 4.5 sur les listings éligibles SoT
+          # (de>800 chars + no bool V1 positif + collector OR px>=60k EUR).
+          # Cap par feat_de_hash idempotence + Anthropic API key gh secret.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AUTORADAR_LLM_HOOK_ENABLED: "true"
+          # Inputs workflow_dispatch (vides si schedule).
+          PHASE_A_SLUG: ${{ inputs.slug }}
+          PHASE_A_LIMIT: ${{ inputs.limit }}
+        run: |
+          set -e
+          if [ -n "$PHASE_A_SLUG" ]; then
+            echo "=== Mode: scrape single slug '$PHASE_A_SLUG' ==="
+            if [ -n "$PHASE_A_LIMIT" ] && [ "$PHASE_A_LIMIT" != "0" ]; then
+              python -u phase_a_scraper.py scrape "$PHASE_A_SLUG" --limit "$PHASE_A_LIMIT"
+            else
+              python -u phase_a_scraper.py scrape "$PHASE_A_SLUG"
+            fi
+          else
+            echo "=== Mode: scrape-all-ready (tous les dealers status=ready) ==="
+            python -u phase_a_scraper.py scrape-all-ready
+          fi
+
+      - name: Print Phase A status (AFTER)
+        if: always()
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          python -u phase_a_scraper.py status || true
