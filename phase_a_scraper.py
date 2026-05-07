@@ -31,6 +31,21 @@ from dedup import DedupCache
 # RECON_V2 PATCHES
 # ═══════════════════════════════════════════════════════════════════════════
 PATCHES: dict[str, dict] = {
+    "dpm-motors": {
+        "listings_url":     "https://dpm-motors.com/occasion-monaco.html",
+        "sitemap_url":      "https://www.dpm-motors.com/sitemap.xml",
+        "sitemap_is_index": False,
+        "url_pattern":      r"/occasion-monaco-[^/]+-\d+\.html$",
+        "extraction":       "selectors",
+        "selectors": {
+            "title": "h2",
+            "price": "div#details div.row > div.col-md-6.col-xl-4:nth-of-type(3) ul.property-list-details > li:nth-of-type(1) > strong",
+            "year":  "div#details div.row > div.col-md-6.col-xl-4:nth-of-type(1) ul.property-list-details > li:nth-of-type(3) > span > strong",
+            "km":    "div#details div.row > div.col-md-6.col-xl-4:nth-of-type(3) ul.property-list-details > li:nth-of-type(2)",
+        },
+        "status":           "ready",
+        "notes_recon":      "870 URLs sitemap, pattern static-html, no JSON-LD. Pilote vague 2 Monaco. Fuel/gear absents (commentes dans le HTML DPM).",
+    },
     "auto-selection": {
         "listings_url":     "https://www.auto-selection.com/voiture-occasion",
         "sitemap_url":      "https://www.auto-selection.com/sitemap.xml",
@@ -545,6 +560,8 @@ class SourceScraper:
             return el.get_text(strip=True) if el else None
 
         title = get("title") or ""
+        # Normalize common "Marque - Modele" separators
+        title = title.replace(" - ", " ").replace(" | ", " ").replace(" — ", " ")
         parts = title.split(maxsplit=1)
         brand = normalize_brand(parts[0]) if parts else None
         model_full = parts[1] if len(parts) > 1 else ""
