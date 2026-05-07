@@ -2,26 +2,36 @@
 Carnet (AutoRadar) -- llm_extractor.py
 ==============================================================
 Step 3 du brief extract_features v2 (docs/brief_extract_features_v2.md).
-Version 2.0 : Phase 3-bis optim.
+Version 2.1 : Phase 5-bis L1 -- output slim sans 'features'.
 
 Routage conditionnel via Claude Haiku 4.5 quand la passe regles
 (v1 + v2 multilingue) ne capture aucun chip ET length(de) > 800.
-Le hook reel sera ajoute en Phase 4 dans feature_extractor.py
-juste apres le bloc v2 try/except (ligne ~625).
 
-Optimisations v2 (vs v1) :
-- Prompt caching Anthropic (cache_control ephemeral 5min) : le system
-  prompt invariant (consignes + 20 features + format) est cache.
-  Lectures cachees a 10% du tarif input normal au-dela du 1er call.
-  Note : le minimum cachable depend du modele (typiquement 1024-2048
-  tokens). Si non atteint, cache_control est ignore silencieusement
-  cote Anthropic -- aucun crash, juste pas de gain.
-- Output slim : summary <=25 mots, highlights/concerns max 8 mots
-  chacun, JSON pur sans markdown fence. Cible -40% output tokens
-  vs v1.
+Optimisations v2.1 (vs v2.0) :
+- Retire le bloc 'features' (20 booleans) du JSON output. Ces
+  booleans n'etaient stockes que dans raw_response et jamais
+  exploites en DB ni par les callers (verifie : backfill_llm.py
+  et hook Phase 4 lisent uniquement highlights, concerns, summary,
+  raw_response, model, extracted_at, de_hash). Output passe de
+  ~410 tokens a ~150 tokens (-60% output tokens, -25% cout total
+  par call).
+- Le retour Python de extract_features_via_llm conserve une cle
+  'features' avec valeur {} pour backwards compat -- aucun caller
+  ne crashe meme s'il itere sur result['features'].items().
+- Le system prompt ne liste plus les 20 booleans -> reduit aussi
+  l'input de ~150 tokens. Reste sous le minimum cachable Haiku
+  (~2048 tokens), donc pas de gain caching tant que L2 n'est pas
+  applique.
+
+Optimisations v2.0 (rappels) :
+- Prompt caching Anthropic (cache_control ephemeral 5min) sur le
+  system prompt invariant. Lectures cachees a 10% du tarif input
+  normal au-dela du 1er call -- mais minimum cachable non atteint
+  tant que L2 (few-shot examples) n'est pas applique.
+- Output slim : summary <=15 mots, highlights/concerns max 6 mots
+  chacun, JSON pur sans markdown fence.
 - Signature publique INCHANGEE : extract_features_via_llm(de, *,
-  model, timeout, api_key) -> dict avec les 8 memes cles. Le futur
-  hook Phase 4 n'est pas impacte.
+  model, timeout, api_key) -> dict avec les 8 memes cles.
 
 Ce module est isole et testable independamment :
 - aucune ecriture DB, aucun side-effect global
@@ -34,10 +44,11 @@ API publique :
 
 Output (8 cles, alignees sur les colonnes DB feat_llm_* + feat_de_hash) :
     {
-        'features':      dict[str, bool],   # 20 booleens alignes feat_*
+        'features':      dict[str, bool],   # v2.1: toujours {} (deprecated content,
+                                            # cle conservee pour backwards compat)
         'highlights':    list[str],         # phrases qualite positives
         'concerns':      list[str],         # signaux d'alerte
-        'summary':       str,               # resume <=25 mots
+        'summary':       str,               # resume <=15 mots
         'raw_response':  dict,              # reponse brute Anthropic (audit)
         'model':         str,               # ex: claude-haiku-4-5-20251001
         'extracted_at':  datetime,          # UTC
@@ -59,14 +70,12 @@ import re
 from datetime import datetime, timezone
 from typing import Any
 
-from extractors.keywords_multilang import BOOLEAN_FEATURES_BY_AXIS
-
 
 # ===========================================================================
 # CONSTANTS
 # ===========================================================================
 
-LLM_EXTRACTOR_VERSION = "2.0.0"  # bump : prompt caching + output slim
+LLM_EXTRACTOR_VERSION = "2.1.0"  # bump : output sans 'features' (L1 -25% cout)
 LLM_MODEL_DEFAULT = "claude-haiku-4-5-20251001"
 LLM_TIMEOUT_DEFAULT = 10.0
 LLM_MAX_TOKENS = 1024
@@ -86,19 +95,14 @@ def _compute_de_hash(de: str) -> str:
 def _build_system_prompt() -> str:
     """Construit le prompt SYSTEME (invariant entre calls = cachable).
 
-    Contient consignes + format JSON + liste des 20 booleens dynamique
-    via BOOLEAN_FEATURES_BY_AXIS. Pas de description de car ici --
-    elle va dans le user message (variant a chaque call, pas cache).
-    """
-    boolean_features = [
-        feat
-        for axis_feats in BOOLEAN_FEATURES_BY_AXIS.values()
-        for feat in axis_feats
-    ]
-    features_block = ',\n    '.join(
-        f'"{f}": true|false' for f in boolean_features
-    )
+    v2.1 : ne demande plus l'emission des 20 booleans dans l'output.
+    Ils n'etaient stockes que dans raw_response et jamais lus en DB.
+    Output reduit a highlights + concerns + summary => -60% output tokens.
 
+    Note v2.0 conservee : le system prompt reste sous le minimum
+    cachable Haiku (~2048 tokens), donc cache_control est silencieusement
+    ignore tant que L2 (few-shot examples) n'est pas applique.
+    """
     return (
         "Tu analyses la description d'une annonce de voiture premium "
         "ou de collection. Tu extrais des signaux qualitatifs "
@@ -112,19 +116,16 @@ def _build_system_prompt() -> str:
         "Premier caractere de ta reponse = '{'. Dernier = '}'.\n\n"
         "Structure stricte :\n\n"
         "{\n"
-        '  "features": {\n'
-        f"    {features_block}\n"
-        "  },\n"
         '  "highlights": ["item court"],\n'
         '  "concerns": ["item court"],\n'
         '  "summary": "Phrase courte."\n'
         "}\n\n"
 
         "## Regles de contenu\n\n"
-        "- features : true UNIQUEMENT si signal explicitement mentionne. "
-        "Conservateur par defaut (false).\n"
-        "- highlights : 1 a 4 elements, max 6 mots chacun, factuels.\n"
-        "- concerns : 0 a 3 elements, max 6 mots chacun. [] si rien.\n"
+        "- highlights : 1 a 4 elements, max 6 mots chacun, factuels "
+        "(ex: 'carnet complet', 'matching numbers', 'premiere main').\n"
+        "- concerns : 0 a 3 elements, max 6 mots chacun. [] si rien "
+        "a signaler (ex: 'peinture refaite', 'kilometrage eleve').\n"
         "- summary : max 15 mots, factuel, sans superlatifs."
     )
 
@@ -132,6 +133,7 @@ def _build_system_prompt() -> str:
 def _build_user_message(de: str) -> str:
     """Construit le message USER (varie a chaque call = pas cache).
 
+    Inchange v2.0 -> v2.1.
     Contient uniquement la description de l'annonce, encadree pour
     delimitation propre.
     """
@@ -146,6 +148,9 @@ def _build_user_message(de: str) -> str:
 def _parse_response(response_text: str) -> dict[str, Any]:
     """Parse la reponse Haiku en JSON robuste.
 
+    v2.1 : 'features' n'est plus required (le LLM ne l'emet plus).
+    Required : highlights, concerns, summary.
+
     Strip defensif des markdown fences (au cas ou le modele en met
     malgre l'instruction "AUCUN markdown"), json.loads, validation
     de structure.
@@ -159,13 +164,12 @@ def _parse_response(response_text: str) -> dict[str, Any]:
     cleaned = re.sub(r'\s*```$', '', cleaned)
     parsed = json.loads(cleaned)
 
-    required = {'features', 'highlights', 'concerns', 'summary'}
+    required = {'highlights', 'concerns', 'summary'}
     missing = required - set(parsed.keys())
     if missing:
         raise ValueError(f'LLM response missing keys: {sorted(missing)}')
 
     type_checks = [
-        ('features', dict),
         ('highlights', list),
         ('concerns', list),
         ('summary', str),
@@ -194,12 +198,15 @@ def extract_features_via_llm(
     """Extrait les features qualitatives d'une description via Claude
     Haiku 4.5.
 
-    Architecture v2 :
-    - system prompt invariant + cache_control ephemeral (5min). Au-dela
-      du 1er call dans la fenetre 5min, lectures cachees a 10% du tarif
-      input normal.
-    - user message = juste la description (varie -> jamais cache).
-    - Output slim : summary <=25 mots, highlights/concerns 8 mots max.
+    Architecture v2.1 (incremental sur v2.0) :
+    - L1 applique : output JSON sans 'features' (les 20 booleans
+      n'etaient ni lus ni utilises en DB). -60% output tokens.
+    - La cle 'features' du retour Python est conservee avec valeur
+      {} pour backwards compat -- aucun caller (backfill_llm.py,
+      hook Phase 4) ne crashe.
+    - System prompt + cache_control ephemeral toujours present mais
+      inactif tant que L2 (few-shot) n'est pas applique (taille
+      sous le minimum cachable Haiku).
 
     Args:
         de: description de l'annonce (UTF-8, accents preserves, casse
@@ -250,7 +257,11 @@ def extract_features_via_llm(
     parsed = _parse_response(response_text)
 
     return {
-        'features': parsed['features'],
+        # v2.1: 'features' conserve dans le retour avec {} pour
+        # backwards compat. Le LLM ne l'emet plus, on ne l'expose
+        # plus, mais aucun caller ne crashe s'il fait
+        # result['features'].items().
+        'features': {},
         'highlights': parsed['highlights'],
         'concerns': parsed['concerns'],
         'summary': parsed['summary'],
