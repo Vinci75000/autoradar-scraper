@@ -26,6 +26,7 @@ from bs4 import BeautifulSoup
 
 from scraper_sources import SOURCES as _SOURCES_BASE
 from dedup import DedupCache
+from make_normalizer import normalize_make_model
 
 # ═══════════════════════════════════════════════════════════════════════════
 # RECON_V2 PATCHES
@@ -45,6 +46,23 @@ PATCHES: dict[str, dict] = {
         },
         "status":           "ready",
         "notes_recon":      "870 URLs sitemap, pattern static-html, no JSON-LD. Pilote vague 2 Monaco. Fuel/gear absents (commentes dans le HTML DPM).",
+    },
+    "exclusive-cars-monaco": {
+        "listings_url":     "https://www.exclusive-cars-monaco.com/annonces",
+        "sitemap_url":      "https://www.exclusive-cars-monaco.com/sitemap.xml",
+        "sitemap_is_index": False,
+        "url_pattern":      r"/annonce-[^/]+-monaco-\d+$",
+        "extraction":       "selectors",
+        "selectors": {
+            "title": 'h1[itemprop="name"]',
+            "price": "#prix span:first-of-type",
+            "year":  "#caracteristiques table tr:nth-of-type(3) td:nth-of-type(5)",
+            "km":    "#caracteristiques table tr:nth-of-type(3) td:nth-of-type(2)",
+            "fuel":  "#caracteristiques table tr:nth-of-type(4) td:nth-of-type(5)",
+            "gear":  "#caracteristiques table tr:nth-of-type(7) td:nth-of-type(2)",
+        },
+        "status":           "ready",
+        "notes_recon":      "Sitemap 46 URLs, HTML statique, h1 schema.org. Tableau caracteristiques 8x5 cells (legend/value/separator/legend/value). Marque dans cell separee mais on utilise h1 + normalize_make_model pour le split robuste.",
     },
     "auto-selection": {
         "listings_url":     "https://www.auto-selection.com/voiture-occasion",
@@ -562,9 +580,10 @@ class SourceScraper:
         title = get("title") or ""
         # Normalize common "Marque - Modele" separators
         title = title.replace(" - ", " ").replace(" | ", " ").replace(" — ", " ")
-        parts = title.split(maxsplit=1)
-        brand = normalize_brand(parts[0]) if parts else None
-        model_full = parts[1] if len(parts) > 1 else ""
+        # Use canonical normalize_make_model (handles 2-word brands: Aston Martin, Land Rover, etc.)
+        mk_canonical, mo_full = normalize_make_model(title)
+        brand = mk_canonical if mk_canonical and mk_canonical != "Inconnue" else None
+        model_full = mo_full or ""
         mod_short = model_full.split()[0] if model_full else ""
 
         return {
