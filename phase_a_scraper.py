@@ -90,6 +90,16 @@ PATCHES: dict[str, dict] = {
         "status":           "ready",
         "notes_recon":      "Site jQuery custom, ~19 fiches, sitemap insuffisant donc listings-page discovery via /occasion. HTML <table> propre + microdata Schema.org Product (itemprop name/brand/model/mpn). Prix dans #prix span format '141.900' (point = separateur milliers).",
     },
+    "monaco-supercars": {
+        "listings_url":     "https://www.monacosupercars.mc/",
+        "sitemap_url":      "https://www.monacosupercars.mc/sitemap.xml",
+        "sitemap_is_index": False,
+        "url_pattern":      r"/fr/vehicules-exception/[^/]+$",
+        "extraction":       "selectors",
+        "selectors":        {},
+        "status":           "manual_inspect",
+        "notes_recon":      "Site Next.js SSR sans JSON-LD. ~6 hypercars by appointment only (Veyron 2.29M, Aventador SV, 812 GTS, 911 992 ST, AMG GT Black Series, Huracan Tecnica). Specs Annee/Km/Prix visibles dans HTML rendu mais structure Tailwind 'class=font-semibold' sans labels CSS distinctifs (text-context-based). ROI faible vs effort parser custom. Iteration future possible avec selecteur basé sur sibling text matching.",
+    },
     "auto-selection": {
         "listings_url":     "https://www.auto-selection.com/voiture-occasion",
         "sitemap_url":      "https://www.auto-selection.com/sitemap.xml",
@@ -348,7 +358,7 @@ FUEL_NORMALIZE = {
 
 GEAR_NORMALIZE = {
     "automatic": "Automatique", "automatique": "Automatique", "auto": "Automatique",
-    "manual": "Manuelle", "manuelle": "Manuelle", "manuel": "Manuelle",
+    "manual": "Manuelle", "manuelle": "Manuelle", "manuel": "Manuelle", "mecanique": "Manuelle", "mécanique": "Manuelle", "meca": "Manuelle",
     "semi-auto": "Automatique", "tiptronic": "Automatique", "dsg": "Automatique",
     "pdk": "Automatique", "f1": "Automatique",
 }
