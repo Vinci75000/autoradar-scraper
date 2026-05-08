@@ -156,7 +156,7 @@ def _normalize_fuel(text: str) -> Optional[str]:
     is_rechargeable = any(k in low for k in ["rechargeable", "phev", "plug"])
     is_gpl = "gpl" in low
     if has_hybride or (has_essence and has_elec) or (has_diesel and has_elec):
-        return "Hybride rechargeable" if is_rechargeable else "Hybride"
+        return "Hybride" if is_rechargeable else "Hybride"
     if has_elec:
         return "Électrique"
     if has_diesel:

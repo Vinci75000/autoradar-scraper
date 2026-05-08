@@ -28,6 +28,7 @@ from scraper_sources import SOURCES as _SOURCES_BASE
 from dedup import DedupCache
 from make_normalizer import normalize_make_model
 from extractors.extract_segond import extract_segond_listing
+from extractors.extract_rivamedia import extract_rivamedia_rss
 
 # ═══════════════════════════════════════════════════════════════════════════
 # RECON_V2 PATCHES
@@ -120,6 +121,56 @@ PATCHES: dict[str, dict] = {
         "selectors":        {},
         "status":           "ready",
         "notes_recon":      "Extracteur custom in extractors/extract_segond.py — WP theme netconcept_V6 (selectors .nc-fiche-vehicule, .main-carac.*, .carac-tech.*, .bloc-diaporama-produit). Sitemap nc_vehicule-sitemap.xml = 144 fiches uniques. Multi-concessions Monaco/Antibes (Lambo/Fiat/Jeep Monaco, Porsche Antibes, Luxe Occasions Antibes) mapped via BRANCH_TO_LOCATION dict. Condition new/demo/used detected via km cascade + badge, serialized as preamble in `de` (CarListing perd condition/dealer_branch/nb_vit/couleur, on les pousse en metadata enrichi).",
+    },
+    "gtcars-prestige": {
+        "listings_url":     "https://www.gtcarsprestige.com/rss/annonces.xml",
+        "sitemap_url":      None,
+        "sitemap_is_index": False,
+        "url_pattern":      r"/annonce-[a-z0-9-]+-\d+/?$",
+        "extraction":       "rivamedia_rss",
+        "selectors":        {},
+        "status":           "ready",
+        "notes_recon":      "Plateforme white-label Rivamedia (CDN auto.cdn-rivamedia.com). Flux RSS expose: 145 items observes 8/5/26. Module extract_rivamedia.py parse XML standardise (preambule CSV [Boite, ch, km, MM/YYYY, garantie?, couleur?, condition] + CDATA HTML). 1 fetch = N cars (scalable North Star). Stock Bugatti/Pagani/McLaren/Aston/Ferrari/Lambo premium.",
+    },
+    "orleans-cars-shop": {
+        "listings_url":     "https://www.orleans-cars-shop.fr/rss/annonces.xml",
+        "sitemap_url":      None,
+        "sitemap_is_index": False,
+        "url_pattern":      r"/annonce-[a-z0-9-]+-\d+/?$",
+        "extraction":       "rivamedia_rss",
+        "selectors":        {},
+        "status":           "ready",
+        "notes_recon":      "Plateforme Rivamedia (meme stack que gtcars-prestige). Flux RSS: 68 items observes 8/5/26. Multi-marques generaliste premium (Skoda, Alfa, VW, etc.). Couleur souvent presente dans le preambule (vs gtcars qui ne l'expose pas).",
+    },
+    "bourcier-auto-sport": {
+        "listings_url":     None,
+        "sitemap_url":      None,
+        "sitemap_is_index": False,
+        "url_pattern":      None,
+        "extraction":       "manual",
+        "selectors":        {},
+        "status":           "deferred-domain-broken",
+        "notes_recon":      "DOMAIN BROKEN au 8/5/26 — bourcierautosport.com retourne HTTP 000 sur tous paths (rss, feed, sitemap, annonces, marques, occasion, voitures, stock). DNS ou TLS cassé. Probablement meme stack Rivamedia qu'gtcars (titles partages, payload home identique md5) mais infrastructure morte. Reprobe trimestriellement.",
+    },
+    "code-911": {
+        "listings_url":     None,
+        "sitemap_url":      None,
+        "sitemap_is_index": False,
+        "url_pattern":      None,
+        "extraction":       "manual",
+        "selectors":        {},
+        "status":           "deferred-wix-spa",
+        "notes_recon":      "Site Wix 100% SPA (rendu cote client). curl + UA navigateur retourne wixErrorPagesApp shell pour /annonce, /sitemap.xml, fiche detail. ~20 cars Porsche estimes. Necessite Playwright stealth pour rendu JS — ROI faible vs invest infra. Defer jusqu'a sprint Playwright dedie.",
+    },
+    "luxury-performance-selection": {
+        "listings_url":     None,
+        "sitemap_url":      None,
+        "sitemap_is_index": False,
+        "url_pattern":      None,
+        "extraction":       "manual",
+        "selectors":        {},
+        "status":           "deferred-no-website",
+        "notes_recon":      "Pas de site web propre identifie. Vend exclusivement via LBC/La Centrale/AutoScout24/auto-selection.com. Stock indirectement capte via auto-selection (deja active). Phase B partnership envisageable.",
     },
     "car-legendary-monaco": {
         "listings_url":     "https://carlegendary.com/nos-vehicules-haut-de-gamme/",
@@ -585,6 +636,10 @@ class SourceScraper:
             car = self._extract_selectors(r.text)
         elif method == "custom_segond":
             car = extract_segond_listing(r.text, url)
+        elif method == "rivamedia_rss":
+            # RSS sources produce N items per fetch via scrape_all().
+            # scrape_listing(url) is per-fiche extraction → not applicable.
+            return None
         else:
             return None
 
@@ -806,6 +861,11 @@ class SourceScraper:
         If `db` provided: uses DedupCache for L1 (URL skip) + L3 (content hash skip).
         L2 (fingerprint cross-source) happens in caller after parsing.
         """
+        # RSS feed dispatch: 1 fetch produces N items → bypass URL-by-URL discovery
+        if self.cfg.get("extraction") == "rivamedia_rss":
+            yield from self._scrape_rivamedia_rss(limit=limit, db=db)
+            return
+
         urls = self.discover_urls()
         self.log.info(f"discovered {len(urls)} URLs for {self.slug}")
 
@@ -891,6 +951,86 @@ class SourceScraper:
                     self.log.error(f"flush_stats failed: {e}")
 
                 # L1 — URL already known: skip the GET entirely
+
+    def _scrape_rivamedia_rss(self, *, limit=None, db=None):
+        """
+        RSS-based scraping: 1 fetch produces N items.
+        Bypasses URL-by-URL discovery since the RSS already provides
+        structured items. Hash content uses the `de` field as the
+        signature (not raw HTML — RSS doesn't fetch fiche detail HTML).
+        """
+        rss_url = self.cfg.get("listings_url")
+        if not rss_url:
+            self.log.warning(f"[{self.slug}] no listings_url for rivamedia_rss")
+            return
+
+        source_name = self.cfg["display_name"]
+        location = (self.cfg.get("city"), self.cfg.get("country") or "France")
+
+        self.log.info(f"[rivamedia] fetching RSS for {self.slug}: {rss_url}")
+        listings = extract_rivamedia_rss(rss_url, source_name, location)
+        self.log.info(f"[rivamedia] {len(listings)} items returned by parser")
+
+        cache = None
+        if db is not None:
+            cache = DedupCache(db, source_name, source_slug=self.slug)
+            cache.load()
+
+        rediscovered_urls = []
+        yielded = 0
+
+        try:
+            for car in listings:
+                if limit and yielded >= limit:
+                    break
+
+                url = car.get("src_url")
+                if not url:
+                    continue
+
+                if cache:
+                    cache.stats["urls_total"] += 1
+
+                    # L1 — URL already known: skip
+                    if cache.seen_url(url):
+                        cache.stats["skipped_url"] += 1
+                        rediscovered_urls.append(url)
+                        continue
+
+                    # L3 — content hash on the `de` field (structured signature)
+                    content_hash = cache.hash_content(car.get("de") or "")
+                    if cache.seen_content_hash(url, content_hash):
+                        cache.stats["skipped_content"] += 1
+                        rediscovered_urls.append(url)
+                        continue
+                    cache.stats["fetched"] += 1
+                    car["_content_hash"] = content_hash
+                    car["_dedup_cache"] = cache
+
+                # Apply config defaults (mirrors scrape_listing post-processing)
+                car["src"] = source_name
+                if not car.get("ci"): car["ci"] = self.cfg.get("city") or ""
+                if not car.get("co"): car["co"] = self.cfg.get("country") or "France"
+                if not car.get("lat"): car["lat"] = self.cfg.get("lat")
+                if not car.get("lng"): car["lng"] = self.cfg.get("lng")
+
+                yield car
+                yielded += 1
+        finally:
+            if cache and rediscovered_urls:
+                try:
+                    updated = cache.bump_seen_urls(rediscovered_urls)
+                    self.log.info(f"bumped last_seen_at on {updated} re-encountered URLs")
+                except Exception as e:
+                    self.log.warning(f"bump_seen_urls failed: {e}")
+            if cache:
+                try:
+                    cache.flush_stats()
+                    self.log.info(cache.summary())
+                except Exception as e:
+                    self.log.error(f"flush_stats failed: {e}")
+
+
 # Selector sniffer
 # ═══════════════════════════════════════════════════════════════════════════
 def selector_sniffer(slug):
