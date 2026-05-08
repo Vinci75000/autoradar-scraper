@@ -1,0 +1,56 @@
+name: AutoRadar Cote Refresh (cron 09h UTC)
+
+# Cote Carnet - rafraichissement quotidien de la table cote_segments
+# (mediane / p25 / p75 par segment mk,mo) via RPC Postgres
+# refresh_cote_segments(). Tout le calcul est cote DB, le job CI ne
+# fait que declencher et logger les stats (segments_count, cars_processed,
+# duration_ms).
+#
+# Schedule 09h UTC = apres tous les crons d'ingestion (dealers 00h+12h,
+# symfio 03h, yellow 04h, phase-a 08h, green 22h) pour avoir les donnees
+# fraiches du matin. Job total ~30s (setup CI + script ~1s).
+
+on:
+  schedule:
+    # 09:00 UTC = 10:00 Paris hiver / 11:00 Paris ete
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: cote-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Refresh cote_segments via RPC
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SENTRY_DSN_SCRAPER: ${{ secrets.SENTRY_DSN_SCRAPER }}
+          SENTRY_ENVIRONMENT: 'production'
+          SENTRY_COMPONENT: 'cron-cote-refresh'
+        run: |
+          python -u scripts/refresh_cote_segments.py
