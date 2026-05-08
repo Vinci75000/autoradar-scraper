@@ -41,7 +41,8 @@ load_dotenv(REPO_ROOT / '.env')
 
 # Import extractor architecture
 from extractors.base import SourceConfig
-from extractors.extract_symfio import SymfioExtractor
+from extractors.extract_symfio import SymfioExtractor  # noqa: F401  (legacy compat)
+from extractors.registry import get_extractor
 from extractors.base import CarListing as ExtractorCarListing
 
 # Import scraper module for CarListing + insert_car + db client + helpers
@@ -54,9 +55,17 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-# Hardcoded slugs for the MVP canary; once `platform` column is added to
-# `sources` table, replace this with a DB query .eq('platform', 'symfio').
+# Hardcoded slugs for the MVP Symfio canary cron; once `platform` column
+# is added to `sources` table, replace SYMFIO_SOURCE_SLUGS with a DB query
+# .eq('platform', 'symfio'). The unfiltered cron loop iterates ONLY on this
+# list -- Symfio dealers stay isolated from custom-extractor dealers.
 SYMFIO_SOURCE_SLUGS = ['auto-seredin', 'jungblut-sportwagen', 'autostrada-sport']
+
+# Custom-extractor dealers (single-tenant, registered via @register("slug")).
+# Reachable only via explicit --slug; never auto-scraped by the Symfio cron.
+CUSTOM_DEALER_SLUGS = ['hollmann-international']
+
+ALL_VALID_SLUGS = SYMFIO_SOURCE_SLUGS + CUSTOM_DEALER_SLUGS
 
 
 def adapt_extractor_carlisting(
@@ -134,7 +143,6 @@ def run_pipeline(limit: int, slug_filter: Optional[str], dry_run: bool) -> dict:
     log.info(f'Found {len(sources)} ready Symfio source(s): {[s["slug"] for s in sources]}')
     log.info(f'Limit per dealer: {limit} | dry_run: {dry_run}')
 
-    extractor = SymfioExtractor()
     counters = {'sources': len(sources), 'extracted': 0, 'adapted': 0, 'inserted': 0, 'duplicates': 0, 'rejected': 0, 'errors': 0}
 
     db = scraper.get_db() if not dry_run else None
@@ -154,12 +162,13 @@ def run_pipeline(limit: int, slug_filter: Optional[str], dry_run: bool) -> dict:
             tier=src.get('tier'),
             type=src.get('type') or 'dealer',
             score_bonus=src.get('score_bonus') or 0,
-            scrape_method='platform_symfio',
-            platform='symfio',
+            scrape_method='platform_symfio' if slug in SYMFIO_SOURCE_SLUGS else 'html_paginated',
+            platform='symfio' if slug in SYMFIO_SOURCE_SLUGS else None,
             city=src.get('city'),
         )
 
         try:
+            extractor = get_extractor(config)
             result = extractor.extract(config, limit=limit)
         except Exception as e:
             log.error(f'  {slug} extraction catastrophic: {e}')
@@ -220,13 +229,13 @@ def main():
     parser.add_argument('--limit', type=int, default=10,
                         help='Max cars per dealer (default 10, canary modeste)')
     parser.add_argument('--slug', default=None,
-                        help='Limit run to single dealer slug (auto-seredin / jungblut-sportwagen / autostrada-sport)')
+                        help='Limit run to single dealer slug (e.g. auto-seredin, hollmann-international)')
     parser.add_argument('--dry-run', action='store_true',
                         help='Extract + adapt only, NO DB writes')
     args = parser.parse_args()
 
-    if args.slug and args.slug not in SYMFIO_SOURCE_SLUGS:
-        log.error(f'Unknown slug {args.slug}. Valid: {SYMFIO_SOURCE_SLUGS}')
+    if args.slug and args.slug not in ALL_VALID_SLUGS:
+        log.error(f'Unknown slug {args.slug}. Valid: {ALL_VALID_SLUGS}')
         sys.exit(1)
 
     counters = run_pipeline(limit=args.limit, slug_filter=args.slug, dry_run=args.dry_run)

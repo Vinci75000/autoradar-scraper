@@ -205,7 +205,7 @@ sources:
     estimated_stock: 100
     scrape_method: html_paginated
     score_bonus: 5
-    status: manual_inspect
+    status: ready
     notes: |
       AJOUT SESSION. CMS custom propriétaire (cache.hollmann.international
       pour assets, pas WP). URL pattern propre /vehicle/26G0789/ et
