@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cote Carnet — référence visuelle v1</title>
+<style>
+body { background: #FAFAF7; margin: 0; padding: 32px 16px; font-family: Garamond, serif; }
+.wrap { max-width: 680px; margin: 0 auto; }
+.cc-frame { background: #F4F1EA; padding: 32px 28px 28px; border-radius: 2px; font-family: Garamond, 'Hoefler Text', 'Times New Roman', serif; color: #0A0A0A; line-height: 1.5; }
+.cc-wordmark { display: flex; align-items: baseline; gap: 8px; margin-bottom: 28px; padding-bottom: 14px; border-bottom: 0.5px solid #0A0A0A20; }
+.cc-wordmark-name { font-family: 'Bodoni 72', 'Bodoni MT', Didot, serif; font-style: italic; font-weight: 500; font-size: 22px; letter-spacing: 0.01em; }
+.cc-wordmark-dot { width: 7px; height: 7px; background: #E85A1F; display: inline-block; }
+.cc-wordmark-tag { font-family: Garamond, 'Hoefler Text', serif; font-weight: 400; font-style: italic; font-size: 13px; color: #0A0A0A99; margin-left: 6px; }
+.cc-segment-title { font-family: 'Bodoni 72', 'Bodoni MT', Didot, serif; font-style: italic; font-weight: 500; font-size: 30px; line-height: 1.15; margin: 6px 0 18px; }
+.cc-spark { width: 100%; height: 56px; display: block; margin: 6px 0 24px; }
+.cc-median-block { text-align: center; padding: 16px 0 18px; }
+.cc-median-num { font-family: 'DM Mono', Menlo, Monaco, Consolas, monospace; font-weight: 400; font-size: 52px; letter-spacing: -0.01em; line-height: 1; color: #0A0A0A; }
+.cc-median-num-cur { font-size: 32px; color: #0A0A0A99; margin-left: 4px; }
+.cc-median-meta { font-size: 13px; color: #0A0A0A99; margin-top: 10px; font-style: italic; }
+.cc-interval { display: grid; grid-template-columns: 1fr 1fr; gap: 0; padding: 14px 0 22px; border-top: 0.5px solid #0A0A0A20; border-bottom: 0.5px solid #0A0A0A20; margin-top: 4px; }
+.cc-interval-cell { text-align: center; padding: 0 12px; }
+.cc-interval-label { font-size: 11px; letter-spacing: 0.08em; color: #0A0A0A66; margin-bottom: 6px; font-family: 'DM Mono', Menlo, monospace; }
+.cc-interval-value { font-family: 'DM Mono', Menlo, monospace; font-size: 17px; }
+.cc-chip-section-title { font-size: 12px; letter-spacing: 0.06em; color: #0A0A0A66; margin: 26px 0 12px; font-family: 'DM Mono', Menlo, monospace; }
+.cc-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cc-chip { display: inline-flex; align-items: baseline; gap: 8px; padding: 10px 14px; border-radius: 2px; font-size: 13px; font-family: Garamond, 'Hoefler Text', serif; }
+.cc-chip-num { font-family: 'DM Mono', Menlo, monospace; font-size: 12px; opacity: 0.8; }
+.cc-chip--under { background: #E85A1F; color: #F4F1EA; }
+.cc-chip--at    { background: #1F4D2F; color: #F4F1EA; }
+.cc-chip--over  { background: #0A0A0A; color: #F4F1EA; }
+.cc-chip--insufficient { background: #FAFAF7; color: #0A0A0A66; border: 0.5px dashed #0A0A0A33; }
+.cc-footer { margin-top: 24px; padding-top: 14px; border-top: 0.5px solid #0A0A0A20; font-style: italic; font-size: 13px; color: #0A0A0A99; line-height: 1.6; }
+.cc-footer-link { display: inline-block; margin-top: 10px; font-family: 'DM Mono', Menlo, monospace; font-style: normal; font-size: 11px; letter-spacing: 0.06em; color: #0A0A0A; border-bottom: 0.5px solid #0A0A0A; padding-bottom: 1px; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="cc-frame">
+  <div class="cc-wordmark">
+    <span class="cc-wordmark-name">Carnet</span>
+    <span class="cc-wordmark-dot" aria-hidden="true"></span>
+    <span class="cc-wordmark-tag">cote — méthode ouverte</span>
+  </div>
+  <h1 class="cc-segment-title">Ferrari 458 Italia</h1>
+  <svg class="cc-spark" viewBox="0 0 600 56" preserveAspectRatio="none" aria-hidden="true">
+    <polyline fill="none" stroke="#0A0A0A" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" points="0,38 50,32 100,36 150,28 200,30 250,22 300,26 350,18 400,24 450,20 500,16 550,18 600,14" />
+  </svg>
+  <div class="cc-median-block">
+    <div class="cc-median-num">108 500<span class="cc-median-num-cur">€</span></div>
+    <div class="cc-median-meta">médiane segment · n=23 · 8 mai 2026</div>
+  </div>
+  <div class="cc-interval">
+    <div class="cc-interval-cell"><div class="cc-interval-label">p25</div><div class="cc-interval-value">85 000 €</div></div>
+    <div class="cc-interval-cell"><div class="cc-interval-label">p75</div><div class="cc-interval-value">132 000 €</div></div>
+  </div>
+  <div class="cc-chip-section-title">chips d'état · exemples</div>
+  <div class="cc-chips">
+    <div class="cc-chip cc-chip--under">Sous-côté <span class="cc-chip-num">−12%</span></div>
+    <div class="cc-chip cc-chip--at">Au prix</div>
+    <div class="cc-chip cc-chip--over">Surcôté <span class="cc-chip-num">+18%</span></div>
+    <div class="cc-chip cc-chip--insufficient">Donnée insuffisante</div>
+  </div>
+  <div class="cc-footer">
+    Méthode ouverte. Échantillon visible. Backtest publié trimestriellement.<br>
+    <a href="https://carnet.life/cote/methodologie" class="cc-footer-link">carnet.life/cote/methodologie →</a>
+  </div>
+</div>
+</div>
+</body>
+</html>
