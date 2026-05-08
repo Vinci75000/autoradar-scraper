@@ -65,6 +65,7 @@ TIER_LUXURY = TIER_SUPERCAR | {
     'bmw', 'audi', 'jaguar',
     'land rover', 'land-rover', 'range rover', 'range-rover',
     'lexus', 'volvo', 'tesla', 'cadillac', 'lincoln',
+    'chevrolet',  # Corvette C8 Z06/ZR1 >=100k EUR legitime chez premium dealers (autostrada, autoseredin)
     'mini',
     # Préparateurs / tuners reconnus
     'brabus', 'alpina', 'mansory', 'ruf', 'techart',
