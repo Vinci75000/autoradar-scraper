@@ -344,7 +344,7 @@ class TestVariantB_Autostrada:
         car = extractor._build_car_from_soup(soup, url, jungblut_config)
 
         assert car is not None
-        assert car.mk == "Chevrolet Corvette"  # canonical mapping
+        assert car.mk == "Chevrolet"  # canonique BRAND_REGISTRY
         assert "Stingray" in (car.mo or "")
         assert car.px == 134900.0
         assert car.cu == "EUR"

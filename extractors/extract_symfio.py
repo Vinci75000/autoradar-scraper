@@ -83,7 +83,7 @@ _BRAND_CANONICAL = {
     "ducati": "Ducati",
     "vespa": "Vespa",
     "smart": "Smart",
-    "corvette": "Chevrolet Corvette",
+    "corvette": "Chevrolet",  # mo conserve "Corvette Stingray ..." via h1 fallback
     "chevrolet": "Chevrolet",
     "ford": "Ford",
     "dodge": "Dodge",
