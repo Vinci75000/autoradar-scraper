@@ -223,14 +223,14 @@ sources:
     city: Hamburg
     tier: 1
     type: dealer
-    listings_url: https://www.jungblut-sportwagen.de/
+    listings_url: https://jungblut-sportwagen.de/de/cars-for-sale.html
     specialty: Porsche specialist depuis 1985, ankauf/verkauf weltweit premium
     brand_focus: ["Porsche"]
     estimated_stock: 25
     scrape_method: platform_symfio
     platform: symfio
     score_bonus: 5
-    status: manual_inspect
+    status: ready
     notes: |
       AJOUT SESSION. Plateforme Symfio (DMS multi-tenant DE, cf auto-seredin).
       Sera couvert par extract_symfio.py. 40 ans d'activité Porsche pur.
@@ -362,14 +362,14 @@ sources:
     city: Hechingen (Stuttgart)
     tier: 2
     type: dealer
-    listings_url: https://autoseredin.de/de/inventory
+    listings_url: https://autoseredin.de/de/cars-for-sale.html
     specialty: Mercedes/Brabus/Maybach/Bentley/RR/Ferrari/Lambo/AM/Bugatti — export worldwide
     brand_focus: ["Mercedes-Benz", "Brabus", "Maybach", "Rolls-Royce", "Bentley", "Ferrari", "Lamborghini", "Aston Martin", "Bugatti", "Porsche"]
     estimated_stock: 116
     scrape_method: platform_symfio
     platform: symfio
     score_bonus: 3
-    status: manual_inspect
+    status: ready
     notes: |
       AJOUT SESSION — pilote Symfio. Plateforme Symfio.de (DMS multi-tenant
       DE, ~104 sites détectés WebTechSurvey, 15 ans d'existence, intégrations
@@ -401,7 +401,7 @@ sources:
     scrape_method: platform_symfio
     platform: symfio
     score_bonus: 3
-    status: manual_inspect
+    status: deferred
     notes: |
       AJOUT SESSION. Plateforme Symfio. URL exacte à vérifier au sniff
       (variantes possibles automotivepassion.de / automotive-passion.de).
@@ -414,13 +414,13 @@ sources:
     timezone: Europe/Berlin
     tier: 2
     type: dealer
-    listings_url: https://www.autostrada-sport.de/
+    listings_url: https://www.autostradasport.de/de/cars-for-sale.html
     specialty: Sportwagen/Roadster all-in-service exclusifs
     estimated_stock: 25
     scrape_method: platform_symfio
     platform: symfio
     score_bonus: 3
-    status: manual_inspect
+    status: ready
     notes: AJOUT SESSION. Plateforme Symfio. URL à confirmer au sniff.
 
   - slug: pyritz-classics
