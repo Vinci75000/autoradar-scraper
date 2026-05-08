@@ -36,7 +36,7 @@ sources:
     timezone: Europe/Berlin
     tier: 1
     type: marketplace
-    listings_url: https://www.classic-trader.com/de/cars
+    listings_url: https://www.classic-trader.com/de/automobile
     specialty: Marketplace européen référence collector, schéma normalisé
     estimated_stock: 15000
     scrape_method: jsonld
@@ -277,7 +277,7 @@ sources:
     estimated_stock: 40
     scrape_method: html_paginated
     score_bonus: 3
-    status: manual_inspect
+    status: deferred
     notes: HTML stable selon veille Sly. Non vérifié sniff cette session.
 
   - slug: cog-classics
@@ -333,7 +333,7 @@ sources:
     estimated_stock: 40
     scrape_method: html_paginated
     score_bonus: 3
-    status: manual_inspect
+    status: deferred
     notes: Non vérifié sniff cette session.
 
   - slug: klw-klassische-automobile-muenster
@@ -350,7 +350,7 @@ sources:
     estimated_stock: 30
     scrape_method: html_paginated
     score_bonus: 3
-    status: manual_inspect
+    status: deferred
     notes: URL à vérifier au sniff. Non vérifié cette session.
 
   - slug: auto-seredin
