@@ -13,3 +13,4 @@ python-dotenv>=1.0.0
 
 # LLM Haiku 4.5 fallback (extract_features v2 step 3 -- brief: docs/brief_extract_features_v2.md)
 anthropic>=0.40.0
+sentry-sdk==2.59.0

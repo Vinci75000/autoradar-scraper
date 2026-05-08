@@ -62,6 +62,9 @@ jobs:
           # (de>800 chars + no bool V1 positif + collector OR px>=60k EUR).
           # Cap par feat_de_hash idempotence + Anthropic API key gh secret.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SENTRY_DSN_SCRAPER: ${{ secrets.SENTRY_DSN_SCRAPER }}
+          SENTRY_ENVIRONMENT: 'production'
+          SENTRY_COMPONENT: 'cron-phase-a'
           AUTORADAR_LLM_HOOK_ENABLED: "true"
           # Inputs workflow_dispatch (vides si schedule).
           PHASE_A_SLUG: ${{ inputs.slug }}

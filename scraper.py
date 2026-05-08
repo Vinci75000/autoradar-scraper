@@ -21,6 +21,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Initialize Sentry early (after .env loaded, before app imports)
+from sentry_init import init_sentry
+init_sentry()
+
 from validation import validate_listing, get_listing_tier, get_km_tier
 from batches import get_sources_for_batch, get_pages_for_batch, is_red_source, RED_SOURCES
 from dealers import DEALERS, get_dealer_by_name, get_dealer_names, get_active_dealers

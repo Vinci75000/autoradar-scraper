@@ -58,6 +58,9 @@ jobs:
           # nouvelles cars insertees pendant ce cron. Cap budget global
           # protege par le tarif Haiku ~0.18c/call apres L1.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SENTRY_DSN_SCRAPER: ${{ secrets.SENTRY_DSN_SCRAPER }}
+          SENTRY_ENVIRONMENT: 'production'
+          SENTRY_COMPONENT: 'cron-dealers'
           AUTORADAR_LLM_HOOK_ENABLED: "true"
         run: |
           python3 batch_runner.py \

@@ -21,6 +21,13 @@ import logging
 from typing import Optional, Iterator, Any
 from urllib.parse import urljoin
 
+from dotenv import load_dotenv
+load_dotenv()
+
+# Initialize Sentry early (after .env loaded, before app imports)
+from sentry_init import init_sentry
+init_sentry()
+
 import httpx
 from bs4 import BeautifulSoup
 
