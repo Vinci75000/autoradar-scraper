@@ -13,7 +13,7 @@ Usage:
   python scraper.py --source all
 """
 
-import os, re, time, json, random, hashlib, argparse, logging, sys, sys
+import os, re, time, json, random, hashlib, argparse, logging, sys
 from datetime import datetime, timezone
 from dataclasses import dataclass, asdict
 from typing import Optional

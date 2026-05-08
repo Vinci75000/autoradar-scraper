@@ -53,6 +53,9 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SENTRY_DSN_SCRAPER: ${{ secrets.SENTRY_DSN_SCRAPER }}
+          SENTRY_ENVIRONMENT: 'production'
+          SENTRY_COMPONENT: 'cron-yellow'
         run: |
           python3 batch_runner.py \
             --batch yellow \

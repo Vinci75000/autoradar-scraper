@@ -2,15 +2,22 @@
 # ═══════════════════════════════════════════════════════════
 # Utilisé par GitHub Actions pour `pip install -r requirements.txt`
 
+# Core HTTP + parsing
 requests>=2.31.0
 beautifulsoup4>=4.12.0
 lxml>=4.9.0
 playwright>=1.40.0
+
+# Database (Supabase)
 supabase>=2.0.0
 postgrest>=0.13.0
+
+# Utilities
 python-dateutil>=2.8.0
 python-dotenv>=1.0.0
 
-# LLM Haiku 4.5 fallback (extract_features v2 step 3 -- brief: docs/brief_extract_features_v2.md)
+# LLM (Haiku 4.5 fallback for extract_features v2 — brief: docs/brief_extract_features_v2.md)
 anthropic>=0.40.0
-sentry-sdk==2.59.0
+
+# Observability
+sentry-sdk>=2.59.0
