@@ -1,0 +1,565 @@
+# dealers-de.yaml
+# AutoRadar / Carnet — sources Allemagne, Vague 2 / Vague 3
+# Généré le 2026-05-08, ajusté après vérif insolvabilités + prospection plateformes.
+# Drop-in pour autoradar-scraper/sources/.
+#
+# ─── Conventions ───────────────────────────────────────────────────────────────
+#   tier:           1 = institutional/concours, 2 = premium volume, 3 = entry
+#   score_bonus:    tier1=+5, tier2=+3, tier3=+1
+#   type:           marketplace | dealer | hub | directory | partnership
+#   status:         ready | manual_inspect | deferred | recon_only
+#   scrape_method:  jsonld | html_paginated | sitemap | platform_symfio
+#                   | platform_rivamedia | recon_only | tbd
+#   platform:       (optionnel) symfio | rivamedia → active parser commun
+#
+# ─── Récap ─────────────────────────────────────────────────────────────────────
+#   2 marketplaces (Classic-Trader, Elferspot) — priorité absolue, ROI massif
+#   6 dealers tier 1 + 4 dealers tier 1 ajoutés session (dont 1 Symfio, 1 Hollmann)
+#   6 dealers tier 2 + 4 dealers tier 2 ajoutés session (3 Symfio + Pyritz)
+#   5 hubs en recon_only (Classic Remise DD/B, Klassikstadt, Motorworld, Ofenwerk)
+#   1 directory (Car and Classic DE)
+#   1 partnership (MB Heritage, successeur Kienle)
+#   Stock estimé cumulé scrappable : ~1 800 à 3 500 voitures premium DE (hors
+#   marketplaces, qui peuvent dépasser à eux seuls 15 000 fiches).
+
+sources:
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # META-MARKETPLACES — priorité absolue (ROI massif, ToS à valider)
+  # ════════════════════════════════════════════════════════════════════════════
+
+  - slug: classic-trader
+    display_name: Classic Trader
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    tier: 1
+    type: marketplace
+    listings_url: https://www.classic-trader.com/de/cars
+    specialty: Marketplace européen référence collector, schéma normalisé
+    estimated_stock: 15000
+    scrape_method: jsonld
+    score_bonus: 5
+    status: manual_inspect
+    notes: |
+      Méta-marketplace allemand. Sniff prioritaire pour valider Vehicle JSON-LD.
+      ToS à valider — risque légal style BaT/Mobile.de. Approche partenariat
+      recommandée au seuil traffic. Dédup cross-source critique : beaucoup
+      d'annonces relayées depuis Cargold, Thiesen, Kienle (historique) etc.
+
+  - slug: elferspot
+    display_name: Elferspot
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    tier: 1
+    type: marketplace
+    listings_url: https://www.elferspot.com/en/marketplace
+    specialty: Marketplace Porsche-only, 1500+ annonces, qualité éditoriale
+    brand_focus: ["Porsche"]
+    estimated_stock: 1500
+    scrape_method: jsonld
+    score_bonus: 5
+    status: manual_inspect
+    notes: |
+      Porsche pur. Volume contenu mais qualité concours. ToS à valider.
+      Annonces signées par dealers tiers (Thiesen, Mechatronik, Eberlein) —
+      dédup cross-source à monitorer.
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # TIER 1 — Institutional grade, concours-level, fit Carnet 5★
+  # ════════════════════════════════════════════════════════════════════════════
+
+  - slug: mechatronik
+    display_name: Mechatronik
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    city: Pleidelsheim
+    tier: 1
+    type: dealer
+    listings_url: https://www.mechatronik.de/verkauf/fahrzeugangebote/
+    specialty: Référence Mercedes SL/Pagode/W111 + restomod, fiches musée
+    brand_focus: ["Mercedes-Benz", "Porsche", "Aston Martin", "BMW"]
+    estimated_stock: 30
+    scrape_method: html_paginated
+    score_bonus: 5
+    status: manual_inspect
+    notes: |
+      Site stable, PHP institutionnel. Stock visible: 300SL Roadster,
+      911 RSR Prototyp, 934 Turbo, AM Vanquish Zagato Speedster, BMW Alpina
+      Roadster. Fiches matching/certificat/historique = bullseye Carnet.
+
+  - slug: thiesen-hamburg
+    display_name: Thiesen Hamburg
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    city: Hamburg-Othmarschen
+    tier: 1
+    type: dealer
+    listings_url: https://www.thiesen-automobile.com/en/cars/
+    specialty: Multimarques rares — Bentley/Bugatti/Honda NSX/Iso Grifo/Lancia Zagato
+    estimated_stock: 50
+    scrape_method: html_paginated
+    score_bonus: 5
+    status: manual_inspect
+    notes: |
+      40+ ans d'activité. Showroom Hamburg-Othmarschen + annexe Berlin
+      (Classic Remise Berlin, Wiebestr. 29-38, depuis 2003). Exposant
+      Rétromobile 2026. URL .com clean. Listed Classic Driver (45 cars).
+      Géré par Timm Meinrenken depuis le départ du fondateur.
+
+  - slug: thiesen-eberhard-raritaeten
+    display_name: Eberhard Thiesen Automobile Raritäten
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    city: Hamburg Nord
+    tier: 1
+    type: dealer
+    listings_url: https://classiccarsgermany.eu/en/home/
+    specialty: Entité séparée du fondateur (depuis 2019), curation discrète
+    estimated_stock: 30
+    scrape_method: html_paginated
+    score_bonus: 5
+    status: manual_inspect
+    notes: |
+      ENTITÉ DISTINCTE de Thiesen Hamburg GmbH. Le fondateur Eberhard Thiesen
+      opère seul depuis 2019 sous son propre nom (+ Bastian Hubald associé
+      depuis 2021). Showroom 1500m². Cars "non-disclosure" non publiées
+      → volume publié réel à confirmer au sniff.
+
+  - slug: hk-engineering
+    display_name: HK Engineering
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    city: Polling
+    tier: 1
+    type: dealer
+    listings_url: https://www.hk-engineering.com/
+    specialty: Hyper-spécialiste 300SL Gullwing/Roadster, chaque voiture = dossier
+    brand_focus: ["Mercedes-Benz"]
+    estimated_stock: 12
+    scrape_method: html_paginated
+    score_bonus: 5
+    status: manual_inspect
+    notes: Petit volume mais ticket moyen très élevé. Non vérifié sniff cette session.
+
+  - slug: mirbach-schuttenbach
+    display_name: MIRBACH + Schuttenbach Automobile
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    city: Anzing bei München
+    tier: 1
+    type: dealer
+    listings_url: https://mirbach.de/en/vehicles
+    specialty: Classics multimarques haut de gamme, gage institutionnel
+    estimated_stock: 25
+    scrape_method: html_paginated
+    score_bonus: 5
+    status: manual_inspect
+    notes: |
+      Actionnaire principal Bernd Pischetsrieder (ex-CEO BMW + VW). Stack
+      Laravel/OctoberCMS (agence KUSE.de) — pattern /storage/app/resized/.
+      Pas d'hyper-supercars mais collection irréprochable Aston/Bentley/
+      Ferrari/Jaguar/Lambo/Lotus/Maserati/MB/Porsche/RR. Profil partenariat
+      possible compte tenu du shareholder.
+
+  - slug: hemmels
+    display_name: Hemmels
+    country: de
+    currency: eur
+    language: en
+    timezone: Europe/Berlin
+    tier: 1
+    type: dealer
+    listings_url: https://www.hemmels.com/
+    specialty: Restauration haut de gamme Mercedes/Jaguar, anglo-allemand bilingue
+    estimated_stock: 20
+    scrape_method: html_paginated
+    score_bonus: 5
+    status: manual_inspect
+    notes: Bilingue EN/DE, fiches exploitables des deux côtés. Non vérifié sniff.
+
+  - slug: hollmann-international
+    display_name: Hollmann International
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    tier: 1
+    type: dealer
+    listings_url: https://hollmann.international/vehicles/
+    specialty: Bugatti/Koenigsegg/Mansory RR/Brabus/Ferrari multi-M€
+    brand_focus: ["Bugatti", "Koenigsegg", "Mansory", "Brabus", "Ferrari", "Aston Martin", "Lamborghini", "Bentley", "Rolls-Royce", "McLaren", "Mercedes-Benz"]
+    estimated_stock: 100
+    scrape_method: html_paginated
+    score_bonus: 5
+    status: manual_inspect
+    notes: |
+      AJOUT SESSION. CMS custom propriétaire (cache.hollmann.international
+      pour assets, pas WP). URL pattern propre /vehicle/26G0789/ et
+      /manufacturer/{Brand}/. Fourchette prix observée: 166k€ → 1.07M€+.
+      Apple App Store id 1444746404 (mobile app native dédiée).
+      Module dédié extract_hollmann.py — effort justifié par ciblage absolu
+      (un des rares dealers DE avec inventaire Bugatti/Koenigsegg en stock).
+
+  - slug: jungblut-sportwagen
+    display_name: Jungblut Sportwagen
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    city: Hamburg
+    tier: 1
+    type: dealer
+    listings_url: https://jungblut-sportwagen.de/de/cars-for-sale.html
+    specialty: Porsche specialist depuis 1985, ankauf/verkauf weltweit premium
+    brand_focus: ["Porsche"]
+    estimated_stock: 25
+    scrape_method: platform_symfio
+    platform: symfio
+    score_bonus: 5
+    status: ready
+    notes: |
+      AJOUT SESSION. Plateforme Symfio (DMS multi-tenant DE, cf auto-seredin).
+      Sera couvert par extract_symfio.py. 40 ans d'activité Porsche pur.
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # TIER 2 — Premium volume, curation forte, intégration faisable
+  # ════════════════════════════════════════════════════════════════════════════
+
+  - slug: cargold-collection
+    display_name: Cargold Collection
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    city: Riedering / Rosenheim
+    tier: 2
+    type: dealer
+    listings_url: https://www.cargold-collection.com/
+    specialty: Classic Sportscars, Prewar Cars & Supercars — matching numbers/colours
+    brand_focus: ["Mercedes-Benz", "Porsche", "Ferrari", "Aston Martin", "Jaguar", "Bentley", "Bugatti", "Lamborghini"]
+    estimated_stock: 200
+    scrape_method: html_paginated
+    score_bonus: 3
+    status: manual_inspect
+    notes: |
+      ⚠ CORRECTION : Riedering/Rosenheim (Bavière), PAS Frankfurt comme parfois
+      cité. URL réelle cargold-collection.com (PAS cargold.de). 38 ans
+      d'activité, 8500+ classiques vendus. Stock visible: Mercedes (95),
+      Porsche (45), Ferrari, AM (3), Jaguar (5), Bentley, Bugatti, Lambo (2),
+      Maybach (2), RR. Tagline "Matching Numbers! / Matching Colours!" =
+      bullseye Carnet absolu. Listed Classic Trader (id 4930), Classic Driver.
+
+  - slug: eberlein-automobile
+    display_name: Eberlein Automobile
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    tier: 2
+    type: dealer
+    listings_url: https://www.eberlein-automobile.de/
+    specialty: Spécialiste Porsche air-cooled, dossiers carnet souvent complets
+    brand_focus: ["Porsche"]
+    estimated_stock: 40
+    scrape_method: html_paginated
+    score_bonus: 3
+    status: manual_inspect
+    notes: HTML stable selon veille Sly. Non vérifié sniff cette session.
+
+  - slug: cog-classics
+    display_name: C.O.G. Classics
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    city: Hof Rockel près Münster
+    tier: 2
+    type: dealer
+    listings_url: https://www.cog-classics.com/
+    specialty: Curation italo-franco-britanno-jap, alignement Carnet fort
+    estimated_stock: 30
+    scrape_method: html_paginated
+    score_bonus: 3
+    status: manual_inspect
+    notes: |
+      Déménagement avril 2026 vers Hof Rockel près Münster — adresse à
+      mettre à jour après confirmation transfert. Curation rare et alignée
+      éditorial Carnet.
+
+  - slug: gassmann-cars
+    display_name: Gassmann GmbH
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    city: Bovenden
+    tier: 2
+    type: dealer
+    listings_url: https://www.gassmann-cars.de/
+    specialty: Multimarques 600+ véhicules — gros volume DE-Centre
+    estimated_stock: 600
+    scrape_method: tbd
+    score_bonus: 3
+    status: manual_inspect
+    notes: |
+      PLUS GROS STOCK UNITAIRE de la liste. Sniff impératif pour identifier
+      la plateforme (sitemap.xml ? listing paginé custom ? Symfio/Modix ?).
+      ROI volume très intéressant si tech accessible.
+
+  - slug: movendi-classic
+    display_name: Movendi Classic Cars
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    tier: 2
+    type: dealer
+    listings_url: https://www.movendi-classic.com/
+    specialty: Multimarques collector, fiches détaillées structure web propre
+    estimated_stock: 40
+    scrape_method: html_paginated
+    score_bonus: 3
+    status: manual_inspect
+    notes: Non vérifié sniff cette session.
+
+  - slug: klw-klassische-automobile-muenster
+    display_name: Klassische Automobile Münster (KLAW)
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    city: Münster
+    tier: 2
+    type: dealer
+    listings_url: https://www.klassische-automobile-muenster.de/
+    specialty: Multimarques collector, propre selon veille
+    estimated_stock: 30
+    scrape_method: html_paginated
+    score_bonus: 3
+    status: manual_inspect
+    notes: URL à vérifier au sniff. Non vérifié cette session.
+
+  - slug: auto-seredin
+    display_name: Auto Seredin
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    city: Hechingen (Stuttgart)
+    tier: 2
+    type: dealer
+    listings_url: https://autoseredin.de/de/cars-for-sale.html
+    specialty: Mercedes/Brabus/Maybach/Bentley/RR/Ferrari/Lambo/AM/Bugatti — export worldwide
+    brand_focus: ["Mercedes-Benz", "Brabus", "Maybach", "Rolls-Royce", "Bentley", "Ferrari", "Lamborghini", "Aston Martin", "Bugatti", "Porsche"]
+    estimated_stock: 116
+    scrape_method: platform_symfio
+    platform: symfio
+    score_bonus: 3
+    status: ready
+    notes: |
+      AJOUT SESSION — pilote Symfio. Plateforme Symfio.de (DMS multi-tenant
+      DE, ~104 sites détectés WebTechSurvey, 15 ans d'existence, intégrations
+      natives Mobile.de/AS24/Classic Trader/JamesEdition/AutoUncle).
+
+      URL pattern standardisé tous Symfio :
+        liste:    /{de|en}/{brand}/index.html  (filtres ?vehicle_tag=, ?price_min=)
+        détail:   /{de|en}/auto/{brand}/{model-slug}/{neu|gebraucht}-in-{ville}-{6char}.html
+      DMS login : {slug}.dms.symfio.de/dashboard
+      CDN assets: website.img.symfio.net
+
+      → Construire extract_symfio.py UNE fois → couvre Auto Seredin + Jungblut
+      + Automotive Passion + Autostrada Sport + autres Symfio futurs identifiés
+      via webtechsurvey.com/technology/symfio. ROI Rivamedia.
+
+  - slug: automotive-passion
+    display_name: Automotive Passion
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    city: Hamburg
+    tier: 2
+    type: dealer
+    listings_url: https://www.automotivepassion.de/
+    specialty: Premium/Luxus Ferrari/Porsche/Mercedes-Benz
+    brand_focus: ["Ferrari", "Porsche", "Mercedes-Benz"]
+    estimated_stock: 30
+    scrape_method: platform_symfio
+    platform: symfio
+    score_bonus: 3
+    status: deferred
+    notes: |
+      AJOUT SESSION. Plateforme Symfio. URL exacte à vérifier au sniff
+      (variantes possibles automotivepassion.de / automotive-passion.de).
+
+  - slug: autostrada-sport
+    display_name: Autostrada Sport
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    tier: 2
+    type: dealer
+    listings_url: https://www.autostradasport.de/de/cars-for-sale.html
+    specialty: Sportwagen/Roadster all-in-service exclusifs
+    estimated_stock: 25
+    scrape_method: platform_symfio
+    platform: symfio
+    score_bonus: 3
+    status: ready
+    notes: AJOUT SESSION. Plateforme Symfio. URL à confirmer au sniff.
+
+  - slug: pyritz-classics
+    display_name: Pyritz Classics GmbH
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    city: Frankfurt am Main (Klassikstadt)
+    tier: 2
+    type: dealer
+    listings_url: https://pyritz-classics.de/
+    specialty: 15 ans dans Klassikstadt, kauf/verkauf/vermittlung Klassiker
+    estimated_stock: 30
+    scrape_method: html_paginated
+    score_bonus: 3
+    status: manual_inspect
+    notes: |
+      AJOUT SESSION. Premier indépendant identifié dans hub Klassikstadt
+      Frankfurt. À sniffer pour stack tech.
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # HUBS — recon one-shot, PAS une source de listings
+  # Crawl tenants page → extract noms/sites → tri Carnet → seeds individuelles
+  # ════════════════════════════════════════════════════════════════════════════
+
+  - slug: hub-classic-remise-duesseldorf
+    display_name: Classic Remise Düsseldorf
+    country: de
+    type: hub
+    listings_url: https://remise.de/duesseldorf/mieter/
+    specialty: 35 spécialistes hébergés
+    scrape_method: recon_only
+    status: recon_only
+    notes: |
+      Crawl one-shot pour extraire dealers locataires. Tri manuel selon
+      ciblage Carnet → seeds individuelles. Page Mieter standardisée.
+
+  - slug: hub-classic-remise-berlin
+    display_name: Classic Remise Berlin
+    country: de
+    type: hub
+    listings_url: https://remise.de/berlin/mieter/
+    specialty: 30 spécialistes hébergés (dont Thiesen Berlin annexe)
+    scrape_method: recon_only
+    status: recon_only
+    notes: |
+      Crawl one-shot. Note: Thiesen Berlin est déjà couvert via
+      thiesen-hamburg (annexe).
+
+  - slug: hub-klassikstadt-frankfurt
+    display_name: Klassikstadt Frankfurt
+    country: de
+    type: hub
+    listings_url: https://www.klassikstadt.de/klassikstadt/partner/
+    specialty: 40+ entreprises sur 16 000m². Concessions Bugatti/Lambo/McLaren présentes.
+    scrape_method: recon_only
+    status: recon_only
+    notes: |
+      Crawl complet à faire. Concessions officielles Bugatti/Lambo/McLaren/
+      Ferrari/AM = partnership track (cf mb-heritage-classic-center).
+      Indépendants déjà identifiés: Pyritz Classics (séparé). Autres
+      candidats indépendants potentiels: "Die Sportwagen Spezialisten"
+      (italiennes), Vincent Krampol (Oldtimer-Resto), Kevin Ehrhardt (Porsche).
+
+  - slug: hub-motorworld-boeblingen
+    display_name: Motorworld Böblingen (Stuttgart)
+    country: de
+    type: hub
+    listings_url: https://www.motorworld.de/region/stuttgart/
+    specialty: Hub multi-dealers région Stuttgart
+    scrape_method: recon_only
+    status: recon_only
+    notes: Crawl one-shot. Sister à Classic Remise.
+
+  - slug: hub-ofenwerk-nuernberg
+    display_name: Ofenwerk Nürnberg
+    country: de
+    type: hub
+    listings_url: https://www.ofenwerk.de/
+    specialty: Hub multi-dealers, Nuremberg
+    scrape_method: recon_only
+    status: recon_only
+    notes: Crawl one-shot.
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # DIRECTORY — utilité découverte longue traîne, pas une source
+  # ════════════════════════════════════════════════════════════════════════════
+
+  - slug: directory-carandclassic-de
+    display_name: Car and Classic — Germany dealers directory
+    country: de
+    type: directory
+    listings_url: https://www.carandclassic.com/dealers/country/germany
+    specialty: Directory officiel registered traders DE
+    scrape_method: recon_only
+    status: recon_only
+    notes: |
+      Crawl one-shot pour identifier dealers DE non encore couverts.
+      Pas une source de listings. Complément aux hubs Classic Remise.
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # PARTNERSHIP TRACK — entités constructeur / successeurs (deferred)
+  # ════════════════════════════════════════════════════════════════════════════
+
+  - slug: mb-heritage-classic-center
+    display_name: Mercedes-Benz Heritage GmbH (Classic Center)
+    country: de
+    currency: eur
+    language: de
+    timezone: Europe/Berlin
+    tier: 1
+    type: partnership
+    listings_url: https://www.mercedes-benz.com/en/classic/
+    specialty: Successeur Kienle (rachat 01/02/2024). Constructeur officiel.
+    status: deferred
+    notes: |
+      Filiale 100% Mercedes-Benz AG. A racheté pièces + employés + savoir-faire
+      de Kienle Automobiltechnik au 01/02/2024 pour 3,05 M€ suite à
+      l'insolvabilité Kienle. Intégré au Mercedes-Benz Classic Center.
+      Constructeur officiel — même logique que Centre Porsche Genève /
+      Lamborghini Porrentruy. Pitch partenariat au seuil ≥5k MAU + ≥50k
+      listings + page /methode + ONG.
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# RETIRÉS suite à vérification (do not seed)
+# ════════════════════════════════════════════════════════════════════════════
+#
+# ❌ kienle (Heimerdingen)
+#    Insolvabilité oct 2023 + scandale fraude 300SL (~130 véhicules avec
+#    numéros châssis manipulés selon enquêteurs LKA). Mercedes-Benz Heritage
+#    GmbH a racheté pièces/savoir-faire/employés au 01/02/2024 pour 3,05 M€.
+#    Klaus Kienle décédé en 2025. La GmbH n'existe plus en tant que telle.
+#    → Voir mb-heritage-classic-center pour la piste partenariat constructeur.
+#
+# ❌ auto-salon-singen (Singen, Bodensee)
+#    Insolvabilité ouverte 28/07/2025 par Tribunal Constance suite à
+#    escroquerie Ferrari sur acomptes (le dirigeant Michael Koltes avait
+#    fait des avances pour des Ferrari livrées par un faux intermédiaire
+#    qui s'est volatilisé). Fermeture prévue oct 2025. 200 cars showroom +
+#    400 en offre à l'arrêt — site probablement plus alimenté.
