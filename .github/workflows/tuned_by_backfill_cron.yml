@@ -1,0 +1,43 @@
+name: AutoRadar Tuned-by Backfill (cron lundi 10h UTC)
+
+# Cron de sécurité hebdo : re-applique les patterns regex tuned_by sur cars
+# actives (idempotent, ne touche que tuned_by IS NULL). Catche les cars
+# insérées sans tuned_by si le pipeline scraper a manqué le hook.
+#
+# Schedule lundi 10h UTC = après cote_refresh (09h), avant dealers (12h).
+# Job ~10s.
+
+on:
+  schedule:
+    # Lundi 10:00 UTC = 11:00 Paris hiver / 12:00 Paris été
+    - cron: '0 10 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: tuned-by-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet psycopg2-binary python-dotenv
+
+      - name: Run backfill
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: python -u scripts/backfill_tuned_by.py

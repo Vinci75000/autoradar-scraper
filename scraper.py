@@ -59,6 +59,7 @@ log = logging.getLogger('autoradar')
 
 # ── Supabase ──────────────────────────────────────────────────────────────
 from supabase import create_client, Client
+from lib.tuner_extractor import extract_tuner
 
 SUPABASE_URL  = os.getenv('SUPABASE_URL',  'https://qqbssqcuxllmtapqkmkz.supabase.co')
 SUPABASE_KEY  = os.getenv('SUPABASE_SERVICE_KEY', '')  # service_role key (NOT anon)
@@ -259,6 +260,7 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
         'hs':        [],
         'status':    'active',
         'is_autoradar': False,
+        'tuned_by': extract_tuner(car.mk, car.mo, getattr(car, 'de', None)),
     }
 
     # ─── Carnet — feature_extractor (Mission B + B-quater) ──────────────────
