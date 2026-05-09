@@ -165,7 +165,7 @@ def test_build_car_from_soup_jaguar_e_type():
     assert car.src_url == URL_VALID
 
     assert car.mk == "Jaguar"
-    assert car.mo == "Jaguar E-Type Series 1, Roadster 4.2 liter"
+    assert car.mo == "E-Type Series 1, Roadster 4.2 liter"
     assert car.yr == 1967
     assert car.km == 25696
     assert car.px == 109000.0

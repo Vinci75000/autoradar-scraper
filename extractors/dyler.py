@@ -199,6 +199,9 @@ class DylerExtractor(Extractor):
         # 3. Override mo with full Model string (richer)
         if model_full := fields.get("Model"):
             car.mo = model_full[:120]
+            # Strip make prefix to avoid "BMW BMW 3.0 CS" duplication
+            if car.mk and car.mo.lower().startswith(car.mk.lower() + " "):
+                car.mo = car.mo[len(car.mk) + 1:].strip()[:120]
 
         # 3.5. Re-apply normalizer with full mk + mo context.
         # Activates AMG reclassification (Mercedes-Benz + "C 63 AMG" -> Mercedes-AMG).
