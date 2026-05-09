@@ -30,7 +30,8 @@ from extractors.dyler import DylerExtractor
 
 def parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument("--limit", type=int, default=10)
+    p.add_argument("--limit", type=int, default=None,
+                   help="Cap on number of cars (default: None = full sitemap)")
     p.add_argument("--dry-run", action="store_true",
                    help="Extract only; do not call insert_car or touch DB")
     return p.parse_args()
