@@ -1,0 +1,80 @@
+name: AutoRadar Dyler Pipeline (cron 06h UTC)
+
+# Dyler.com canary — sitemap-mode crawl (~25k cars worldwide).
+# Schedule modeste (1x/jour 06h UTC) pour les 1-2 premieres semaines.
+# Apres validation, on consolidera dans marketplace_cron (avec A4.2
+# classicdriver et A4.3 carandclassic).
+#
+# Architecture:
+#   - sitemap discovery: ~25k URLs en 1 GET
+#   - dedup L1 (URL skip avant GET) economise les 24k+ deja en DB
+#   - regime stable post-1st-run: ~5-10 min pour les nouvelles cars
+#   - 1st full run lance manuellement le 2026-05-10 (ce cron prend le relais)
+
+on:
+  schedule:
+    # 06:00 UTC = 07:00 Paris hiver / 08:00 Paris ete
+    # Slot libre: dealers 00h+12h, symfio 03h, yellow 04h, phase-a 08h, green 22h
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Cars max (vide = tous, ~25k pour full run)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Dry-run (extract only, NO insert)'
+        type: boolean
+        required: false
+        default: false
+
+concurrency:
+  group: dyler-pipeline
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Dyler pipeline
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          # LLM hook actif (coherent avec dealers + symfio cron).
+          # SoT: collector >=25 ans OR px >=60k. Cap Haiku ~0.18c/call apres L1.
+          AUTORADAR_LLM_HOOK_ENABLED: 'true'
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SENTRY_DSN_SCRAPER: ${{ secrets.SENTRY_DSN_SCRAPER }}
+          SENTRY_ENVIRONMENT: 'production'
+          SENTRY_COMPONENT: 'cron-dyler'
+        run: |
+          LIMIT="${{ github.event.inputs.limit }}"
+          DRY="${{ github.event.inputs.dry_run }}"
+
+          ARGS=""
+          if [ -n "$LIMIT" ]; then ARGS="$ARGS --limit $LIMIT"; fi
+          if [ "$DRY" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+
+          echo "Running: python -u scripts/run_dyler.py $ARGS"
+          python -u scripts/run_dyler.py $ARGS
