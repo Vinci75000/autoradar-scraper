@@ -93,3 +93,6 @@ backup_de_*.json
 .DS_Store
 .vscode/
 .idea/
+
+# Recon artifacts (regenerable via scripts/recon_eu.py)
+docs/recon_*.csv
