@@ -33,6 +33,9 @@ dette technique trackée mai 2026.
 BRAND_REGISTRY = {
     # ── Marques composées (matchées en priorité, étape 2 de l'algo) ──
     "mercedes-benz":  "Mercedes-Benz",
+    "mercedes-amg":   "Mercedes-AMG",
+    "mercedes amg":   "Mercedes-AMG",
+    "amg":            "Mercedes-AMG",
     "land rover":     "Land Rover",
     "range rover":    "Range Rover",
     "alfa romeo":     "Alfa Romeo",
@@ -149,6 +152,8 @@ BRAND_REGISTRY = {
     "oldsmobile":     "Oldsmobile",
     "auburn":         "Auburn",
     "international":   "International",
+    "shelby":          "Shelby",
+    "shelby american": "Shelby",
 
     # ── Modernes / Électriques ──
     "tesla":          "Tesla",
