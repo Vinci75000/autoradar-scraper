@@ -69,3 +69,27 @@ snapshots/
 
 *.bak
 *.bak_*
+
+__pycache__/
+*.pyc
+.pytest_cache/
+backfill_*.log
+backup_*.json
+*.bak
+*.before_*
+backup_de_*.json
+.DS_Store
+.vscode/
+.idea/
+
+__pycache__/
+*.pyc
+.pytest_cache/
+backfill_*.log
+backup_*.json
+*.bak
+*.before_*
+backup_de_*.json
+.DS_Store
+.vscode/
+.idea/
