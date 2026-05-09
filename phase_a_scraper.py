@@ -710,12 +710,19 @@ class SourceScraper:
         if isinstance(model_full, dict):
             model_full = model_full.get("name", "") or ""
         model_full = str(model_full).strip()
-        mod_short = model_full.split()[0] if model_full else ""
+
+        # Use canonical normalize_make_model (handles 2-word brands: Aston Martin,
+        # Land Rover, Alfa Romeo, etc.) and AMG re-classification.
+        full_title = f"{brand} {model_full}".strip() if brand else model_full
+        mk_canonical, mo_canonical = normalize_make_model(full_title)
+        mk_final = mk_canonical if mk_canonical and mk_canonical != "Inconnue" else None
+        mo_final = mo_canonical or model_full
+        mod_short = mo_final.split()[0] if mo_final else ""
 
         return {
-            "mk":  normalize_brand(brand),
+            "mk":  mk_final,
             "mod": mod_short,
-            "mo":  model_full,
+            "mo":  mo_final,
             "yr":  parse_year(yr) or parse_int(yr),
             "km":  parse_int(km),
             "px":  parse_int(offers.get("price")),
