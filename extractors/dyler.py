@@ -352,7 +352,7 @@ class DylerExtractor(Extractor):
 
     @staticmethod
     def _normalize_fuel(value: Optional[str]) -> Optional[str]:
-        if not value:
+        if not value or value.strip().upper() == "N/A":
             return None
         v = value.lower().strip()
         for keyword, normalized in _FUEL_NORMALIZE:
@@ -362,7 +362,7 @@ class DylerExtractor(Extractor):
 
     @staticmethod
     def _normalize_gearbox(value: Optional[str]) -> Optional[str]:
-        if not value:
+        if not value or value.strip().upper() == "N/A":
             return None
         v = value.lower().strip()
         for keyword, normalized in _GEARBOX_NORMALIZE:

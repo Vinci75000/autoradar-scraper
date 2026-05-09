@@ -187,3 +187,37 @@ def test_build_car_from_soup_jaguar_e_type():
     assert car.raw["color"] == "Red"
     assert car.raw["steering_wheel"] == "LHD"
     assert "vin" not in car.raw  # 'N/A' stripped
+
+# ---------- _normalize_fuel / _normalize_gearbox: N/A handling ----------
+
+def test_normalize_fuel_returns_none_on_na():
+    assert DylerExtractor._normalize_fuel("N/A") is None
+    assert DylerExtractor._normalize_fuel("n/a") is None
+    assert DylerExtractor._normalize_fuel("  N/A  ") is None
+
+
+def test_normalize_fuel_returns_none_on_empty():
+    assert DylerExtractor._normalize_fuel(None) is None
+    assert DylerExtractor._normalize_fuel("") is None
+
+
+def test_normalize_fuel_passes_real_values():
+    assert DylerExtractor._normalize_fuel("Diesel") == "Diesel"
+    assert DylerExtractor._normalize_fuel("Petrol") is not None
+
+
+def test_normalize_gearbox_returns_none_on_na():
+    assert DylerExtractor._normalize_gearbox("N/A") is None
+    assert DylerExtractor._normalize_gearbox("n/a") is None
+    assert DylerExtractor._normalize_gearbox("  N/A  ") is None
+
+
+def test_normalize_gearbox_returns_none_on_empty():
+    assert DylerExtractor._normalize_gearbox(None) is None
+    assert DylerExtractor._normalize_gearbox("") is None
+
+
+def test_normalize_gearbox_passes_real_values():
+    assert DylerExtractor._normalize_gearbox("Automatic") is not None
+    assert DylerExtractor._normalize_gearbox("Manual") is not None
+
