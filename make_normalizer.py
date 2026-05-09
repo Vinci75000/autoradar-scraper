@@ -24,6 +24,9 @@ dans scraper.py) et normalize_brand (dans phase_a_scraper.py). Voir
 dette technique trackée mai 2026.
 """
 
+import re
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # RÉFÉRENTIEL CANONIQUE
 # ═══════════════════════════════════════════════════════════════════════════
@@ -188,10 +191,62 @@ _SIMPLE_ALIASES = [
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# RE-CLASSIFICATION AMG
+# ═══════════════════════════════════════════════════════════════════════════
+# Distingue les vraies AMG ("C 63 AMG", "GT R", "SLS AMG") des packs trim
+# "AMG Line" / "AMG-Line" qui sont juste esthétiques.
+
+_AMG_GENUINE_RE = re.compile(r'\bAMG\b(?!\s*-?\s*LINE)', re.IGNORECASE)
+
+
+def _is_genuine_amg(mo):
+    """True si mo contient AMG en tant que désignation de modèle.
+
+    Examples:
+        >>> _is_genuine_amg("C 63 AMG")
+        True
+        >>> _is_genuine_amg("C 220 AMG-Line")
+        False
+        >>> _is_genuine_amg("GLE 45 AMG 4MATIC")
+        True
+        >>> _is_genuine_amg("E 200 AMG Line")
+        False
+    """
+    if not mo:
+        return False
+    return bool(_AMG_GENUINE_RE.search(mo))
+
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # API PUBLIQUE
 # ═══════════════════════════════════════════════════════════════════════════
 
 def normalize_make_model(raw_title):
+    """Extrait et normalise (mk, mo), avec re-classification AMG.
+
+    Wrapper public sur _normalize_make_model_raw. Applique la règle :
+    si la marque canonique est 'Mercedes-Benz' et le modèle contient
+    'AMG' en tant que désignation de modèle (pas trim 'AMG Line' /
+    'AMG-Line'), on reclasse en 'Mercedes-AMG'.
+
+    Examples:
+        >>> normalize_make_model("Mercedes-Benz C 63 AMG")
+        ('Mercedes-AMG', 'C 63 AMG')
+        >>> normalize_make_model("Mercedes C 220 AMG Line")
+        ('Mercedes-Benz', 'C 220 AMG Line')
+        >>> normalize_make_model("Mercedes-Benz SLS AMG")
+        ('Mercedes-AMG', 'SLS AMG')
+        >>> normalize_make_model("Audi RS6")
+        ('Audi', 'RS6')
+    """
+    canonical, remainder = _normalize_make_model_raw(raw_title)
+    if canonical == "Mercedes-Benz" and _is_genuine_amg(remainder):
+        canonical = "Mercedes-AMG"
+    return (canonical, remainder)
+
+
+def _normalize_make_model_raw(raw_title):
     """Extrait et normalise (mk, mo) depuis un titre brut.
 
     Args:

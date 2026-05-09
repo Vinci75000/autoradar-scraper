@@ -66,6 +66,25 @@ TESTS = [
     # ── Étape 6 : fallback titlecase ──
     ("inconnu pourri",       "hjujhhzt7u",                    "Hjujhhzt7U",    ""),
     ("inconnu deux mots",    "Babasse Carmodel",              "Babasse",       "Carmodel"),
+
+    # ── Étape 7 : Re-classification AMG (Sprint A4.1.1) ──
+    ("AMG c63 plain",            "Mercedes-Benz C 63 AMG",            "Mercedes-AMG",   "C 63 AMG"),
+    ("AMG c63 short alias",      "Mercedes C 63 AMG",                 "Mercedes-AMG",   "C 63 AMG"),
+    ("AMG sls",                  "Mercedes-Benz SLS AMG",             "Mercedes-AMG",   "SLS AMG"),
+    ("AMG gle 45 4matic",        "Mercedes-Benz GLE 45 AMG 4MATIC",   "Mercedes-AMG",   "GLE 45 AMG 4MATIC"),
+    ("AMG e63 s",                "Mercedes E 63 AMG S",               "Mercedes-AMG",   "E 63 AMG S"),
+    ("AMG g63 with chassis",     "Mercedes G 63 AMG (W463)",          "Mercedes-AMG",   "G 63 AMG (W463)"),
+    ("AMG-Line dash trim",       "Mercedes-Benz C 220 AMG-Line",      "Mercedes-Benz",  "C 220 AMG-Line"),
+    ("AMG-Line space trim",      "Mercedes-Benz C 220 AMG Line",      "Mercedes-Benz",  "C 220 AMG Line"),
+    ("AMG-line lowercase",       "Mercedes-Benz E 200 AMG-line",      "Mercedes-Benz",  "E 200 AMG-line"),
+    ("Mercedes no AMG",          "Mercedes-Benz C 200",               "Mercedes-Benz",  "C 200"),
+    ("Audi unaffected",          "Audi RS6",                          "Audi",           "RS6"),
+    ("BMW unaffected",           "BMW M5",                            "BMW",            "M5"),
+    ("AMG direct GT R",          "AMG GT R",                          "Mercedes-AMG",   "GT R"),
+    ("AMG direct via composé",   "Mercedes-AMG GT",                   "Mercedes-AMG",   "GT"),
+    ("AMG-Line + AMG genuine",   "Mercedes-Benz C 220 AMG-Line AMG Sport", "Mercedes-AMG",   "C 220 AMG-Line AMG Sport"),
+    ("Mercedes empty mo",        "Mercedes-Benz",                     "Mercedes-Benz",  ""),
+    ("AMG substring no boundary","Mercedes-Benz xRAMGx",              "Mercedes-Benz",  "xRAMGx"),
 ]
 
 
