@@ -15,6 +15,8 @@ feature_extractor) is agnostic to the source.
 """
 from __future__ import annotations
 
+import hashlib
+import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -35,7 +37,8 @@ class CarListing:
     src: str  # source slug (matches sources.slug)
 
     mk: Optional[str] = None  # make
-    mo: Optional[str] = None  # model
+    mo: Optional[str] = None  # model (full variant string)
+    mod: Optional[str] = None  # short model (subset of mo, e.g. "911" vs "911 Carrera 4S")
     yr: Optional[int] = None  # year
     km: Optional[int] = None  # mileage
     px: Optional[float] = None  # price
@@ -45,9 +48,24 @@ class CarListing:
     ci: Optional[str] = None  # city
     co: Optional[str] = None  # country code (ISO 3166-1 alpha-2: de, fr, ch)
     de: Optional[str] = None  # description (LLM fuel — coverage matters)
+    age_label: Optional[str] = None  # human-readable age bucket (legacy field)
+    ow: int = 1  # number of owners (default 1, matches legacy CarListing)
 
     photos: list[str] = field(default_factory=list)
+    opts: list = field(default_factory=list)  # list of options/equipment tags
     raw: dict = field(default_factory=dict)  # source-specific payload kept for debug
+
+    def fingerprint(self) -> str:
+        """Deduplicate: same car on multiple sources (L2 dedup).
+
+        Hashes mk + first 12 chars of mo + yr + km bucketed to 5000.
+        Returns 12-char MD5 hex. Defensive: None-safe on all fields.
+        Mirror of legacy scraper.py:CarListing.fingerprint() with None handling.
+        """
+        norm = lambda s: re.sub(r"[^a-z0-9]", "", (s or "").lower())
+        km_bucket = round((self.km or 0) / 5000) * 5000
+        raw = f"{norm(self.mk)}{norm((self.mo or '')[:12])}{self.yr or 0}{km_bucket}"
+        return hashlib.md5(raw.encode()).hexdigest()[:12]
 
     def __repr__(self) -> str:
         return f"CarListing({self.src}:{self.mk} {self.mo} {self.yr} {self.px}{self.cu})"
