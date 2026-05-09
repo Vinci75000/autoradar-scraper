@@ -19,9 +19,9 @@ on:
   workflow_dispatch:
     inputs:
       limit:
-        description: 'Cars max (vide = tous, ~25k pour full run)'
+        description: 'Cars max (default 99999 = full sitemap)'
         required: false
-        default: ''
+        default: '99999'
       dry_run:
         description: 'Dry-run (extract only, NO insert)'
         type: boolean
