@@ -136,22 +136,6 @@ def test_extract_fields_country_with_flag_icon():
 
 # ---------- _normalize_* ----------
 
-def test_normalize_brand_alfa_romeo():
-    assert DylerExtractor._normalize_brand("alfa-romeo") == "Alfa Romeo"
-
-
-def test_normalize_brand_bmw_uppercase():
-    assert DylerExtractor._normalize_brand("bmw") == "BMW"
-
-
-def test_normalize_brand_citroen_accent():
-    assert DylerExtractor._normalize_brand("citroen") == "Citroën"
-
-
-def test_normalize_brand_unknown_titlecase():
-    assert DylerExtractor._normalize_brand("jaguar") == "Jaguar"
-
-
 def test_normalize_fuel_petrol():
     assert DylerExtractor._normalize_fuel("Petrol") == "Essence"
 

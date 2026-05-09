@@ -23,6 +23,8 @@ HTML enrichment:
 from __future__ import annotations
 
 import logging
+
+from make_normalizer import normalize_make_model
 import re
 import time
 from typing import Optional
@@ -60,31 +62,6 @@ _COUNTRY_ISO = {  # lowercase ISO 3166-1 alpha-2
     "Ukraine": "ua", "United Kingdom": "gb", "Vatican City": "va",
     "United States": "us", "Canada": "ca", "Australia": "au", "Japan": "jp",
     "New Zealand": "nz",
-}
-
-_BRAND_CANONICAL = {
-    "alfa-romeo": "Alfa Romeo",
-    "aston-martin": "Aston Martin",
-    "land-rover": "Land Rover",
-    "range-rover": "Land Rover",
-    "mercedes-benz": "Mercedes-Benz",
-    "rolls-royce": "Rolls-Royce",
-    "de-tomaso": "De Tomaso",
-    "iso-rivolta": "Iso Rivolta",
-    "bmw": "BMW",
-    "audi": "Audi",
-    "vw": "Volkswagen",
-    "volkswagen": "Volkswagen",
-    "citroen": "Citroën",
-    "citroën": "Citroën",
-    "peugeot": "Peugeot",
-    "renault": "Renault",
-    "mclaren": "McLaren",
-    "ds": "DS",
-    "mg": "MG",
-    "amc": "AMC",
-    "gmc": "GMC",
-    "ac": "AC",
 }
 
 _FUEL_NORMALIZE = [
@@ -212,7 +189,7 @@ class DylerExtractor(Extractor):
             logger.warning(f"dyler: URL pattern mismatch {url}, skipping")
             return None
         make_slug, model_slug, year, listing_id = url_data
-        car.mk = self._normalize_brand(make_slug)
+        car.mk, _ = normalize_make_model(make_slug)
         car.mo = model_slug.replace("-", " ").title()
         car.yr = year
 
@@ -222,6 +199,10 @@ class DylerExtractor(Extractor):
         # 3. Override mo with full Model string (richer)
         if model_full := fields.get("Model"):
             car.mo = model_full[:120]
+
+        # 3.5. Re-apply normalizer with full mk + mo context.
+        # Activates AMG reclassification (Mercedes-Benz + "C 63 AMG" -> Mercedes-AMG).
+        car.mk, _ = normalize_make_model(f"{car.mk} {car.mo}")
 
         # 4. Mileage -> km. REQUIRED: skip car if missing (calculate_score needs it).
         km = self._mileage_to_km(fields.get("Mileage"))
@@ -365,15 +346,6 @@ class DylerExtractor(Extractor):
             except ValueError:
                 return None
         return None
-
-    @staticmethod
-    def _normalize_brand(slug: Optional[str]) -> Optional[str]:
-        if not slug:
-            return None
-        slug_lower = slug.lower()
-        if mapped := _BRAND_CANONICAL.get(slug_lower):
-            return mapped
-        return slug.replace("-", " ").title()
 
     @staticmethod
     def _normalize_fuel(value: Optional[str]) -> Optional[str]:
