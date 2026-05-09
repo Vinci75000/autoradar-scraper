@@ -436,27 +436,8 @@ DELAY_BETWEEN_REQUESTS = 1.5
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Brand / fuel / gear normalization
+# Fuel / gear normalization
 # ═══════════════════════════════════════════════════════════════════════════
-BRAND_ALIASES = {
-    "vw": "Volkswagen", "volkswagen": "Volkswagen",
-    "mercedes-benz": "Mercedes", "mercedes benz": "Mercedes", "mb": "Mercedes",
-    "land-rover": "Land Rover", "landrover": "Land Rover",
-    "rolls-royce": "Rolls-Royce", "rollsroyce": "Rolls-Royce",
-    "alfa-romeo": "Alfa Romeo", "alfa romeo": "Alfa Romeo",
-    "aston-martin": "Aston Martin", "aston martin": "Aston Martin",
-    "abarth": "Abarth", "fiat": "Fiat", "ferrari": "Ferrari", "porsche": "Porsche",
-    "bmw": "BMW", "audi": "Audi", "lexus": "Lexus", "toyota": "Toyota",
-    "lamborghini": "Lamborghini", "mclaren": "McLaren", "bentley": "Bentley",
-    "maserati": "Maserati", "jaguar": "Jaguar", "bugatti": "Bugatti",
-    "pagani": "Pagani", "koenigsegg": "Koenigsegg",
-    "renault": "Renault", "peugeot": "Peugeot", "citroen": "Citroën", "citroën": "Citroën",
-    "alpine": "Alpine", "lotus": "Lotus", "morgan": "Morgan",
-    "mini": "MINI", "smart": "Smart",
-    "cadillac": "Cadillac", "chevrolet": "Chevrolet", "dodge": "Dodge",
-    "ford": "Ford", "pontiac": "Pontiac", "buick": "Buick", "lincoln": "Lincoln",
-}
-
 FUEL_NORMALIZE = {
     "gasoline": "Essence", "petrol": "Essence", "essence": "Essence",
     "diesel": "Diesel", "gazole": "Diesel",
@@ -471,11 +452,6 @@ GEAR_NORMALIZE = {
     "semi-auto": "Automatique", "tiptronic": "Automatique", "dsg": "Automatique",
     "pdk": "Automatique", "f1": "Automatique",
 }
-
-
-def normalize_brand(s):
-    if not s: return None
-    return BRAND_ALIASES.get(s.strip().lower(), s.strip().title())
 
 
 def normalize_fuel(s):
