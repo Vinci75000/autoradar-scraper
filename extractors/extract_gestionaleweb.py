@@ -532,6 +532,8 @@ def extract_from_detail(html: str, url: str) -> Optional[CarItem]:
     Extrait une CarItem d'une page détail.
 
     Priorité JSON-LD (Vehicle ou Product schema), fallback HTML heuristique.
+    Enrichit ensuite les fields manquants via parsers HTML body (cavauto
+    quick_facts, autoluce Elementor red-label spans).
     Filtre les motos/scooters (helper _is_likely_motorcycle) car certains dealers
     multi-véhicules (ex: Ruote da Sogno) mélangent cars et motos sous /veicolo/.
     """
@@ -540,6 +542,7 @@ def extract_from_detail(html: str, url: str) -> Optional[CarItem]:
         car = _try_html_fallback(html, url)
     if not car:
         return None
+    car = _enrich_from_html(car, html)
     if _is_likely_motorcycle(f"{car.mk or ''} {car.mod or ''}", car.de or ""):
         logger.info("Skip motorcycle url=%s title=%r", url, f"{car.mk} {car.mod}")
         return None
@@ -662,6 +665,148 @@ _DUAL_BRAND_CAR_EXCEPTIONS = frozenset({
     "cr-v", "cr-z", "hr-v", "br-v",
     # Add more known false positives here as we observe them in the wild
 })
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# HTML body parsers (3rd / 4th style) — enrichissement post-JSON-LD/fallback
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _extract_quick_facts(html: str) -> dict:
+    """
+    Cavauto-style block:
+        <div class="quick_facts auto">
+          <div class="el km"><div class="icon">…</div><span class="value">0KM</span></div>
+          <div class="el cv">…<span class="value">420 CV</span></div>
+          <div class="el type">…<span class="value">benzina</span></div>
+        </div>
+
+    Returns:
+        Dict {key_lowercase: value_str}, e.g. {'km': '0KM', 'cv': '420 CV', 'type': 'benzina'}.
+        Empty if no match.
+    """
+    out: dict = {}
+    pattern = re.compile(
+        r'<div class="el ([a-z_]+)"[^>]*>'
+        r'(?:(?!<div class="el ).)*?'
+        r'<span class="value">([^<]+)</span>',
+        re.DOTALL,
+    )
+    for m in pattern.finditer(html):
+        key = m.group(1).lower()
+        val = m.group(2).strip()
+        if val:
+            out[key] = val
+    return out
+
+
+def _extract_elementor_p_spans(html: str) -> dict:
+    """
+    Autoluce-style block (Elementor + red-label spans):
+        <p>
+          <span style="color: #cc0000;">ANNO</span>: 2022<br />
+          <span style="color: #cc0000;">CHILOMETRI</span>: &#8211;<br />
+          <span style="color: #cc0000;">ALIMENTAZIONE</span>: BENZINA/PETROL<br />
+          <span style="color: #cc0000;">CAMBIO</span>: Automatico<br />
+        </p>
+
+    Returns:
+        Dict {label_lowercase: value_str}, e.g. {'anno': '2022', 'cambio': 'Automatico'}.
+        Skips fields where value is "—" / "&#8211;" (en-dash = "non communiqué").
+    """
+    out: dict = {}
+    pattern = re.compile(
+        r'<span[^>]*color:\s*#cc0000[^>]*>([^<]+)</span>:?\s*([^<]*)<',
+        re.IGNORECASE,
+    )
+    for m in pattern.finditer(html):
+        label = m.group(1).strip().lower().rstrip(":")
+        value = (
+            m.group(2)
+            .replace("&#8211;", "—")
+            .replace("&#8212;", "—")
+            .replace("&nbsp;", " ")
+            .strip()
+        )
+        # Skip empty / placeholder values
+        if value and value not in ("—", "-", "n/a", "n/d", "nd"):
+            out[label] = value
+    return out
+
+
+def _enrich_from_html(car: "CarItem", html: str) -> "CarItem":
+    """
+    Fill missing fields on an already-parsed CarItem using HTML body parsers.
+
+    Used after JSON-LD or _try_html_fallback to capture data those parsers
+    couldn't see (cavauto quick_facts only in HTML body, autoluce Elementor
+    red-label spans).
+
+    Mutates and returns the same CarItem (for chaining).
+    """
+    qf = _extract_quick_facts(html)
+    el = _extract_elementor_p_spans(html)
+
+    if not qf and not el:
+        return car
+
+    # ── km ─────────────────────────────────────────────────────────────
+    if car.km is None:
+        # cavauto: <div class="el km"><span class="value">0KM</span></div>
+        if "km" in qf:
+            m = re.search(r"\d[\d.,\s]*", qf["km"])
+            if m:
+                try:
+                    car.km = int(m.group().replace(".", "").replace(",", "").replace(" ", ""))
+                except ValueError:
+                    pass
+        # autoluce: chilometri / km label
+        if car.km is None:
+            for k in ("chilometri", "km", "kilometri", "kilométrage"):
+                if k in el:
+                    m = re.search(r"\d[\d.,\s]*", el[k])
+                    if m:
+                        try:
+                            car.km = int(m.group().replace(".", "").replace(",", "").replace(" ", ""))
+                            break
+                        except ValueError:
+                            continue
+
+    # ── yr ─────────────────────────────────────────────────────────────
+    if car.yr is None:
+        for k in ("anno", "année", "year", "immatricolazione"):
+            if k in el:
+                m = re.search(r"\d{4}", el[k])
+                if m:
+                    try:
+                        y = int(m.group())
+                        if 1900 <= y <= 2100:
+                            car.yr = y
+                            break
+                    except ValueError:
+                        continue
+
+    # ── fu (carburant) ─────────────────────────────────────────────────
+    if car.fu is None:
+        # cavauto: type
+        if "type" in qf:
+            car.fu = _extract_fuel(qf["type"])
+        # autoluce: alimentazione
+        if car.fu is None:
+            for k in ("alimentazione", "carburante", "combustibile", "fuel"):
+                if k in el:
+                    car.fu = _extract_fuel(el[k])
+                    if car.fu:
+                        break
+
+    # ── ge (boîte) ─────────────────────────────────────────────────────
+    if car.ge is None:
+        for k in ("cambio", "transmission", "gearbox"):
+            if k in el:
+                car.ge = _extract_gearbox(el[k])
+                if car.ge:
+                    break
+
+    return car
 
 
 def _try_jsonld(html: str, url: str) -> Optional[CarItem]:
