@@ -113,15 +113,19 @@ SUSPICIOUS_MAKES = {
 CANONICAL_BRANDS = set(BRAND_REGISTRY.values())
 
 
-def get_listing_tier(yr_int: int, px_int: int) -> str:
+def get_listing_tier(yr_int: int, px_int) -> str:
     """
     Classification d'une annonce pour tagging / affichage.
 
     Priorité : collector > hypercar > supercar > luxury > standard.
     Une voiture ≥ 25 ans est marquée "collector" quel que soit son prix.
+    POA listing (px_int=None) : "collector" si ≥ 25 ans, sinon "standard"
+    (pas de signal prix → tier le plus permissif). Sprint A4-Italy / C1.3.
     """
     if (CURRENT_YEAR - yr_int) >= COLLECTOR_AGE:
         return "collector"
+    if px_int is None:
+        return "standard"  # POA — no price signal to tier on
     if px_int >= PRICE_HYPERCAR_FLOOR:
         return "hypercar"
     if px_int >= PRICE_SUPERCAR_FLOOR:
@@ -136,6 +140,23 @@ def get_listing_tier(yr_int: int, px_int: int) -> str:
 # Standard/luxury : 5 paliers, fusionne les 3 premiers paliers premium.
 KM_TIERS = ['zero_km', 'as_new', 'low_km', 'moderate', 'well_used', 'high_km', 'very_high_km']
 PREMIUM_TIERS = {'supercar', 'hypercar', 'collector'}
+
+
+# ─── POA (Price On Application) keywords — multilingual EU markets ───
+# Sprint A4-Italy / C1 — see migrations/2026_05_10_drop_notnull_px.sql
+# When px=None and any of these markers appear in the listing text,
+# the listing is admitted as a legitimate "price on request" entry
+# (Ferrari su richiesta, McLaren P1 POA, Mercedes A160 prix sur demande, etc.).
+# This constant is mirrored in phase_a_scraper.py (separate gate, same intent).
+_POA_KEYWORDS = (
+    'su richiesta',           # IT
+    'poa',                    # EN abbreviation
+    'price on application',   # EN full
+    'preis auf anfrage',      # DE
+    'prix sur demande',       # FR
+    'on request',             # EN generic
+    'sur demande',            # FR fallback
+)
 
 
 def get_km_tier(km_int, listing_tier: str) -> str:
@@ -205,17 +226,28 @@ def validate_listing(data) -> tuple:
     if mk not in CANONICAL_BRANDS:
         return False, f"marque hors registry: '{mk}'"
 
-    try:
-        px_int = int(px)
-    except (TypeError, ValueError):
-        return False, f"prix invalide: '{px}'"
+    # Price validation — tolerate px=None for POA listings (Sprint A4-Italy / C1)
+    # px_int is None when px is None and the listing is admitted as POA.
+    # Downstream tier/cohérence checks must skip when px_int is None.
+    px_int = None
+    if px is None:
+        de = (g('de') or '').strip()
+        poa_text = (full_title + ' ' + mo + ' ' + de).lower()
+        if not any(k in poa_text for k in _POA_KEYWORDS):
+            return False, f"prix invalide: '{px}'"
+        # POA accepted — bypass numeric range checks (px_int stays None)
+    else:
+        try:
+            px_int = int(px)
+        except (TypeError, ValueError):
+            return False, f"prix invalide: '{px}'"
 
-    if px_int < 500:
-        return False, f"prix trop bas (probable pièce): {px_int}€"
+        if px_int < 500:
+            return False, f"prix trop bas (probable pièce): {px_int}€"
 
-    # Plafond absolu — s'applique aussi aux collectors
-    if px_int > PRICE_HARD_CAP:
-        return False, f"prix au-delà du plafond ({PRICE_HARD_CAP:,}€): {px_int}€"
+        # Plafond absolu — s'applique aussi aux collectors
+        if px_int > PRICE_HARD_CAP:
+            return False, f"prix au-delà du plafond ({PRICE_HARD_CAP:,}€): {px_int}€"
 
     # Année (parsée maintenant pour pouvoir détecter le collector avant le check tier)
     try:
@@ -231,8 +263,8 @@ def validate_listing(data) -> tuple:
     # Override collector : voiture ≥ 25 ans → check tier bypassé.
     is_collector = (CURRENT_YEAR - yr_int) >= COLLECTOR_AGE
 
-    # Validation cohérence prix ↔ marque (sauf collector)
-    if not is_collector:
+    # Validation cohérence prix ↔ marque (sauf collector et POA)
+    if not is_collector and px_int is not None:
         mk_norm = mk.lower().strip()
         if px_int >= PRICE_HYPERCAR_FLOOR:
             if mk_norm not in TIER_HYPERCAR:
@@ -259,7 +291,7 @@ def validate_listing(data) -> tuple:
             pass
 
     age = CURRENT_YEAR - yr_int
-    if age < 3 and px_int < 3000:
+    if px_int is not None and age < 3 and px_int < 3000:
         return False, f"voiture récente {yr_int} bradée: {px_int}€"
 
     return True, "ok"

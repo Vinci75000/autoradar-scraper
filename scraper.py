@@ -107,7 +107,8 @@ def calculate_score(car: CarListing, market_avg: Optional[int] = None) -> dict:
     km_per_yr = car.km / max(age, 1)
 
     # ── Prix (25 pts) ──
-    if market_avg:
+    # POA-aware: if market_avg or car.px is None, fall back to neutral score.
+    if market_avg and car.px is not None:
         ratio = car.px / market_avg
         if   ratio < 0.85: s_px = 25
         elif ratio < 0.95: s_px = 22
@@ -115,7 +116,7 @@ def calculate_score(car: CarListing, market_avg: Optional[int] = None) -> dict:
         elif ratio < 1.15: s_px = 12
         else:              s_px = 6
     else:
-        s_px = 16  # pas de référence
+        s_px = 16  # pas de référence (ou prix POA — Sprint A4-Italy / C1.3)
 
     # ── Mécanique / fiabilité (30 pts) ──
     s_me = max(10, 30 - int(km_per_yr / 3000))
@@ -214,7 +215,7 @@ def save_fingerprint(db: Client, car_id: str, car: CarListing):
         'mo_norm':  norm(car.mo[:20]),
         'yr_norm':  car.yr,
         'km_bucket':round(car.km / 5000) * 5000,
-        'px_bucket':round(car.px / 500) * 500,
+        'px_bucket': round(car.px / 500) * 500 if car.px is not None else None,
         'fp_hash':  car.fingerprint(),
     }).execute()
 
@@ -320,7 +321,7 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
             'confidence': 0.8,
         }).execute()
 
-        log.info(f'✓ Inserted: {car.mk} {car.mo} {car.yr} — score {score_data["sc"]} — {car.px}€')
+        log.info(f'✓ Inserted: {car.mk} {car.mo} {car.yr} — score {score_data["sc"]} — {car.px if car.px is not None else "POA"}€')
         return car_id
     return None
 
