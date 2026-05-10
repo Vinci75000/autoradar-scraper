@@ -178,6 +178,7 @@ BRAND_REGISTRY.update({
     # IT classics & ultra-rares
     "iso": "Iso",
     "autobianchi": "Autobianchi",
+    "innocenti": "Innocenti",
     "dallara": "Dallara",
     "de tomaso": "De Tomaso",
     "detomaso": "De Tomaso",

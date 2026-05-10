@@ -561,6 +561,28 @@ _MOTORCYCLE_KEYWORDS = (
     "motocross", "supermoto", "naked bike", "motorrad",
 )
 
+# Motorcycle model names from brands that ALSO make cars (Honda, Suzuki, BMW...)
+# Detected as 2nd token in title (after brand). Lowercase, exact match.
+# Source: collector classics most commonly seen at multi-vehicle dealers.
+_MOTORCYCLE_MODELS_DUAL_BRAND = frozenset({
+    # Honda motos
+    "cb", "cbr", "cbf", "cr", "crf", "vtr", "vtx", "vfr", "nsr", "rc30", "rc45",
+    "mtx", "msx", "monkey", "dax", "cub", "africa", "transalp", "shadow",
+    # Suzuki motos
+    "katana", "gsx", "gsxr", "gsx-r", "gs", "pe", "rm", "rmx", "rgv", "sv",
+    "tl", "dr", "vstrom", "intruder", "burgman", "bandit",
+    # BMW motos (R-series, K-series, S1000RR — distinct des modèles cars)
+    "r1", "r2", "r3", "r5", "r6", "r9", "r12", "r17", "r18", "r25", "r26",
+    "r27", "r45", "r50", "r60", "r65", "r75", "r80", "r90", "r100",
+    "k1", "k75", "k100", "k1100", "k1200", "k1300", "k1600",
+    "s1000rr", "s1000r", "s1000xr", "f650", "f700", "f750", "f800", "f850", "f900",
+    "g310", "g650", "hp2", "hp4",
+    # Kawasaki (mostly moto-only but sometimes parsed via 1st token)
+    "ninja", "zx", "zxr", "z1", "kxf", "klx", "klr", "versys",
+    # Generic moto markers
+    "scrambler", "café racer", "cafe racer", "trial", "enduro",
+})
+
 
 def _is_likely_motorcycle(title: str, description: str = "") -> bool:
     """
@@ -568,15 +590,78 @@ def _is_likely_motorcycle(title: str, description: str = "") -> bool:
     Description is intentionally ignored — pages of multi-vehicle dealers
     (cars + motos) often include menus or staff bios mentioning motorcycles
     that produce false positives on every car listing.
+
+    Layered detection:
+      1. Generic moto keywords ("motociclo", "scooter", " four "...)
+      2. Brand-only motos (Yamaha, Ducati, Vespa, Triumph...)
+      3. Dual-brand model markers (Honda CB, Suzuki Katana, BMW R75...)
     """
     text = (title or "").lower()
     if any(kw in text for kw in _MOTORCYCLE_KEYWORDS):
         return True
-    # Brands moto-only in first 4 tokens
-    head = " ".join(text.split()[:4])
+
+    # Tokenize title (stripping leading year if any)
+    tokens = text.split()
+    if tokens and re.fullmatch(r"(?:19[0-9]\d|20[0-3]\d)", tokens[0]):
+        tokens = tokens[1:]
+    if not tokens:
+        return False
+
+    # Dedup consecutive duplicate tokens : "Honda HONDA 750 Four" → "Honda 750 Four"
+    # Happens when title H1 + attrs Modèle override duplicates the brand.
+    deduped = [tokens[0]]
+    for t in tokens[1:]:
+        if t != deduped[-1]:
+            deduped.append(t)
+    tokens = deduped
+
+    # 'Four' / 'Sei' (Honda CB750 Four, Benelli Sei) = classic moto markers
+    # appearing right after a digit cylinder count.
+    if "four" in tokens[:5] or "sei" in tokens[:5]:
+        # Only flag if first token is a dual-brand maker (Honda/Suzuki/Kawasaki/Benelli already moto)
+        first = tokens[0] if tokens else ""
+        if first in ("honda", "suzuki", "kawasaki", "yamaha"):
+            return True
+
+    # Brand-only motos in first 4 tokens
+    head = " ".join(tokens[:4])
     if any(b in head for b in _MOTORCYCLE_BRANDS):
         return True
+
+    # Dual-brand model marker : 2nd token (just after brand) matches moto model.
+    # Strip / and - suffixes to handle "R75/5", "GSX-R", "F800-GS" etc.
+    if len(tokens) >= 2:
+        second_raw = tokens[1].rstrip(".,;:").strip("()")
+        # Exceptions explicites : cars Honda dont le préfixe matche un moto.
+        # Ex: 'CR-V', 'HR-V' — ne PAS flagger comme moto.
+        if second_raw in _DUAL_BRAND_CAR_EXCEPTIONS:
+            return False
+        second = re.split(r"[/\-]", second_raw)[0]
+        if second in _MOTORCYCLE_MODELS_DUAL_BRAND:
+            return True
+        # Match moto prefix immediately followed by digits (CB1300, GSX750, ZX10)
+        m = re.match(r"^([a-z]{2,4})\d{2,4}", second)
+        if m and m.group(1) in _MOTORCYCLE_MODELS_DUAL_BRAND:
+            return True
+
+        # BMW special : "R 1200 GS" / "K 100 RS" / "S 1000 RR" → 2 tokens espacés
+        first = tokens[0]
+        if first == "bmw" and len(tokens) >= 3:
+            combined = second_raw + tokens[2].rstrip(".,;:")
+            if re.match(r"^[rkfgs]\d{2,4}", combined):
+                return True
+            if re.match(r"^hp\d", combined):
+                return True
+
     return False
+
+
+# Cars dont le préfixe modèle pourrait matcher un nom moto (faux positif).
+# Ex: Honda CR-V (car) vs Honda CR (moto motocross).
+_DUAL_BRAND_CAR_EXCEPTIONS = frozenset({
+    "cr-v", "cr-z", "hr-v", "br-v",
+    # Add more known false positives here as we observe them in the wild
+})
 
 
 def _try_jsonld(html: str, url: str) -> Optional[CarItem]:
@@ -721,6 +806,24 @@ def _try_html_fallback(html: str, url: str) -> Optional[CarItem]:
         if label_el and value_el:
             attrs[label_el.get_text(strip=True).lower()] = value_el.get_text(strip=True)
 
+    # 2bis. Fallback : liste <li><strong>Label</strong>: Value</li>
+    # Style Forlini/GestionaleAuto (très répandu sur les dealers WP IT).
+    # Tolère la typo "<storng>" rencontrée chez Forlini.
+    if not attrs:
+        for li in soup.find_all("li"):
+            strong = li.find(["strong", "b", "storng"])
+            if not strong:
+                continue
+            label = strong.get_text(strip=True).rstrip(":").lower()
+            full_text = li.get_text(separator=" ", strip=True)
+            # Strip le label en début pour récupérer la valeur
+            if full_text.lower().startswith(label):
+                value = full_text[len(label):].lstrip(": \t").strip()
+            else:
+                value = full_text.replace(strong.get_text(strip=True), "", 1).lstrip(": \t").strip()
+            if label and value and len(value) < 200:
+                attrs[label] = value
+
     yr = _extract_year(title)
     km = None
     ci = None
@@ -731,8 +834,8 @@ def _try_html_fallback(html: str, url: str) -> Optional[CarItem]:
             if k in attrs:
                 mod = attrs[k]
                 break
-        # Year
-        for k in ("année", "anno", "year"):
+        # Year (Yoast: année/anno; Forlini: immatricolazione MM/YYYY)
+        for k in ("immatricolazione", "année", "anno", "year"):
             if k in attrs:
                 m = re.search(r"\d{4}", attrs[k])
                 if m:
@@ -741,9 +844,9 @@ def _try_html_fallback(html: str, url: str) -> Optional[CarItem]:
                     except ValueError:
                         pass
                 break
-        # km — including 'odomètre' (FR), 'odometro' (IT)
+        # km — including 'odomètre' (FR), 'odometro' (IT), 'chilometraggio'
         for k in ("odomètre", "odometro", "odometer", "kilométrage",
-                  "kilometri", "km", "mileage", "chilometri"):
+                  "kilometri", "km", "mileage", "chilometri", "chilometraggio"):
             if k in attrs:
                 m = re.search(r"\d[\d.,\s]*", attrs[k])
                 if m:
@@ -759,9 +862,8 @@ def _try_html_fallback(html: str, url: str) -> Optional[CarItem]:
                 ci = attrs[k]
                 break
 
-    # 3. Prix : sélecteur explicite Ruote da Sogno UNIQUEMENT.
-    # Ne pas faire de fallback texte : le footer contient souvent le capital
-    # social de la SRL (« Capitale sociale versato: € 2.215.000 ») qui pollue.
+    # 3. Prix : sélecteur explicite Ruote da Sogno > sélecteur Forlini-style fallback.
+    # Le fallback HTML évite le footer (Capitale sociale SRL, IVA, etc.).
     px = None
     price_el = soup.select_one("span.veicolo-price.price-eur") or soup.select_one(".price-eur")
     if price_el:
@@ -771,6 +873,8 @@ def _try_html_fallback(html: str, url: str) -> Optional[CarItem]:
                 px = int(m.group().replace(".", "").replace(",", "").replace(" ", ""))
             except ValueError:
                 pass
+    if px is None:
+        px = _extract_price_from_html(html)
 
     text = soup.get_text(" ", strip=True)
     if km is None:
@@ -778,8 +882,25 @@ def _try_html_fallback(html: str, url: str) -> Optional[CarItem]:
     if yr is None:
         yr = _extract_year(text)
 
-    fu = _extract_fuel(text)
-    ge = _extract_gearbox(text)
+    # Carburant : prioriser attrs (Alimentazione/Carburante) sinon fallback texte
+    fu = None
+    for k in ("alimentazione", "carburante", "combustibile", "fuel", "carburant"):
+        if k in attrs:
+            fu = _extract_fuel(attrs[k])
+            if fu:
+                break
+    if fu is None:
+        fu = _extract_fuel(text)
+
+    # Boîte : prioriser attrs (Cambio/Boîte de vitesses) sinon fallback texte
+    ge = None
+    for k in ("cambio", "boîte de vitesses", "transmission", "gearbox"):
+        if k in attrs:
+            ge = _extract_gearbox(attrs[k])
+            if ge:
+                break
+    if ge is None:
+        ge = _extract_gearbox(text)
 
     car = CarItem(
         mk=mk, mod=mod, yr=yr, km=km, px=px, fu=fu, ge=ge, ci=ci,
@@ -873,30 +994,92 @@ _YEAR_RX = re.compile(r"\b(19[0-9]\d|20[0-3]\d)\b")
 
 def _strip_title_suffix(title: str) -> str:
     """
-    Strip les suffixes italien typiques d'un titre Forlini/GestionaleWeb-style :
-    'PORSCHE 911 ... NUOVA usato 18169548' → 'PORSCHE 911 ... NUOVA'
+    Strip les suffixes typiques d'un titre Forlini/GestionaleWeb-style :
+    'PORSCHE 911 ... NUOVA usato 18169548' → 'PORSCHE 911 ...'
+    'AUDI A3 SPB 30 TFSI ... usato Elettrica/Benzina Grigio scuro' → 'AUDI A3 SPB 30 TFSI ...'
 
-    Patterns nettoyés :
-      - 'usato', 'usata', 'nuovo', 'nuova', 'km0', 'km zero' en fin
-      - ID numérique (séquence de chiffres ≥6 en fin, après usato/nuovo si présent)
-      - Whitespace excédentaire
+    Algo : trouve le 1er mot-bruit dans le title et truncate à partir de là.
+    Mots-bruit : statut (usato/nuovo/km 0), fuels (benzina/diesel/elettrica/...),
+    couleurs italiennes courantes (bianco/nero/grigio/...), aziendale/semestrale.
 
-    Conservatif : si le résultat est trop court (<2 tokens), retourne l'original.
+    Conservatif : si le résultat est trop court (<2 tokens) ou ne commence pas
+    par une marque connue, retourne l'original.
     """
     if not title:
         return title
     cleaned = title.strip()
+    # Strip ID numérique en fin (≥6 digits)
     cleaned = re.sub(r"\s+\d{6,}\s*$", "", cleaned)
-    cleaned = re.sub(
-        r"\s+(?:usato|usata|nuovo|nuova|km\s*0|km\s*zero|aziendale|semestrale)\s*$",
-        "",
-        cleaned,
-        flags=re.IGNORECASE,
-    )
-    cleaned = re.sub(r"\s+\d{6,}\s*$", "", cleaned)
+
+    tokens = cleaned.split()
+    truncate_at = None
+    for i, tok in enumerate(tokens):
+        tl = tok.lower().strip(".,;:")
+        # Mots-bruit qui marquent la fin du modèle réel
+        if tl in _NOISE_TOKENS:
+            truncate_at = i
+            break
+        # Patterns slash : "Elettrica/Benzina", "Elettrica/Diesel"
+        if "/" in tl and any(f in tl for f in ("benzina", "diesel", "elettrica", "metano", "gpl")):
+            truncate_at = i
+            break
+
+    if truncate_at is not None and truncate_at >= 2:
+        cleaned = " ".join(tokens[:truncate_at])
+
     if len(cleaned.split()) < 2:
         return title
     return cleaned
+
+
+# Mots-bruit dans les titres Forlini/Gestionale-style : statuts + fuels + couleurs italiennes
+_NOISE_TOKENS = frozenset({
+    # Statut véhicule
+    "usato", "usata", "nuovo", "nuova", "aziendale", "semestrale",
+    "km0", "km", "zero",
+    # Carburants (italien)
+    "benzina", "diesel", "elettrica", "elettrico", "metano", "gpl",
+    "ibrido", "ibrida",
+    # Couleurs italiennes courantes
+    "bianco", "bianca", "nero", "nera", "grigio", "grigia", "rosso",
+    "rossa", "blu", "azzurro", "azzurra", "verde", "argento",
+    "metallizzato", "metallizzata", "scuro", "scura", "chiaro", "chiara",
+    "perla", "perlato", "perlata", "marrone", "giallo", "gialla",
+    "arancione", "viola",
+})
+
+
+def _extract_price_from_html(html: str) -> Optional[int]:
+    """
+    Extrait le prix depuis le HTML brut, en évitant les bruits du footer
+    (capital social SRL, IVA, REA, etc.).
+
+    Stratégie : balaye le body (sans <script>/<style>), trouve les patterns
+    numériques associés à €, ignore ceux dont le contexte gauche contient
+    'capitale sociale', 'iva', 'p.iva', 'rea', 'capital social'. Retient le
+    premier candidat dans une plage raisonnable (500..10M€).
+    """
+    if not html:
+        return None
+    body = re.sub(r"<script.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
+    body = re.sub(r"<style.*?</style>", "", body, flags=re.DOTALL | re.IGNORECASE)
+    noise_ctx = ("capitale sociale", "capital social", "iva", "p.iva",
+                 "rea ", "rea:", "registro imprese", "p. iva")
+    for m in re.finditer(
+        r"(?:€\s*([0-9][0-9.,\s]{2,15})|([0-9][0-9.,\s]{2,15})\s*€)",
+        body,
+    ):
+        ctx = body[max(0, m.start() - 60):m.start()].lower()
+        if any(noise in ctx for noise in noise_ctx):
+            continue
+        num_str = m.group(1) or m.group(2)
+        try:
+            val = int(num_str.replace(".", "").replace(",", "").replace(" ", ""))
+        except ValueError:
+            continue
+        if 500 <= val <= 10_000_000:
+            return val
+    return None
 
 
 def _extract_price_eur(text: str) -> Optional[int]:
@@ -939,15 +1122,26 @@ def _extract_fuel(text: str) -> Optional[str]:
     if not text:
         return None
     t = text.lower()
-    if "elettr" in t or "electric" in t or re.search(r"\bev\b", t):
+
+    # Détection des combinaisons multi-carburant (MHEV/HEV/PHEV)
+    # Ex: "Elettrica/Benzina", "Elettrica+Diesel", "Hybrid Petrol"
+    is_electric = "elettr" in t or "electric" in t or re.search(r"\bev\b", t)
+    is_combustion = ("benzina" in t or "essence" in t or "gasoline" in t
+                     or "petrol" in t or "diesel" in t or "gasoil" in t)
+
+    # Hybride si on voit explicitement le mot OU électrique + thermique
+    # (contrainte cars_fu_check, cf memory B-quinquies + Sprint A3 fix transverse)
+    if any(x in t for x in ("hybrid", "ibrid", "phev", "plug-in", "plug in",
+                            "mhev", " hev")):
+        return "Hybride"
+    if is_electric and is_combustion:
+        return "Hybride"
+
+    if is_electric:
         return "Électrique"
     if "diesel" in t:
         return "Diesel"
-    # PHEV / Plug-in / Hybride — IMPORTANT : tous mappent vers "Hybride"
-    # (contrainte cars_fu_check, cf memory B-quinquies + Sprint A3 fix transverse)
-    if any(x in t for x in ("hybrid", "ibrid", "phev", "plug-in", "plug in")):
-        return "Hybride"
-    if "benzina" in t or "essence" in t or "gasoline" in t or "petrol" in t:
+    if is_combustion:
         return "Essence"
     return None
 

@@ -943,10 +943,11 @@ SOURCES: dict[str, SourceConfig] = {
                         "Shelby", "RAM", "Dodge", "Chrysler", "Militem", "Jeep"],
         "estimated_stock": 40,
         "scrape_method": "httpx_bs4",
-        "extraction": "jsonld",
+        "extraction": "gestionaleweb",
+        "url_pattern": r"/auto/[a-z0-9-]+/?$",
         "score_bonus": 5,
         "selectors": {},
-        "notes": "A4-Italy. WP+WC. JSON-LD Product attendu (pattern RS Monaco).",
+        "notes": "A4-Italy. WP + auto-sitemap.xml (cars-only, ~31 URLs). moto-sitemap.xml et noleggio-sitemap.xml ignorés via url_pattern. Pattern fiches: /auto/{slug}/.",
     },
 
     "omar-forlini": {
@@ -1060,9 +1061,11 @@ SOURCES: dict[str, SourceConfig] = {
                         "Mini", "Porsche"],
         "estimated_stock": 55,
         "scrape_method": "httpx_bs4",
+        "extraction": "gestionaleweb",
+        "url_pattern": r"/annunci/[a-z0-9-]+/?$",
         "score_bonus": 5,
         "selectors": {},
-        "notes": "A4-Italy manual_inspect. WP+Elementor+Intelligex hosting. URL /annunci/{slug}/. CSS a sniffer.",
+        "notes": "A4-Italy. WP + rental-sitemap.xml (~425 URLs mixtes auto+moto). Pattern fiches: /annunci/{slug}/. Filtre moto 3-couches actif.",
     },
 
     "luzzago-1975": {
