@@ -34,6 +34,7 @@ import logging
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Callable, Iterator, List, Literal, Optional
 from urllib.parse import urljoin, urlparse
 
@@ -784,6 +785,41 @@ def _enrich_from_html(car: "CarItem", html: str) -> "CarItem":
                             break
                     except ValueError:
                         continue
+
+    # ── yr fallback NEW car (Sprint A4-Italy / C2) ─────────────────────
+    # Cars neuves (cavauto "Nuovo", km=0) n'ont pas d'immatriculation,
+    # donc anno/année/year/immatricolazione absents. Tenter :
+    #   1. MY (model year) du slug URL : silverado-my25 → 2025
+    #   2. Fallback : année courante (signal "nuovo" présent → car neuve récente)
+    if car.yr is None:
+        is_new = False
+        # Détection "nuovo/nuova" ou "0 km" dans quick_facts ou elementor labels
+        for src in (qf, el):
+            for v in src.values():
+                if isinstance(v, str) and re.search(
+                    r"\b(nuov[ao]|km\s*0|0\s*km|0km)\b", v, re.IGNORECASE
+                ):
+                    is_new = True
+                    break
+            if is_new:
+                break
+
+        if is_new:
+            # 1. MY du slug URL (silverado-my25, golf_my2025, etc.)
+            if car.src_url:
+                my_match = re.search(r"[-_/]my[-_]?(\d{2,4})\b", car.src_url, re.IGNORECASE)
+                if my_match:
+                    yy = int(my_match.group(1))
+                    if 1900 <= yy <= 2100:        # 4-digit (my2025)
+                        car.yr = yy
+                    elif yy <= 30:                 # 2-digit modern (my25 → 2025)
+                        car.yr = 2000 + yy
+                    elif yy >= 50:                 # 2-digit last century (my98 → 1998)
+                        car.yr = 1900 + yy
+                    # 31..49 ambigu → laisse car.yr=None pour rejet propre
+            # 2. Fallback : année courante (car neuve récente)
+            if car.yr is None:
+                car.yr = datetime.now().year
 
     # ── fu (carburant) ─────────────────────────────────────────────────
     if car.fu is None:
