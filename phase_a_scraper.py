@@ -36,6 +36,13 @@ from dedup import DedupCache
 from make_normalizer import normalize_make_model
 from extractors.extract_segond import extract_segond_listing
 from extractors.extract_rivamedia import extract_rivamedia_rss
+from extractors.extract_gestionaleweb import (
+    probe as gestionaleweb_probe,
+    scrape_all as gestionaleweb_scrape_all,
+)
+from extractors.extract_carandclassic import (
+    scrape_all as carandclassic_scrape_all,
+)
 
 # ═══════════════════════════════════════════════════════════════════════════
 # RECON_V2 PATCHES
@@ -856,6 +863,16 @@ class SourceScraper:
             yield from self._scrape_rivamedia_rss(limit=limit, db=db)
             return
 
+        # === A4-Italy : 2 modes plateforme (gestionaleweb + carandclassic_aggregator) ===
+        if self.cfg.get("extraction") == "gestionaleweb":
+            yield from self._scrape_gestionaleweb(limit=limit, db=db)
+            return
+
+        if self.cfg.get("extraction") == "carandclassic_aggregator":
+            yield from self._scrape_carandclassic(limit=limit, db=db)
+            return
+        # === fin A4-Italy ===
+
         urls = self.discover_urls()
         self.log.info(f"discovered {len(urls)} URLs for {self.slug}")
 
@@ -988,6 +1005,194 @@ class SourceScraper:
                         continue
 
                     # L3 — content hash on the `de` field (structured signature)
+                    content_hash = cache.hash_content(car.get("de") or "")
+                    if cache.seen_content_hash(url, content_hash):
+                        cache.stats["skipped_content"] += 1
+                        rediscovered_urls.append(url)
+                        continue
+                    cache.stats["fetched"] += 1
+                    car["_content_hash"] = content_hash
+                    car["_dedup_cache"] = cache
+
+                # Apply config defaults (mirrors scrape_listing post-processing)
+                car["src"] = source_name
+                if not car.get("ci"): car["ci"] = self.cfg.get("city") or ""
+                if not car.get("co"): car["co"] = self.cfg.get("country") or "France"
+                if not car.get("lat"): car["lat"] = self.cfg.get("lat")
+                if not car.get("lng"): car["lng"] = self.cfg.get("lng")
+
+                yield car
+                yielded += 1
+        finally:
+            if cache and rediscovered_urls:
+                try:
+                    updated = cache.bump_seen_urls(rediscovered_urls)
+                    self.log.info(f"bumped last_seen_at on {updated} re-encountered URLs")
+                except Exception as e:
+                    self.log.warning(f"bump_seen_urls failed: {e}")
+            if cache:
+                try:
+                    cache.flush_stats()
+                    self.log.info(cache.summary())
+                except Exception as e:
+                    self.log.error(f"flush_stats failed: {e}")
+
+
+    def _scrape_gestionaleweb(self, *, limit=None, db=None):
+        """
+        GestionaleWeb-style adaptive scrape (RSS / sitemap / JSON-LD detail).
+        1 module = N dealers IT (Forlini pilote A4-Italy).
+        """
+        from dataclasses import asdict
+
+        base_url = self.cfg.get("base_url")
+        if not base_url:
+            self.log.warning(f"[{self.slug}] no base_url for gestionaleweb")
+            return
+
+        source_name = self.cfg["display_name"]
+
+        # Adapter : module attend une httpx.Response (resp.status_code, resp.headers, resp.text)
+        def http_get(url, timeout=12):
+            return self.client.get(url, timeout=timeout)
+
+        self.log.info(f"[gestionaleweb] probe for {self.slug}: {base_url}")
+        probe_result = gestionaleweb_probe(
+            base_url, http_get=http_get, url_pattern=self.cfg.get("url_pattern")
+        )
+        self.log.info(
+            f"[gestionaleweb] probe -> method={probe_result.method!r} "
+            f"discovered={probe_result.discovered_url!r} "
+            f"sample_count={probe_result.sample_count}"
+        )
+
+        if probe_result.method == "unknown":
+            self.log.warning(f"[{self.slug}] probe failed — no extraction strategy")
+            return
+
+        cache = None
+        if db is not None:
+            cache = DedupCache(db, source_name, source_slug=self.slug)
+            cache.load()
+
+        rediscovered_urls = []
+        yielded = 0
+
+        try:
+            for item in gestionaleweb_scrape_all(
+                base_url=base_url,
+                probe_result=probe_result,
+                http_get=http_get,
+                listings_url=self.cfg.get("listings_url"),
+                url_pattern=self.cfg.get("url_pattern"),
+                max_items=limit,
+            ):
+                if limit and yielded >= limit:
+                    break
+
+                car = asdict(item)
+                car.pop("fingerprint_hash", None)
+
+                url = car.get("src_url")
+                if not url:
+                    continue
+
+                if cache:
+                    cache.stats["urls_total"] += 1
+
+                    if cache.seen_url(url):
+                        cache.stats["skipped_url"] += 1
+                        rediscovered_urls.append(url)
+                        continue
+
+                    content_hash = cache.hash_content(car.get("de") or "")
+                    if cache.seen_content_hash(url, content_hash):
+                        cache.stats["skipped_content"] += 1
+                        rediscovered_urls.append(url)
+                        continue
+                    cache.stats["fetched"] += 1
+                    car["_content_hash"] = content_hash
+                    car["_dedup_cache"] = cache
+
+                # Apply config defaults (mirrors scrape_listing post-processing)
+                car["src"] = source_name
+                if not car.get("ci"): car["ci"] = self.cfg.get("city") or ""
+                if not car.get("co"): car["co"] = self.cfg.get("country") or "France"
+                if not car.get("lat"): car["lat"] = self.cfg.get("lat")
+                if not car.get("lng"): car["lng"] = self.cfg.get("lng")
+
+                yield car
+                yielded += 1
+        finally:
+            if cache and rediscovered_urls:
+                try:
+                    updated = cache.bump_seen_urls(rediscovered_urls)
+                    self.log.info(f"bumped last_seen_at on {updated} re-encountered URLs")
+                except Exception as e:
+                    self.log.warning(f"bump_seen_urls failed: {e}")
+            if cache:
+                try:
+                    cache.flush_stats()
+                    self.log.info(cache.summary())
+                except Exception as e:
+                    self.log.error(f"flush_stats failed: {e}")
+
+
+    def _scrape_carandclassic(self, *, limit=None, db=None):
+        """
+        Car and Classic aggregator scrape (multi-langue, filtre auto-only).
+        1 module = 1 dealer C&C absorbé via /user/ccts{id}.
+        """
+        from dataclasses import asdict
+
+        listings_url = self.cfg.get("listings_url")
+        if not listings_url:
+            self.log.warning(f"[{self.slug}] no listings_url for carandclassic_aggregator")
+            return
+
+        source_name = self.cfg["display_name"]
+
+        # Adapter : module attend une httpx.Response (resp.status_code, resp.headers, resp.text)
+        def http_get(url, timeout=12):
+            return self.client.get(url, timeout=timeout)
+
+        self.log.info(f"[carandclassic] fetching dealer page for {self.slug}: {listings_url}")
+
+        cache = None
+        if db is not None:
+            cache = DedupCache(db, source_name, source_slug=self.slug)
+            cache.load()
+
+        rediscovered_urls = []
+        yielded = 0
+
+        try:
+            for item in carandclassic_scrape_all(
+                listings_url=listings_url,
+                dealer_display_name=source_name,
+                dealer_city=self.cfg.get("city"),
+                http_get=http_get,
+                cars_only=True,
+                max_pages=self.cfg.get("max_pages_per_run", 50),
+            ):
+                if limit and yielded >= limit:
+                    break
+
+                car = asdict(item)
+                car.pop("fingerprint_hash", None)
+
+                url = car.get("src_url")
+                if not url:
+                    continue
+
+                if cache:
+                    cache.stats["urls_total"] += 1
+
+                    if cache.seen_url(url):
+                        cache.stats["skipped_url"] += 1
+                        rediscovered_urls.append(url)
+                        continue
+
                     content_hash = cache.hash_content(car.get("de") or "")
                     if cache.seen_content_hash(url, content_hash):
                         cache.stats["skipped_content"] += 1

@@ -166,6 +166,27 @@ BRAND_REGISTRY = {
     "nio":            "NIO",
 }
 
+# ═══════════════════════════════════════════════════════════════════════════
+# Sprint A4-Italy — extension BRAND_REGISTRY (8 marques + aliases)
+# ═══════════════════════════════════════════════════════════════════════════
+BRAND_REGISTRY.update({
+    # USA muscle / pickups (Cavauto)
+    "ram": "RAM",
+    "dodge ram": "RAM",
+    # IT modern rebadge
+    "militem": "Militem",
+    # IT classics & ultra-rares
+    "iso": "Iso",
+    "autobianchi": "Autobianchi",
+    "dallara": "Dallara",
+    "de tomaso": "De Tomaso",
+    "detomaso": "De Tomaso",
+    "de-tomaso": "De Tomaso",
+    "bizzarrini": "Bizzarrini",
+    # Britanniques classics
+    "bsa": "BSA",
+    "b.s.a.": "BSA",
+})
 
 # ═══════════════════════════════════════════════════════════════════════════
 # PRÉ-CALCULS (évalués une seule fois à l'import)
