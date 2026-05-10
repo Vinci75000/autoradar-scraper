@@ -483,6 +483,36 @@ def parse_year(s):
     m = re.search(r"\b(19\d{2}|20[0-3]\d)\b", str(s))
     return int(m.group(1)) if m else None
 
+# ═══════════════════════════════════════════════════════════════════════════
+# POA (Price On Application) keywords — multilingual (EU markets)
+# Sprint A4-Italy / C1 — see migrations/2026_05_10_drop_notnull_px.sql
+# ═══════════════════════════════════════════════════════════════════════════
+_POA_KEYWORDS = (
+    'su richiesta',           # IT
+    'poa',                    # EN abbreviation
+    'price on application',   # EN full
+    'preis auf anfrage',      # DE
+    'prix sur demande',       # FR
+    'on request',             # EN generic
+    'sur demande',            # FR fallback
+)
+
+
+def _is_valid_or_poa_price(px, mo: str = "", de: str = "", title: str = "") -> bool:
+    """
+    Return True if the price is acceptable for admission:
+      - a positive int >= 100 (sanity check), OR
+      - None when text fields contain a POA marker.
+
+    Rejects px=0 even with POA marker (likely scraping bug, not legitimate POA).
+    Rejects floats and strings (only int EUR accepted).
+    """
+    if px is None:
+        text = (str(mo or '') + ' ' + str(de or '') + ' ' + str(title or '')).lower()
+        return any(k in text for k in _POA_KEYWORDS)
+    if not isinstance(px, int) or isinstance(px, bool) or px < 100:
+        return False
+    return True
 
 # ═══════════════════════════════════════════════════════════════════════════
 # DICT -> CarListing CONVERTER
@@ -504,7 +534,8 @@ def dict_to_carlisting(d: dict):
         return None
     if km is None or not isinstance(km, int) or km < 0:
         return None
-    if not px or not isinstance(px, int) or px < 100:
+    # Price validation — tolerate px=None for POA listings (Sprint A4-Italy / C1)
+    if not _is_valid_or_poa_price(px, mo, d.get("de"), d.get("title")):
         return None
 
     mod = d.get("mod") or (mo.split()[0] if mo else "Unknown")
