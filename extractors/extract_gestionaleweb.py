@@ -1024,7 +1024,10 @@ def _strip_title_suffix(title: str) -> str:
             truncate_at = i
             break
 
-    if truncate_at is not None and truncate_at >= 2:
+    if truncate_at is not None:
+        # Si truncate donnerait < 2 tokens, retourner l'original
+        if truncate_at < 2:
+            return title
         cleaned = " ".join(tokens[:truncate_at])
 
     if len(cleaned.split()) < 2:
@@ -1035,7 +1038,7 @@ def _strip_title_suffix(title: str) -> str:
 # Mots-bruit dans les titres Forlini/Gestionale-style : statuts + fuels + couleurs italiennes
 _NOISE_TOKENS = frozenset({
     # Statut véhicule
-    "usato", "usata", "nuovo", "nuova", "aziendale", "semestrale",
+    "usato", "usata", "nuovo", "aziendale", "semestrale",
     "km0", "km", "zero",
     # Carburants (italien)
     "benzina", "diesel", "elettrica", "elettrico", "metano", "gpl",
