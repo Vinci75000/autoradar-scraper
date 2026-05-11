@@ -50,4 +50,4 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run classicdriver pipeline
-        run: python -u scripts/run_classicdriver.py
+        run: python -u scripts/run_classicdriver.py --limit 3000

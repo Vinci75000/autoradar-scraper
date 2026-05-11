@@ -352,23 +352,23 @@ class DylerExtractor(Extractor):
 
     @staticmethod
     def _normalize_fuel(value: Optional[str]) -> Optional[str]:
-        if not value or value.strip().upper() == "N/A":
+        if not value or value.strip().upper() in ("N/A", "OTHER", "UNKNOWN"):
             return None
         v = value.lower().strip()
         for keyword, normalized in _FUEL_NORMALIZE:
             if keyword in v:
                 return normalized
-        return value.strip().title()
+        return None
 
     @staticmethod
     def _normalize_gearbox(value: Optional[str]) -> Optional[str]:
-        if not value or value.strip().upper() == "N/A":
+        if not value or value.strip().upper() in ("N/A", "OTHER", "UNKNOWN"):
             return None
         v = value.lower().strip()
         for keyword, normalized in _GEARBOX_NORMALIZE:
             if keyword in v:
                 return normalized
-        return value.strip().title()
+        return None
 
     @staticmethod
     def _build_raw(fields: dict, soup: BeautifulSoup, listing_id: str) -> dict:
