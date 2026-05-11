@@ -92,6 +92,10 @@ class CarListing:
     lng:       float = None
     de:        Optional[str] = None  # description longue (B-quinquies)
 
+    # Phase 2 — Vue Enchères : is_auction flag + structured auction JSONB.
+    is_auction: bool = False
+    auction: Optional[dict] = None
+
     def fingerprint(self) -> str:
         """Deduplicate: same car on multiple sources"""
         norm = lambda s: re.sub(r'[^a-z0-9]', '', s.lower())
@@ -262,6 +266,8 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
         'status':    'active',
         'is_autoradar': False,
         'tuned_by': extract_tuner(car.mk, car.mo, getattr(car, 'de', None)),
+        'is_auction': getattr(car, 'is_auction', False),
+        'auction':    getattr(car, 'auction', None),
     }
 
     # ─── Carnet — feature_extractor (Mission B + B-quater) ──────────────────

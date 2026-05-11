@@ -55,6 +55,11 @@ class CarListing:
     opts: list = field(default_factory=list)  # list of options/equipment tags
     raw: dict = field(default_factory=dict)  # source-specific payload kept for debug
 
+    # Phase 2 — Vue Enchères : is_auction flag + structured auction JSONB.
+    # Validated by base_auction.AuctionExtractor.make_auction_dict().
+    is_auction: bool = False
+    auction: Optional[dict] = None
+
     def fingerprint(self) -> str:
         """Deduplicate: same car on multiple sources (L2 dedup).
 
