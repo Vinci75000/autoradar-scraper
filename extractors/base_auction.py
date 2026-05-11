@@ -145,3 +145,26 @@ class AuctionExtractor(Extractor):
         if closes > now:
             return "live"
         return "ended"
+
+    def refresh_auction(self, url: str) -> Optional[dict]:
+        """Re-fetch a live auction and return ONLY mutable fields.
+
+        Called by auction_live_refresh cron to update bid_current / bid_count /
+        watchers / reserve_met for live auctions WITHOUT rebuilding the full
+        CarListing (cheaper, faster, lower risk of regression).
+
+        Returns:
+          - dict with subset of mutable auction fields (any of: bid_current,
+            bid_count, watchers, reserve_met). Caller merges into existing
+            cars.auction JSONB. Keys absent from dict are NOT updated.
+          - None if listing 404'd (auctioneer removed/withdrew the lot — the
+            cron will then archive it).
+          - Empty dict {} on transient fetch error (caller skips update, will
+            retry next cron run).
+
+        Subclasses MUST override this method.
+        """
+        raise NotImplementedError(
+            f"{self.__class__.__name__} must implement refresh_auction(url) "
+            f"to support auction_live_refresh cron."
+        )

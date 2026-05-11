@@ -241,8 +241,6 @@ def test_scrape_bid_current_from_aktuelles_gebot(fixture_html):
     assert bid == 15500
 
 
-# ─── classictrader: build_car E2E ────────────────────────────────────────────
-
 def test_build_car_from_fixture(fixture_html, config):
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(fixture_html, "html.parser")
@@ -289,3 +287,71 @@ def test_build_car_from_fixture(fixture_html, config):
 
     # VIN propagated
     assert car.raw.get("vin") == "WDB1070451A012345"
+
+
+# ─── classictrader: refresh_auction (live cron) ──────────────────────────────
+
+
+def test_refresh_auction_returns_mutable_fields_only(fixture_html):
+    """refresh_auction returns dict with bid/watchers/reserve_met from a fetched page."""
+    class MockResponse:
+        status_code = 200
+    MockResponse.text = fixture_html
+
+    class MockClient:
+        def get(self, url):
+            return MockResponse()
+    extractor = ClassicTraderExtractor(http_client=MockClient())
+    url = "https://www.classic-trader.com/de/automobile/inserat/mercedes-benz/sl-klasse/420-sl/1986/455183"
+    result = extractor.refresh_auction(url)
+    assert result is not None
+    assert isinstance(result, dict)
+    assert set(result.keys()) == {"bid_current", "bid_count", "watchers", "reserve_met"}
+    assert result["bid_current"] == 15500
+    assert result["bid_count"] == 8
+    assert result["watchers"] == 16
+    assert result["reserve_met"] is False
+
+
+def test_refresh_auction_404_returns_none():
+    """404 → listing gone → caller should archive."""
+    class MockResponse:
+        status_code = 404
+        text = ""
+
+    class MockClient:
+        def get(self, url):
+            return MockResponse()
+    extractor = ClassicTraderExtractor(http_client=MockClient())
+    assert extractor.refresh_auction("https://example.com/gone") is None
+
+
+def test_refresh_auction_transient_error_returns_empty_dict():
+    """HTTP 500 → transient → caller skips update + retries next run."""
+    class MockResponse:
+        status_code = 500
+        text = ""
+
+    class MockClient:
+        def get(self, url):
+            return MockResponse()
+    extractor = ClassicTraderExtractor(http_client=MockClient())
+    assert extractor.refresh_auction("https://example.com/oops") == {}
+
+
+def test_refresh_auction_no_longer_auction_returns_none():
+    """If listing switched to fixed-price (title changed), treat as gone."""
+    html = (
+        '<html><head><title>Zu Verkaufen: Mercedes-Benz 500 E (1992) '
+        'angeboten für 49.800 €</title></head><body></body></html>'
+    )
+
+    class MockResponse:
+        status_code = 200
+    MockResponse.text = html
+
+    class MockClient:
+        def get(self, url):
+            return MockResponse()
+    extractor = ClassicTraderExtractor(http_client=MockClient())
+    assert extractor.refresh_auction("https://example.com/switched") is None

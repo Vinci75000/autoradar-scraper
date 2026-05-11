@@ -166,6 +166,59 @@ class ClassicTraderExtractor(AuctionExtractor):
             "first_car": (result.cars[0].__dict__ if result.cars else None),
         }
 
+    def refresh_auction(self, url: str) -> Optional[dict]:
+        """Re-fetch a live auction; return mutable fields only.
+
+        Used by auction_live_refresh cron. Cheaper than full _build_car_from_soup
+        because we skip JSON-LD, vehicle specs, photos — only the bid/watcher
+        state matters for live updates.
+
+        Returns:
+          - dict with {bid_current, bid_count, watchers, reserve_met}
+          - None if 404 or no longer an auction (listing changed mode/withdrawn)
+          - {} on transient HTTP error (caller skips, retries next run)
+        """
+        try:
+            r = self._client.get(url)
+        except Exception as e:
+            logger.warning(f"classictrader: refresh fetch error for {url}: {e}")
+            return {}
+        if r.status_code == 404:
+            logger.info(f"classictrader: refresh 404 — listing gone: {url}")
+            return None
+        if r.status_code != 200:
+            logger.warning(
+                f"classictrader: refresh HTTP {r.status_code} for {url}"
+            )
+            return {}
+        # Sanity: still an auction? (auctioneer could have switched mode)
+        if not self._is_auction_listing(r.text):
+            logger.info(
+                f"classictrader: refresh — no longer auction-mode: {url}"
+            )
+            return None
+
+        soup = BeautifulSoup(r.text, "html.parser")
+        dtdd = self._parse_dt_dd_pairs(soup)
+
+        bid_current = self._scrape_bid_current(r.text)
+        bid_count = self._parse_int(dtdd.get("gebote", "0")) or 0
+        watchers = self._parse_int(dtdd.get("beobachter")) or 0
+
+        status_text = dtdd.get("status", "")
+        reserve_met: Optional[bool] = None
+        if RESERVE_MET_RE.search(status_text):
+            reserve_met = True
+        elif RESERVE_NOT_MET_RE.search(status_text):
+            reserve_met = False
+
+        return {
+            "bid_current": bid_current,
+            "bid_count": bid_count,
+            "watchers": watchers,
+            "reserve_met": reserve_met,
+        }
+
     # ─── Discovery ────────────────────────────────────────────────────────────
 
     def _discover_detail_urls(self, listings_url: str) -> list[str]:
