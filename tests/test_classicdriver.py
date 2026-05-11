@@ -146,10 +146,24 @@ def test_normalize_fuel_petrol_diesel_hybrid():
     assert ClassicDriverExtractor._normalize_fuel("Electric") == "Électrique"
 
 
+def test_normalize_fuel_other_returns_none():
+    """'Other' is a real classicdriver value but not in DB CHECK enum."""
+    assert ClassicDriverExtractor._normalize_fuel("Other") is None
+    assert ClassicDriverExtractor._normalize_fuel("Unknown") is None
+    assert ClassicDriverExtractor._normalize_fuel("Steam Engine") is None  # not in keywords
+
+
 def test_normalize_gearbox_manual_auto():
     assert ClassicDriverExtractor._normalize_gearbox("Manual") == "Manuelle"
     assert ClassicDriverExtractor._normalize_gearbox("Automatic") == "Automatique"
     assert ClassicDriverExtractor._normalize_gearbox("N/A") is None
+
+
+def test_normalize_gearbox_other_returns_none():
+    """'Other' must map to None to satisfy cars_ge_check CHECK constraint."""
+    assert ClassicDriverExtractor._normalize_gearbox("Other") is None
+    assert ClassicDriverExtractor._normalize_gearbox("Unknown") is None
+    assert ClassicDriverExtractor._normalize_gearbox("CVT") is None  # not in keywords
 
 
 # ─── End-to-end build_car ────────────────────────────────────────────────────
