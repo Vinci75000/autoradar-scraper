@@ -238,7 +238,22 @@ def main():
         log.error(f'Unknown slug {args.slug}. Valid: {ALL_VALID_SLUGS}')
         sys.exit(1)
 
-    counters = run_pipeline(limit=args.limit, slug_filter=args.slug, dry_run=args.dry_run)
+    # OPS observability + Sentry alerts (Sprint OPS #3 + #4)
+    from ops.cron_runs import record_run
+    with record_run('symfio_cron', source='symfio') as ops:
+        counters = run_pipeline(limit=args.limit, slug_filter=args.slug, dry_run=args.dry_run)
+        ops.add(
+            added=counters.get('inserted', 0),
+            updated=counters.get('duplicates', 0),
+            skipped=counters.get('rejected', 0),
+        )
+        ops.errors = counters.get('errors', 0)
+        ops.set_meta('sources_processed', counters.get('sources', 0))
+        ops.set_meta('cars_extracted', counters.get('extracted', 0))
+        ops.set_meta('cars_adapted', counters.get('adapted', 0))
+        ops.set_meta('dry_run', args.dry_run)
+        ops.set_meta('limit', args.limit)
+        ops.set_meta('slug_filter', args.slug or 'all')
 
     # Exit non-zero if all sources failed to extract anything
     if counters['extracted'] == 0 and counters['sources'] > 0:
