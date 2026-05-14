@@ -96,3 +96,6 @@ backup_de_*.json
 
 # Recon artifacts (regenerable via scripts/recon_eu.py)
 docs/recon_*.csv
+.env.local
+*.log
+logs/
