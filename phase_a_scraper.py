@@ -913,10 +913,11 @@ class SourceScraper:
             cache.load()
 
         rediscovered_urls = []
+        fetched_count = 0
 
         try:
-            for i, url in enumerate(urls):
-                if limit and i >= limit:
+            for url in urls:
+                if limit and fetched_count >= limit:
                     break
 
                 if cache:
@@ -946,6 +947,8 @@ class SourceScraper:
                         rediscovered_urls.append(url)
                         continue
                     cache.stats["fetched"] += 1
+
+                fetched_count += 1
 
                 # Parse the response
                 method = self.cfg.get("extraction", "selectors")
