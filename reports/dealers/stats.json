@@ -1,18 +1,18 @@
 {
   "batch": "dealers",
-  "generated_at": "2026-06-06T14:04:42.585045",
+  "generated_at": "2026-06-07T04:46:51.207724",
   "runs_analyzed": 7,
-  "period_start": "2026-06-03T17:02:19.630203",
-  "period_end": "2026-06-06T13:58:06.553489",
+  "period_start": "2026-06-04T04:46:46.205420",
+  "period_end": "2026-06-07T04:40:16.603006",
   "sources_total_max": 18,
   "sources_ok_pct_avg": 5.6,
   "sources_ok_pct_min": 5.6,
   "sources_ok_pct_max": 5.6,
-  "cards_found_total": 13528,
+  "cards_found_total": 13539,
   "listings_extracted_total": 28,
   "cars_new_total": 1,
   "duplicates_total": 6,
-  "duration_avg_sec": 387.5,
+  "duration_avg_sec": 390.1,
   "alerts_triggered": 7,
   "trend": "stable"
 }
