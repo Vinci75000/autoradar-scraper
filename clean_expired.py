@@ -208,8 +208,16 @@ def main():
 
     # Apply expired
     for car in expired:
+        reason = car["check_result"]["reason"]
+        exit_reason = "sold" if reason.startswith("marker:") else "gone"
         supa.table("cars").update(
-            {"status": "expired", "expires_at": now_iso, "last_seen_at": now_iso}
+            {
+                "status": "expired",
+                "expires_at": now_iso,
+                "last_seen_at": now_iso,
+                "disappeared_at": now_iso,
+                "exit_reason": exit_reason,
+            }
         ).eq("id", car["id"]).execute()
     if expired:
         print(f"[wash] {len(expired)} cars marked expired")
