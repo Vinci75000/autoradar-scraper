@@ -39,6 +39,11 @@ from extractors.auction_registry import (  # noqa: E402
     get_auction_extractor,
     list_registered_auctioneers,
 )
+# JONCTION : ré-applique le pont frontend après le merge du patch de refresh.
+# Le patch met à jour bid_count/bid_current/watchers (clés canoniques) ;
+# le pont propage ça vers bids/watching/sold_price (clés frontend) et
+# recalcule h_offset. Idempotent — cf. base_auction.apply_frontend_bridge.
+from extractors.base_auction import apply_frontend_bridge  # noqa: E402
 
 logger = logging.getLogger("auction_live_refresh")
 logging.basicConfig(
@@ -131,6 +136,10 @@ def refresh_one(extractor, car: dict) -> Optional[dict]:
     for k, v in patch.items():
         if v is not None:
             auction[k] = v
+    # JONCTION : le merge a touché les clés canoniques (bid_count, watchers,
+    # bid_current) → propage vers les clés frontend (bids, watching,
+    # sold_price) et recalcule h_offset. Idempotent.
+    apply_frontend_bridge(auction)
     return auction
 
 

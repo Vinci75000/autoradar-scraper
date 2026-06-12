@@ -473,8 +473,10 @@ class ClassicTraderExtractor(AuctionExtractor):
 
         # 10. Country / city — Classic Trader rarely exposes vehicle location
         # publicly until winning. Default to source country (de).
-        car.co = config.country or "de"
-        car.ci = (car.co or "de").upper()  # placeholder
+        car.co = (config.country or "de").lower()
+        # ci: pas de localisation fiable depuis le refacto Next.js de classictrader.
+        # À récupérer depuis __NEXT_DATA__ dans le sprint dédié. Pour l'instant None.
+        car.ci = ""
 
         # 11. Raw payload
         car.raw = {

@@ -3,10 +3,22 @@
 
 Cron job (every 30 min) that maintains auction status correctness in DB.
 
-Operations:
-  - 'upcoming' → 'live'  when started_at <= NOW
-  - 'live' → 'sold'      when closes_at < NOW AND reserve_met = True
-  - 'live' → 'ended'     when closes_at < NOW AND reserve_met = False/None
+Aligned with the frontend contract: 3 statuses only (live / upcoming / sold).
+The frontend filters on `auction.status` strictly — pas de support pour
+`ended`. Quand un lot dépasse `closes_at`, il devient `sold` quel que soit
+`reserve_met`. La nuance "vendu vs ravalé" reste lisible via le flag
+`withdrawn` posé dans le JSONB pour les lots dont la réserve n'a pas été
+atteinte — le frontend pourra l'afficher en sous-badge plus tard.
+
+Transitions :
+  upcoming  → live      h_offset ≤ 72  ET  closes_at > now
+  live      → upcoming  h_offset > 72                              (lot reclasse)
+  *         → sold      closes_at ≤ now                            (vendu, ou ravalé+withdrawn)
+
+`withdrawn` est :
+  - True   si la réserve n'a pas été atteinte (lot ravalé, pas de vente effective)
+  - False  si la réserve a été atteinte
+  - None   si reserve_met n'est pas connu (ex. plateformes sans concept de réserve)
 
 Cost profile: 0 HTTP fetches. Pure DB read+write. ~1 second total.
 Cron: every 30 minutes (frequent enough that status is never >30min stale).
@@ -27,10 +39,10 @@ from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from dotenv import load_dotenv  # noqa: E402
-load_dotenv()
-
-from scraper import get_db  # noqa: E402
+from extractors.base_auction import (  # noqa: E402
+    UPCOMING_THRESHOLD_H,
+    apply_frontend_bridge,
+)
 
 logger = logging.getLogger("auction_status_sweeper")
 logging.basicConfig(
@@ -45,8 +57,9 @@ PAGE_SIZE = 950
 def fetch_active_auctions(db) -> list[dict]:
     """Fetch all cars where auction.status IN ('upcoming', 'live').
 
-    Returns list of cars (each a dict from Supabase). Paginated to handle
-    arbitrary number of active auctions (Supabase 1000-row page cap).
+    Retourne aussi les `ended` legacy (transitoires : seront migrés en `sold`
+    avec withdrawn=True par la nouvelle logique). Cf. backfill_auction_status.py
+    pour le rattrapage one-shot des `ended` existants.
     """
     out: list[dict] = []
     page = 0
@@ -58,7 +71,7 @@ def fetch_active_auctions(db) -> list[dict]:
             db.table("cars")
             .select("id, src, src_url, auction")
             .eq("is_auction", True)
-            .in_("auction->>status", ["upcoming", "live"])
+            .in_("auction->>status", ["upcoming", "live", "ended"])
             .range(start, end)
             .execute()
         )
@@ -70,10 +83,23 @@ def fetch_active_auctions(db) -> list[dict]:
     return out
 
 
-def compute_new_status(auction: dict, now: Optional[datetime] = None) -> Optional[str]:
-    """Compute the correct status for an auction at this moment.
+def compute_new_auction(
+    auction: dict, now: Optional[datetime] = None
+) -> Optional[dict]:
+    """Compute the correct (status, withdrawn) for an auction at this moment.
 
-    Returns the new status if it differs from current, else None (no update).
+    Returns a NEW auction dict (status + withdrawn updated) if anything must
+    change, else None (no update needed). Le bridge n'est PAS appliqué ici —
+    c'est le main loop qui l'applique après merge.
+
+    Règles :
+      - closes_at parsable + dépassé → status='sold'
+            withdrawn = True si reserve_met est False, sinon False
+            (None si reserve_met est None — concept N/A pour cette plateforme)
+      - sinon : reclasse upcoming↔live selon h_offset vs UPCOMING_THRESHOLD_H
+            (priorité au temps réel : on recalcule h_offset depuis closes_at,
+            on ne fait pas confiance à un h_offset stale dans le JSONB)
+      - si rien ne change → None
     """
     if not auction or not isinstance(auction, dict):
         return None
@@ -81,6 +107,7 @@ def compute_new_status(auction: dict, now: Optional[datetime] = None) -> Optiona
         now = datetime.now(timezone.utc)
 
     current_status = auction.get("status")
+    current_withdrawn = auction.get("withdrawn")
     closes_at_raw = auction.get("closes_at")
     started_at_raw = auction.get("started_at")
     reserve_met = auction.get("reserve_met")
@@ -93,24 +120,45 @@ def compute_new_status(auction: dict, now: Optional[datetime] = None) -> Optiona
     except (ValueError, AttributeError):
         return None
 
-    # Past close → terminal status
-    if closes_at < now:
-        new_status = "sold" if reserve_met is True else "ended"
-        return new_status if new_status != current_status else None
+    # ── Cas 1 : clôture dépassée → sold (+ withdrawn selon reserve_met) ──
+    if closes_at <= now:
+        if reserve_met is True:
+            new_withdrawn = False
+        elif reserve_met is False:
+            new_withdrawn = True
+        else:
+            new_withdrawn = None  # N/A pour cette source
+        if current_status == "sold" and current_withdrawn == new_withdrawn:
+            return None
+        out = {**auction, "status": "sold", "withdrawn": new_withdrawn}
+        return out
 
-    # Not yet closed, but maybe started?
-    if current_status == "upcoming" and started_at_raw:
+    # ── Cas 2 : pas clôturé → live ou upcoming selon seuil 72h ──
+    # On respecte un started_at futur (lot pas encore ouvert aux enchères)
+    if started_at_raw:
         try:
-            started_at = datetime.fromisoformat(started_at_raw.replace("Z", "+00:00"))
-            if started_at <= now:
-                return "live"
+            started_at = datetime.fromisoformat(
+                started_at_raw.replace("Z", "+00:00")
+            )
+            if started_at > now:
+                # pas encore commencé → forcément upcoming
+                if current_status == "upcoming":
+                    return None
+                return {**auction, "status": "upcoming"}
         except (ValueError, AttributeError):
             pass
 
-    return None  # no change
+    # Sinon : seuil 72h sur le temps restant
+    h_offset = (closes_at - now).total_seconds() / 3600.0
+    target_status = "upcoming" if h_offset > UPCOMING_THRESHOLD_H else "live"
+    if current_status == target_status:
+        return None
+    return {**auction, "status": target_status}
 
 
-def update_auction_status(db, car_id: str, new_auction: dict, dry_run: bool = False) -> bool:
+def update_auction(
+    db, car_id: str, new_auction: dict, dry_run: bool = False
+) -> bool:
     """Update the auction JSONB for a single car. Returns True on success."""
     if dry_run:
         return True
@@ -124,6 +172,12 @@ def update_auction_status(db, car_id: str, new_auction: dict, dry_run: bool = Fa
 
 def main(dry_run: bool = False) -> dict:
     """Run one sweep pass. Returns counters."""
+    # Lazy imports: gardent le module importable pour les tests sans charger
+    # le scraper réel (qui exige .env + supabase client).
+    from dotenv import load_dotenv
+    load_dotenv()
+    from scraper import get_db
+
     db = get_db()
     t0 = datetime.now()
     auctions = fetch_active_auctions(db)
@@ -132,26 +186,32 @@ def main(dry_run: bool = False) -> dict:
     counters = {
         "fetched": len(auctions),
         "to_live": 0,
+        "to_upcoming": 0,
         "to_sold": 0,
-        "to_ended": 0,
         "errors": 0,
     }
 
     for car in auctions:
         auction = car.get("auction") or {}
-        new_status = compute_new_status(auction, now=now)
-        if new_status is None:
+        new_auction = compute_new_auction(auction, now=now)
+        if new_auction is None:
             continue
-        # Merge: keep all auction fields, update only status
-        new_auction = {**auction, "status": new_status}
-        ok = update_auction_status(db, car["id"], new_auction, dry_run=dry_run)
+        # JONCTION : le status / withdrawn viennent de changer → recalcule
+        # h_offset et synthétise sold_price si on bascule en 'sold'. Idempotent.
+        apply_frontend_bridge(new_auction, now=now)
+        ok = update_auction(db, car["id"], new_auction, dry_run=dry_run)
         if not ok:
             counters["errors"] += 1
             continue
+        new_status = new_auction["status"]
         counters[f"to_{new_status}"] += 1
+        withdrawn_str = (
+            f" withdrawn={new_auction.get('withdrawn')}"
+            if new_status == "sold" else ""
+        )
         logger.info(
             f"{car['src']} lot={auction.get('lot_number')} "
-            f"{auction.get('status')} → {new_status} "
+            f"{auction.get('status')} → {new_status}{withdrawn_str} "
             f"(closes_at={auction.get('closes_at')})"
         )
 
@@ -160,8 +220,8 @@ def main(dry_run: bool = False) -> dict:
         f"sweep done in {duration:.1f}s — "
         f"fetched={counters['fetched']} "
         f"to_live={counters['to_live']} "
+        f"to_upcoming={counters['to_upcoming']} "
         f"to_sold={counters['to_sold']} "
-        f"to_ended={counters['to_ended']} "
         f"errors={counters['errors']}"
         + (" [DRY RUN]" if dry_run else "")
     )

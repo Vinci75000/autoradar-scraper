@@ -99,3 +99,9 @@ docs/recon_*.csv
 .env.local
 *.log
 logs/
+
+# Session liquidité + enchères — jetables / locaux
+run_patch_*.sh
+sniff_auctions*.sh
+*.bak*
+liquidity.py
