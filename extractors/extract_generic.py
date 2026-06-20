@@ -147,17 +147,25 @@ _BRAND_LOOKUP = {k.lower(): v for k, v in _BRAND_REG.items()}
 _BRAND_KEYS = sorted(_BRAND_LOOKUP.keys(), key=lambda s: -len(s))
 
 
+_TITLE_SEP_RE = re.compile(r"\s*\|\s*|\s+[\u2022\u00b7\u2013\u2014]\s+|\s+-\s+")
+
+
 def _brand_from_title(title):
     if not title:
         return None, None
-    # strip un prefixe annee ("1965 Porsche 911 901" -> "Porsche 911 901").
-    # L'annee reste recuperee ailleurs via _year_from_title(_hint).
-    t = re.sub(r"^\s*(?:18|19|20)\d{2}\s+", "", title)
-    low = t.lower()
-    for key in _BRAND_KEYS:
-        if low == key or low.startswith(key + " "):
-            rest = t[len(key):].strip(" -/|").strip()
-            return _BRAND_LOOKUP[key], (re.sub(r"\s+", " ", rest)[:120] or None)
+    # gere "Dealer | Marque Modele" : teste le titre entier puis chaque
+    # segment (| . - ). 1er segment a marque connue gagne. Strip prefixe
+    # annee. L'annee reste recuperee via _year_from_title(_hint).
+    for cand in [title, *_TITLE_SEP_RE.split(title)]:
+        cand = cand.strip()
+        if not cand:
+            continue
+        t = re.sub(r"^\s*(?:18|19|20)\d{2}\s+", "", cand)
+        low = t.lower()
+        for key in _BRAND_KEYS:
+            if low == key or low.startswith(key + " "):
+                rest = t[len(key):].strip(" -/|").strip()
+                return _BRAND_LOOKUP[key], (re.sub(r"\s+", " ", rest)[:120] or None)
     return None, None
 
 
