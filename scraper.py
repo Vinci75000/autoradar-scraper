@@ -248,6 +248,9 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
             log.info(f'↻ Updated: {car.mk} {car.mo} {car.yr} — {_old_px} → {car.px}€')
         else:
             log.info(f'↻ Seen: {car.mk} {car.mo} {car.yr} — last_seen refreshed')
+        if car.photos:
+            _upd['photos'] = car.photos
+            _upd['cover_url'] = car.photos[0]
         db.table('cars').update(_upd).eq('id', _rid).execute()
         return None
 
@@ -287,6 +290,8 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
         'tuned_by': extract_tuner(car.mk, car.mo, getattr(car, 'de', None)),
         'is_auction': getattr(car, 'is_auction', False),
         'auction':    getattr(car, 'auction', None),
+        'photos':    car.photos or [],
+        'cover_url': (car.photos[0] if car.photos else None),
     }
 
     # ─── Carnet — feature_extractor (Mission B + B-quater) ──────────────────
