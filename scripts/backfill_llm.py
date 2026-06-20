@@ -266,7 +266,7 @@ def main() -> int:
                 "(inline dans la commande, pas dans .env)"
             )
             return 1
-        if not os.environ.get("ANTHROPIC_API_KEY"):
+        if os.environ.get("LLM_BACKEND", "").lower() != "ollama" and not os.environ.get("ANTHROPIC_API_KEY"):
             print("ERROR: ANTHROPIC_API_KEY missing from .env")
             return 1
 
