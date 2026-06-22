@@ -188,17 +188,35 @@ def _parse_response(response_text: str) -> dict[str, Any]:
 # API PUBLIQUE
 # ===========================================================================
 
+_OLLAMA_BOOST = (
+    "\n\nCONTRAINTES DE SORTIE (strictes) :\n"
+    "- Ecris highlights, concerns ET summary en FRANCAIS uniquement.\n"
+    "- Traduis les termes techniques : 'restoration'->'restauration', "
+    "'5-speed manual'->'boite manuelle 5 rapports', 'automatic'->'boite automatique', "
+    "'matching numbers'->'numeros concordants', 'frame-off'->'restauration complete'. "
+    "Ne garde en VO que les designations universelles (V8, V12, VIN).\n"
+    "- highlights : 3 a 6 elements courts et concrets tires de la description "
+    "(annee de restauration, cylindree, finition, couleur, options). Aucun superlatif.\n"
+    "- summary : UNE phrase citant au moins un fait precis (annee, cylindree, "
+    "restauration, provenance). Interdit : 'moteur puissant' ou toute generalite vague, "
+    "et toute reprise du titre.\n"
+    "Exemple correct : 'Coupe restauree en 2019, moteur 3 litres, finition origine.'"
+)
+
+
 def _extract_via_ollama(de: str, model: str, timeout: float) -> dict[str, Any]:
     """Backend Ollama local (gratuit). Memes prompt + parsing que le chemin
-    Anthropic. format=json force une sortie JSON valide cote Ollama."""
+    Anthropic, avec un boost FR et un timeout adapte aux modeles locaux.
+    format=json force une sortie JSON valide cote Ollama."""
     import json as _json
     import urllib.request
 
     base = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+    _to = max(timeout, float(os.environ.get("OLLAMA_TIMEOUT", "120")))
     payload = _json.dumps({
         "model": model,
         "messages": [
-            {"role": "system", "content": _build_system_prompt()},
+            {"role": "system", "content": _build_system_prompt() + _OLLAMA_BOOST},
             {"role": "user", "content": _build_user_message(de)},
         ],
         "format": "json",
@@ -209,43 +227,7 @@ def _extract_via_ollama(de: str, model: str, timeout: float) -> dict[str, Any]:
         f"{base}/api/chat", data=payload,
         headers={"Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        data = _json.loads(r.read().decode("utf-8"))
-    parsed = _parse_response(data["message"]["content"])
-    return {
-        "features": {},
-        "highlights": parsed["highlights"],
-        "concerns": parsed["concerns"],
-        "summary": parsed["summary"],
-        "raw_response": data,
-        "model": f"ollama/{model}",
-        "extracted_at": datetime.now(timezone.utc),
-        "de_hash": _compute_de_hash(de),
-    }
-
-
-def _extract_via_ollama(de: str, model: str, timeout: float) -> dict[str, Any]:
-    """Backend Ollama local (gratuit). Memes prompt + parsing que le chemin
-    Anthropic. format=json force une sortie JSON valide cote Ollama."""
-    import json as _json
-    import urllib.request
-
-    base = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-    payload = _json.dumps({
-        "model": model,
-        "messages": [
-            {"role": "system", "content": _build_system_prompt()},
-            {"role": "user", "content": _build_user_message(de)},
-        ],
-        "format": "json",
-        "stream": False,
-        "options": {"temperature": 0.2},
-    }).encode("utf-8")
-    req = urllib.request.Request(
-        f"{base}/api/chat", data=payload,
-        headers={"Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(req, timeout=timeout) as r:
+    with urllib.request.urlopen(req, timeout=_to) as r:
         data = _json.loads(r.read().decode("utf-8"))
     parsed = _parse_response(data["message"]["content"])
     return {
@@ -299,11 +281,6 @@ def extract_features_via_llm(
     """
     if not isinstance(de, str) or not de.strip():
         raise ValueError('de must be a non-empty string')
-
-    # Backend switch : Ollama local (gratuit) si LLM_BACKEND=ollama.
-    if os.environ.get('LLM_BACKEND', 'anthropic').lower() == 'ollama':
-        om = model if not str(model).startswith('claude') else os.environ.get('OLLAMA_MODEL', 'qwen2.5:7b')
-        return _extract_via_ollama(de, om, timeout)
 
     # Backend switch : Ollama local (gratuit) si LLM_BACKEND=ollama.
     if os.environ.get('LLM_BACKEND', 'anthropic').lower() == 'ollama':
