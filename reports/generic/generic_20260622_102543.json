@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-06-22T10:25:43.359445+00:00",
+  "batch": "generic",
+  "sources_total": 192,
+  "sources_ok": 0,
+  "sources_ok_pct": 0.0,
+  "cards_found": 0,
+  "listings_extracted": 0,
+  "new_in_db": 0,
+  "duplicates": 0,
+  "duration_sec": 0.9,
+  "threshold_pct": 50.0,
+  "alert": true,
+  "report_path": "reports/generic/generic_20260622_102543.md"
+}
