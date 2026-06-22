@@ -235,14 +235,16 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
     # L1 src_url — meme annonce deja en base : on rafraichit (prix + last_seen_at)
     # au lieu de skipper sec. Garde le prix a jour + nourrit le wash (clean_expired).
     _exist = (db.table('cars')
-                .select('id, px')
+                .select('id, px, status, times_seen')
                 .eq('src_url', car.src_url)
                 .limit(1)
                 .execute())
     if _exist.data:
         _rid = _exist.data[0]['id']
         _old_px = _exist.data[0].get('px')
-        _upd = {'last_seen_at': datetime.utcnow().isoformat() + 'Z'}
+        _seen = (_exist.data[0].get('times_seen') or 0) + 1
+        _upd = {'last_seen_at': datetime.utcnow().isoformat() + 'Z',
+                'status': 'active', 'expires_at': None, 'times_seen': _seen}
         if car.px is not None and car.px != _old_px:
             _upd['px'] = car.px
             log.info(f'↻ Updated: {car.mk} {car.mo} {car.yr} — {_old_px} → {car.px}€')
