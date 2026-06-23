@@ -30,3 +30,8 @@ __all__ = [
     "list_registered",
     "register",
 ]
+from . import extract_cargold  # noqa: F401
+from . import extract_eberhard  # noqa: F401
+from . import extract_thiesen  # noqa: F401
+from . import extract_erclassics  # noqa: F401
+from . import extract_generic  # noqa: F401

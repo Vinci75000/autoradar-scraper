@@ -73,7 +73,7 @@ def get_extractor(config: SourceConfig) -> Extractor:
 
     # 3. Method-based generic fallback
     method_to_generic = {
-        "jsonld": "_generic_jsonld",
+        "jsonld": "generic_jsonld",
         "html_paginated": "_generic_html",
         "sitemap": "_generic_sitemap",
     }

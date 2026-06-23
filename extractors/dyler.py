@@ -110,12 +110,20 @@ class DylerExtractor(Extractor):
 
     # ─── Public API ────────────────────────────────────────────────────────────
 
-    def extract(self, config: SourceConfig, limit: Optional[int] = None) -> ExtractionResult:
+    def extract(self, config: SourceConfig, limit: Optional[int] = None,
+                skip_urls: Optional[set] = None,
+                only_urls: Optional[set] = None) -> ExtractionResult:
         result = ExtractionResult(source_slug=config.slug)
         t0 = time.monotonic()
+        skip_urls = skip_urls or set()
         try:
             urls = self._discover_detail_urls(config.listings_url)
             result.pages_fetched = 1
+            if only_urls is not None:
+                _only = set(only_urls)
+                urls = [u for u in urls if u in _only]
+            elif skip_urls:
+                urls = [u for u in urls if u not in skip_urls]
             if limit is not None:
                 urls = urls[:limit]
             for url in urls:
