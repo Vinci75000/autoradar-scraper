@@ -186,6 +186,20 @@ def get_km_tier(km_int, listing_tier: str) -> str:
     return 'very_high_km'
 
 
+SUPERCAR_MODEL_EXCEPTIONS = (
+    ('ford', 'gt'),       # Ford GT — supercar Le Mans
+    ('lexus', 'lfa'),     # Lexus LFA — V10
+    ('acura', 'nsx'),     # Acura NSX
+    ('honda', 'nsx'),     # Honda NSX
+)
+
+
+def _is_exception_supercar(mk_norm, mo):
+    """Modele d'exception : marque generaliste, modele supercar legitime."""
+    mo_low = (mo or '').lower()
+    return any(b in mk_norm and m in mo_low for b, m in SUPERCAR_MODEL_EXCEPTIONS)
+
+
 def validate_listing(data) -> tuple:
     """
     Valide une annonce avant insertion. Accepte dict ou objet CarListing.
@@ -270,7 +284,7 @@ def validate_listing(data) -> tuple:
             if mk_norm not in TIER_HYPERCAR:
                 return False, f"prix hypercar ({px_int:,}€) sans marque hypercar: '{mk}'"
         elif px_int >= PRICE_SUPERCAR_FLOOR:
-            if mk_norm not in TIER_SUPERCAR:
+            if mk_norm not in TIER_SUPERCAR and not _is_exception_supercar(mk_norm, mo):
                 return False, f"prix supercar ({px_int:,}€) sans marque supercar+: '{mk}'"
         elif px_int >= PRICE_LUXURY_FLOOR:
             if mk_norm not in TIER_LUXURY:

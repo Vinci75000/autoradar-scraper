@@ -63,9 +63,25 @@ SYMFIO_SOURCE_SLUGS = ['auto-seredin', 'jungblut-sportwagen', 'autostrada-sport'
 
 # Custom-extractor dealers (single-tenant, registered via @register("slug")).
 # Reachable only via explicit --slug; never auto-scraped by the Symfio cron.
-CUSTOM_DEALER_SLUGS = ['hollmann-international']
+CUSTOM_DEALER_SLUGS = ['hollmann-international', 'mechatronik', 'cargold-collection', 'thiesen-eberhard-raritaeten', 'thiesen-hamburg', 'erclassics']
 
 ALL_VALID_SLUGS = SYMFIO_SOURCE_SLUGS + CUSTOM_DEALER_SLUGS
+
+
+def _norm_ge(raw):
+    """ge limite a {Automatique, Manuelle} — seules valeurs admises par cars_ge_check."""
+    g = (raw or '').lower()
+    if any(k in g for k in ('manu', 'schalt', 'mecan', 'mécan', 'boite m', 'boîte m')):
+        return 'Manuelle'
+    return 'Automatique'
+
+
+def _poa_de(ext_car):
+    """POA: si pas de prix, garantir un marqueur reconnu par validate_listing."""
+    de = ext_car.de or ''
+    if not ext_car.px and 'on request' not in de.lower():
+        de = (de + '\nPrice on request').strip()
+    return de or None
 
 
 def adapt_extractor_carlisting(
@@ -86,14 +102,11 @@ def adapt_extractor_carlisting(
 
     yr = ext_car.yr or datetime.now().year
     km = ext_car.km if ext_car.km is not None else 0
-    px = int(ext_car.px) if ext_car.px else 0
+    px = int(ext_car.px) if ext_car.px else None  # POA: None, pas 0
 
     # Pre-filter: avoid sending obvious junk to insert_car (waste of geocode
     # API call + Supabase round-trip). Aligned with seuils validate_listing.
-    if px <= 0:
-        log.debug(f'pre-filter rejected (no price): {ext_car.mk} {mo}')
-        return None
-    if yr < 2000 or yr > datetime.now().year:
+    if yr < 1900 or yr > datetime.now().year:
         log.debug(f'pre-filter rejected (yr={yr}): {ext_car.mk} {mo}')
         return None
     if km < 0 or km > 500000:
@@ -108,7 +121,7 @@ def adapt_extractor_carlisting(
         km=km,
         px=px,
         fu=ext_car.fu or 'Essence',
-        ge=ext_car.ge or 'Automatique',
+        ge=_norm_ge(ext_car.ge),
         ci=ext_car.ci or 'Inconnue',
         co=ext_car.co or 'de',
         src=ext_car.src,
@@ -116,7 +129,7 @@ def adapt_extractor_carlisting(
         age_label=scraper._age_label(datetime.now()),
         ow=1,
         opts=[],
-        de=ext_car.de,
+        de=_poa_de(ext_car),
     )
 
 
