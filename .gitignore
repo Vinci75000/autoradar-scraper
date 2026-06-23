@@ -105,3 +105,7 @@ run_patch_*.sh
 sniff_auctions*.sh
 *.bak*
 liquidity.py
+
+# runtime / scratch
+dyler_tried.txt
+reports/generic/generic_2026*
