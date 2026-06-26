@@ -26,7 +26,7 @@ from sentry_init import init_sentry
 init_sentry()
 
 from validation import validate_listing, get_listing_tier, get_km_tier
-from batches import get_sources_for_batch, get_pages_for_batch, is_red_source, RED_SOURCES
+from batches import get_sources_for_batch, get_pages_for_batch, is_red_source, RED_SOURCES, get_pages_for_source
 from dealers import DEALERS, get_dealer_by_name, get_dealer_names, get_active_dealers
 from make_normalizer import normalize_make_model
 from feature_extractor import (
@@ -95,6 +95,8 @@ class CarListing:
     # Phase 2 — Vue Enchères : is_auction flag + structured auction JSONB.
     is_auction: bool = False
     auction: Optional[dict] = None
+    photos:    list = None       # URLs photos scrapees (cover = photos[0])
+    cover_url: Optional[str] = None
 
     def fingerprint(self) -> str:
         """Deduplicate: same car on multiple sources"""
@@ -2844,8 +2846,11 @@ if __name__ == '__main__':
         log.info(f'   Sources : {", ".join(sources)}')
 
         for src in sources:
+            eff_pages = get_pages_for_source(src, pages)
+            if eff_pages != pages:
+                log.info(f'   premium {src}: {eff_pages} pages (vs {pages})')
             try:
-                run(src, pages)
+                run(src, eff_pages)
             except Exception as e:
                 log.error(f'❌ {src} a échoué : {e}')
                 log.info('   On continue avec la source suivante...')

@@ -45,6 +45,21 @@ GREEN_SOURCES = [
 # Cadence batch GREEN : 2 fois par jour
 GREEN_PAGES = 5  # max pages par run, par source
 
+# ─── PROFONDEUR PAR-SOURCE — levier "approfondir premium" ───
+# Override pour sources premium a fort catalogue rotatif. Absente d'ici =
+# profondeur du batch. dyler N'EST PAS ici (bas de gamme, on ne le gonfle pas).
+SOURCE_PAGES_OVERRIDE = {
+    "classicdriver":   20,
+    "classictrader":   15,
+    "superclassics":   15,
+    "collectingcars":  12,
+    "goodtimers":      10,
+}
+
+
+def get_pages_for_source(source_name, default_pages):
+    return SOURCE_PAGES_OVERRIDE.get(source_name, default_pages)
+
 # ─── BATCH YELLOW — Grands publics, CGU regardantes mais OK ───
 # Ces sources ont des CGU explicitement anti-scraping mais pas
 # d'historique d'attaques contre petits agrégateurs. À traiter
