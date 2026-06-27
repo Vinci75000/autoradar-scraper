@@ -69,6 +69,26 @@ def main() -> int:
     print(f'[refresh_cote] total_elapsed   = {elapsed_ms} ms (incl. network)')
     print(f'[refresh_cote] updated_at      = {updated}')
     print(json.dumps(data, ensure_ascii=False))
+
+    # ─── market_snapshot : KPI Marche pre-calcules (meme run, meme client) ───
+    print('[refresh_market] calling RPC refresh_market_snapshot()...')
+    try:
+        m_started = time.time()
+        m_result = sb.rpc('refresh_market_snapshot', {}).execute()
+        m_elapsed = int((time.time() - m_started) * 1000)
+        m_data = m_result.data or {}
+        print(f'[refresh_market] median_px   = {m_data.get("median_px")}')
+        print(f'[refresh_market] n_total     = {m_data.get("n_total")}')
+        print(f'[refresh_market] n_sources   = {m_data.get("n_sources")}')
+        print(f'[refresh_market] n_countries = {m_data.get("n_countries")}')
+        print(f'[refresh_market] n_deals     = {m_data.get("n_deals")}')
+        print(f'[refresh_market] server_ms   = {m_data.get("duration_ms")} ms')
+        print(f'[refresh_market] total_ms    = {m_elapsed} ms (incl. network)')
+        print(json.dumps(m_data, ensure_ascii=False))
+    except Exception as e:
+        # ne jamais faire echouer le cron cote si market echoue
+        print(f'[refresh_market] RPC failed (non-fatal): {e}', file=sys.stderr)
+
     return 0
 
 
