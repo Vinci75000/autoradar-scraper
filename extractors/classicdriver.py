@@ -94,11 +94,25 @@ class ClassicDriverExtractor(Extractor):
     """Extracts collector cars from classicdriver.com via Drupal DOM scraping."""
 
     DEFAULT_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
+    # Un UA « AutoRadarBot » se fait 403 direct par l'anti-bot. On se présente comme
+    # un vrai Chrome, avec le set de headers qu'un navigateur envoie (Cloudflare
+    # 403 souvent sur des en-têtes incomplets, même avec un UA correct).
     DEFAULT_HEADERS = {
         "User-Agent": (
-            "Mozilla/5.0 (compatible; AutoRadarBot/1.0; +https://carnet.life/about)"
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
         ),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9,de;q=0.7,fr;q=0.6",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Sec-Ch-Ua": '"Chromium";v="126", "Google Chrome";v="126", "Not.A/Brand";v="24"',
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": '"macOS"',
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1",
     }
     INTER_REQUEST_DELAY_S = 0.5
     REVERSE_SITEMAP = True  # crawl highest listing_id first (latest)
