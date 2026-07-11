@@ -645,6 +645,17 @@ class GenericJsonLdExtractor(Extractor):
 
         car.raw = {"extractor": "generic_jsonld", "jsonld": bool(obj)}
         if not car.mk:
+            # Fallback : marque depuis le slug d'URL (fiat-abarth-695, autobianchi-y10,
+            # volkswagen-t-roc...,svoc260.html) quand titre/JSON-LD n'ont rien donne.
+            _slug = urlparse(url).path.rstrip("/").rsplit("/", 1)[-1]
+            _slug = re.sub(r",\w+\.html?$", "", _slug, flags=re.IGNORECASE)
+            _slug = re.sub(r"[-_]+", " ", _slug).strip()
+            _mk4, _mo4 = _brand_from_title(_slug)
+            if _mk4:
+                car.mk = _mk4
+                if not car.mo and _mo4:
+                    car.mo = _mo4
+        if not car.mk:
             logger.debug(f"no brand from {url}; dropping")
             return None
         if not obj and not car.mo:
