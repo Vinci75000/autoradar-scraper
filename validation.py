@@ -58,6 +58,9 @@ TIER_SUPERCAR = TIER_HYPERCAR | {
     'spyker', 'noble', 'morgan', 'tvr', 'wiesmann',
     'italdesign', 'zagato', 'touring',
     'facel vega', 'panhard',
+    # Sportives/piste boutique legitimes a 100k+ (garde-fou prix-tier)
+    'dallara', 'alpine', 'donkervoort', 'radical', 'ktm', 'bac',
+    'ariel', 'caterham',
 }
 
 # Tier 1 — LUXURY : ajout des marques premium standard

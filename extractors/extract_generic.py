@@ -278,6 +278,9 @@ def _clean_model(mo, toks):
     if not mo:
         return mo
     mo = mo.split(" | ")[0].strip()
+    # Certains CMS accolent " - <annee> - <slogan>" au modele (classica...) :
+    # on coupe au premier " - AAAA" (un vrai modele ne contient pas " - 2015").
+    mo = re.split(r"\s+[-–—]\s+(?:18|19|20)\d{2}\b", mo)[0].strip()
     for sep in (" – ", " — ", " - "):
         if sep in mo:
             left, right = mo.rsplit(sep, 1)
