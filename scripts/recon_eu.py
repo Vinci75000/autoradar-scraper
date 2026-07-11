@@ -46,6 +46,11 @@ PEPITE_KEYWORDS_FR = [
     "sport", "sportive", "prestige", "exclusif", "exclusive", "rare",
     "prepare", "preparee", "preparation", "supercar", "vintage", "gt",
 ]
+PEPITE_KEYWORDS_DE = [
+    "klassiker", "oldtimer", "youngtimer", "sportwagen", "sammler",
+    "sammlung", "raritat", "raritaet", "selten", "exklusiv", "prestige",
+    "rennsport", "manufaktur", "veredelung", "tuning", "klassisch",
+]
 CAR_PATH_HINTS = [
     "/auto", "/car", "/cars", "/annunci", "/inserzioni",
     "/vehicle", "/listing", "/coches", "/veicoli", "/macchina",
@@ -101,6 +106,18 @@ SEED_FR = [
     "https://capotsvintage.com",
     "https://symbolcars.fr",
     "https://www.qualityluxurycars06.com",
+]
+
+# Allemagne — petits spécialistes collection/sport/prep (pas les annuaires).
+SEED_DE = [
+    "https://kultgarage.de",
+    "https://www.to-sign.de",
+    "https://www.oldtimer-engels.de",
+    "https://www.stasmotors.de",
+    "https://www.autohaus-cuntz.de",
+    "https://www.cog-classics.com",
+    "http://www.autosalon-isartal.de",
+    "https://www.mirbach.de",
 ]
 
 
@@ -257,13 +274,13 @@ def audit_source(url, keywords):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--country", choices=["it", "es", "fr"], required=True)
+    ap.add_argument("--country", choices=["it", "es", "fr", "de"], required=True)
     ap.add_argument("--output", required=True)
     ap.add_argument("--delay", type=float, default=2.5, help="Politeness delay between sources")
     args = ap.parse_args()
 
-    seeds = {"it": SEED_IT, "es": SEED_ES, "fr": SEED_FR}[args.country]
-    keywords = {"it": PEPITE_KEYWORDS_IT, "es": PEPITE_KEYWORDS_ES, "fr": PEPITE_KEYWORDS_FR}[args.country]
+    seeds = {"it": SEED_IT, "es": SEED_ES, "fr": SEED_FR, "de": SEED_DE}[args.country]
+    keywords = {"it": PEPITE_KEYWORDS_IT, "es": PEPITE_KEYWORDS_ES, "fr": PEPITE_KEYWORDS_FR, "de": PEPITE_KEYWORDS_DE}[args.country]
 
     results = []
     for i, url in enumerate(seeds, 1):
