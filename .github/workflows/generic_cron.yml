@@ -58,7 +58,10 @@ jobs:
           SENTRY_DSN_SCRAPER: ${{ secrets.SENTRY_DSN_SCRAPER }}
           SENTRY_ENVIRONMENT: 'production'
           SENTRY_COMPONENT: 'cron-generic'
-          AUTORADAR_LLM_HOOK_ENABLED: "true"
+          # LLM DÉCOUPLÉ du scrape : un appel Claude par voiture étranglait le run
+          # (152 concessions → timeout). Le scrape pose la donnée core + features regex ;
+          # l'enrichissement LLM (résumé/highlights) se fait à part via un backfill async.
+          AUTORADAR_LLM_HOOK_ENABLED: "false"
         run: |
           python3 run_generic.py \
             --limit ${{ github.event.inputs.limit || '25' }} \
