@@ -151,6 +151,8 @@ class ClassicDriverExtractor(Extractor):
             msg = f"{config.slug} listing fetch catastrophic: {exc}"
             logger.error(msg)
             result.errors.append(msg)
+        finally:
+            self._close_browser()
         result.duration_s = time.monotonic() - t0
         return result
 
@@ -167,6 +169,59 @@ class ClassicDriverExtractor(Extractor):
             "first_car": result.cars[0].__dict__ if result.cars else None,
         }
 
+    # ─── Fetch avec fallback navigateur (gratuit, TLS/fingerprint réels) ─────────
+    def _get_text(self, url: str) -> str:
+        """httpx d'abord ; si 403 / erreur, on repasse par un vrai navigateur —
+        seul levier gratuit contre l'anti-bot (fingerprint TLS d'un Chrome réel).
+        Si l'IP elle-même est blacklistée, le navigateur échouera aussi (on le saura)."""
+        try:
+            resp = self._client.get(url)
+            if resp.status_code == 403:
+                raise RuntimeError("403 httpx")
+            resp.raise_for_status()
+            return resp.text
+        except Exception as exc:
+            logger.info(f"classicdriver: httpx KO ({exc}) → fallback navigateur : {url}")
+            return self._browser_get(url)
+
+    def _ensure_browser(self):
+        if getattr(self, "_pw", None) is not None:
+            return
+        from playwright.sync_api import sync_playwright
+        self._pw = sync_playwright().start()
+        self._browser = self._pw.chromium.launch(headless=True)
+        self._bctx = self._browser.new_context(
+            user_agent=self.DEFAULT_HEADERS["User-Agent"],
+            locale="en-US",
+            extra_http_headers={"Accept-Language": self.DEFAULT_HEADERS["Accept-Language"]},
+        )
+        logger.info("classicdriver: navigateur lancé (fallback anti-bot)")
+
+    def _browser_get(self, url: str) -> str:
+        self._ensure_browser()
+        page = self._bctx.new_page()
+        try:
+            resp = page.goto(url, wait_until="domcontentloaded", timeout=45000)
+            if resp is not None and resp.status == 403:
+                # éventuel challenge : petite pause + reload
+                page.wait_for_timeout(4000)
+                resp = page.reload(wait_until="domcontentloaded", timeout=45000)
+            if resp is None or not resp.ok:
+                raise RuntimeError(f"navigateur {resp.status if resp else 'no-response'} : {url}")
+            return resp.text()
+        finally:
+            page.close()
+
+    def _close_browser(self):
+        try:
+            if getattr(self, "_browser", None):
+                self._browser.close()
+            if getattr(self, "_pw", None):
+                self._pw.stop()
+        except Exception:
+            pass
+        self._pw = None
+
     # ─── Internals ─────────────────────────────────────────────────────────────
 
     def _discover_detail_urls(self, listings_url: str) -> list[str]:
@@ -174,12 +229,11 @@ class ClassicDriverExtractor(Extractor):
 
         Filters URL paths matching /{lang}/car/{brand}/{model}/{year}/{listing_id}.
         """
-        resp = self._client.get(listings_url)
-        resp.raise_for_status()
+        sm_text = self._get_text(listings_url)
         # Detect sitemapindex vs urlset
-        is_index = "<sitemapindex" in resp.text
+        is_index = "<sitemapindex" in sm_text
         if is_index:
-            sub_urls = re.findall(r"<sitemap>\s*<loc>([^<]+)</loc>", resp.text)
+            sub_urls = re.findall(r"<sitemap>\s*<loc>([^<]+)</loc>", sm_text)
             logger.info(f"classicdriver: sitemap index has {len(sub_urls)} sub-sitemaps")
             sub_urls = sub_urls[: self.MAX_SUB_SITEMAPS]
         else:
@@ -190,12 +244,11 @@ class ClassicDriverExtractor(Extractor):
         urls: list[str] = []
         for sm_url in sub_urls:
             try:
-                r = self._client.get(sm_url)
-                r.raise_for_status()
+                sub_text = self._get_text(sm_url)
             except Exception as exc:
                 logger.warning(f"classicdriver: skip sub-sitemap {sm_url}: {exc}")
                 continue
-            for m in re.finditer(r"<loc>([^<]+)</loc>", r.text):
+            for m in re.finditer(r"<loc>([^<]+)</loc>", sub_text):
                 url = m.group(1).strip()
                 path = urlparse(url).path
                 if CD_URL_PARTS_RE.match(path) and url not in seen:
@@ -212,9 +265,8 @@ class ClassicDriverExtractor(Extractor):
         return urls
 
     def _extract_one(self, url: str, config: SourceConfig) -> Optional[CarListing]:
-        resp = self._client.get(url)
-        resp.raise_for_status()
-        soup = BeautifulSoup(resp.text, "html.parser")
+        html = self._get_text(url)
+        soup = BeautifulSoup(html, "html.parser")
         return self._build_car_from_soup(soup, url, config)
 
     def _build_car_from_soup(
