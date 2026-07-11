@@ -2,7 +2,7 @@ name: wash_cron
 
 on:
   schedule:
-    - cron: '0 3 * * *'  # Daily 03h UTC
+    - cron: '0 */6 * * *'  # Toutes les 6h (backlog de vendues à éponger)
   workflow_dispatch:
     inputs:
       dry_run:
@@ -16,7 +16,7 @@ on:
       batch_size:
         description: 'Nombre max de cars par run'
         required: false
-        default: '500'
+        default: '3000'
       max_age_days:
         description: 'Cars non vues depuis X jours'
         required: false
@@ -25,7 +25,7 @@ on:
 jobs:
   wash:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 50
 
     steps:
       - name: Checkout
@@ -47,6 +47,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
-          BATCH_SIZE: ${{ github.event.inputs.batch_size || '500' }}
+          BATCH_SIZE: ${{ github.event.inputs.batch_size || '3000' }}
           MAX_AGE_DAYS: ${{ github.event.inputs.max_age_days || '7' }}
+          CONCURRENCY: '20'
         run: python -u clean_expired.py

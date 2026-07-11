@@ -150,18 +150,37 @@ def main():
 
     supa = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-    cutoff = datetime.now(timezone.utc) - timedelta(days=MAX_AGE_DAYS)
-    print(f"[wash] fetching cars with last_seen_at < {cutoff.isoformat()}")
-
-    result = (
-        supa.table("cars")
-        .select("id, src_url, mk, mo, last_seen_at")
-        .eq("status", "active")
-        .lt("last_seen_at", cutoff.isoformat())
-        .order("last_seen_at", desc=False)
-        .limit(BATCH_SIZE)
-        .execute()
-    )
+    # Curseur INDÉPENDANT du scraper : on re-vérifie les ACTIVES les moins récemment
+    # lavées (last_checked_at le plus ancien / jamais lavé d'abord). Découplé de
+    # last_seen_at, que le scraper rafraîchit à chaque re-scrape — sinon une annonce
+    # VENDUE mais dont la page existe encore ne vieillit jamais et échappe au wash.
+    print(f"[wash] fetching {BATCH_SIZE} active cars by oldest last_checked_at")
+    try:
+        result = (
+            supa.table("cars")
+            .select("id, src_url, mk, mo, last_checked_at")
+            .eq("status", "active")
+            .order("last_checked_at", desc=False, nullsfirst=True)
+            .limit(BATCH_SIZE)
+            .execute()
+        )
+    except TypeError:
+        # supabase-py ancien sans nullsfirst : NULLS triés en dernier en ASC —
+        # on fait donc 2 passes (jamais-lavées d'abord, puis les plus anciennes).
+        never = (supa.table("cars").select("id, src_url, mk, mo, last_checked_at")
+                 .eq("status", "active").is_("last_checked_at", "null")
+                 .limit(BATCH_SIZE).execute())
+        rows_never = never.data or []
+        rest = []
+        if len(rows_never) < BATCH_SIZE:
+            r2 = (supa.table("cars").select("id, src_url, mk, mo, last_checked_at")
+                  .eq("status", "active").not_.is_("last_checked_at", "null")
+                  .order("last_checked_at", desc=False)
+                  .limit(BATCH_SIZE - len(rows_never)).execute())
+            rest = r2.data or []
+        class _R:  # petit shim pour homogénéiser
+            data = rows_never + rest
+        result = _R()
 
     cars = result.data or []
     print(f"[wash] {len(cars)} cars to check")
@@ -215,6 +234,7 @@ def main():
                 "status": "expired",
                 "expires_at": now_iso,
                 "last_seen_at": now_iso,
+                "last_checked_at": now_iso,
                 "disappeared_at": now_iso,
                 "exit_reason": exit_reason,
             }
@@ -222,9 +242,10 @@ def main():
     if expired:
         print(f"[wash] {len(expired)} cars marked expired")
 
-    # Refresh last_seen_at on alive (avoids re-check next run)
+    # Marque last_checked_at sur les vivantes (curseur du wash — les fait sortir
+    # de la tête de file jusqu'au prochain tour, indépendamment du scraper).
     for car in alive:
-        supa.table("cars").update({"last_seen_at": now_iso}).eq(
+        supa.table("cars").update({"last_seen_at": now_iso, "last_checked_at": now_iso}).eq(
             "id", car["id"]
         ).execute()
     if alive:

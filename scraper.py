@@ -237,12 +237,18 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
     # L1 src_url — meme annonce deja en base : on rafraichit (prix + last_seen_at)
     # au lieu de skipper sec. Garde le prix a jour + nourrit le wash (clean_expired).
     _exist = (db.table('cars')
-                .select('id, px, status, times_seen')
+                .select('id, px, status, times_seen, exit_reason')
                 .eq('src_url', car.src_url)
                 .limit(1)
                 .execute())
     if _exist.data:
         _rid = _exist.data[0]['id']
+        # Anti-resurrection : une annonce VENDUE ne revient pas. Si le wash l'a
+        # expiree (exit_reason='sold'), on ne la re-active plus — sinon flip-flop
+        # sans fin (la page « vendu » existe encore et se re-scrape en boucle).
+        if _exist.data[0].get('status') == 'expired' and _exist.data[0].get('exit_reason') == 'sold':
+            log.info(f'⊘ Vendu, non ressuscite: {car.mk} {car.mo} {car.yr}')
+            return None
         _old_px = _exist.data[0].get('px')
         _seen = (_exist.data[0].get('times_seen') or 0) + 1
         _upd = {'last_seen_at': datetime.utcnow().isoformat() + 'Z',
