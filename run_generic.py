@@ -86,7 +86,12 @@ def main():
     ap.add_argument('--threshold', type=float, default=50.0,
                     help="seuil d'alerte : alert=true si sources_ok_pct < THRESHOLD")
     ap.add_argument('--write', action='store_true', help='insere en base (sinon dry)')
+    ap.add_argument('--debug', action='store_true', help='logs DEBUG (raisons de rejet/drop)')
     args = ap.parse_args()
+
+    if args.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
+        logging.getLogger('httpx').setLevel(logging.WARNING)
 
     db = scraper.get_db()
     sources = load_generic_sources(db, args.slug)
