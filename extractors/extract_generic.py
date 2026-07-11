@@ -76,7 +76,18 @@ _BRAND_CANONICAL = {
 def _norm_brand(name):
     if not name or not isinstance(name, str):
         return None
-    return _BRAND_CANONICAL.get(name.strip().lower(), name.strip())
+    raw = name.strip()
+    # Essaie: casse, puis sans ponctuation/espaces (PORSCHE, B.M.W., MC LAREN...)
+    # contre le petit dict ET le registry complet (_BRAND_LOOKUP, defini plus bas).
+    lookup = globals().get("_BRAND_LOOKUP", {})
+    for key in (raw.lower(),
+                re.sub(r"[.\s]+", " ", raw.lower()).strip(),
+                re.sub(r"[.\s]+", "", raw.lower())):
+        if key in _BRAND_CANONICAL:
+            return _BRAND_CANONICAL[key]
+        if key in lookup:
+            return lookup[key]
+    return raw
 
 
 def _norm_fuel(s):
