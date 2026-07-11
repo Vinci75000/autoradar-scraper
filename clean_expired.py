@@ -228,7 +228,6 @@ def main():
             {
                 "status": "expired",
                 "expires_at": now_iso,
-                "last_seen_at": now_iso,
                 "last_checked_at": now_iso,
                 "disappeared_at": now_iso,
                 "exit_reason": exit_reason,
@@ -239,12 +238,15 @@ def main():
 
     # Marque last_checked_at sur les vivantes (curseur du wash — les fait sortir
     # de la tête de file jusqu'au prochain tour, indépendamment du scraper).
+    # IMPORTANT : le wash ne touche QUE last_checked_at, jamais last_seen_at —
+    # ce dernier doit rester le signal propre du scraper (« vue par la source »),
+    # sinon on ne peut plus distinguer une source vivante d'une source morte.
     for car in alive:
-        supa.table("cars").update({"last_seen_at": now_iso, "last_checked_at": now_iso}).eq(
+        supa.table("cars").update({"last_checked_at": now_iso}).eq(
             "id", car["id"]
         ).execute()
     if alive:
-        print(f"[wash] {len(alive)} cars last_seen_at refreshed")
+        print(f"[wash] {len(alive)} cars last_checked_at set (alive)")
 
     # Erreurs (timeout / injoignable) : on ne les expire PAS (impossible à vérifier),
     # mais on marque last_checked_at pour qu'elles rotent en fin de file — sinon le
