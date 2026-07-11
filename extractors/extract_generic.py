@@ -429,11 +429,33 @@ class GenericJsonLdExtractor(Extractor):
             if l not in seen:
                 seen.add(l)
                 urls.append(l)
+        # Pagination : explicite (selectors) sinon auto-detectee depuis la page 1.
+        # Debloque le catalogue complet des dealers dont le stock est pagine
+        # (?page=N, ?paged=N... ou /page/N/) sans config par dealer.
+        page_style = "query"
+        if not page_param and urls:
+            _soup1 = BeautifulSoup(first.text, "html.parser")
+            for a in _soup1.find_all("a", href=True):
+                mm = re.search(r"[?&](page|paged|pagina|seite|pagenumber|pagenr|pg)=(\d+)",
+                               a["href"], re.IGNORECASE)
+                if mm and int(mm.group(2)) >= 2:
+                    page_param, page_style = mm.group(1), "query"
+                    break
+            if not page_param:
+                for a in _soup1.find_all("a", href=True):
+                    if re.search(r"/page/\d+/?$", urlparse(a["href"]).path, re.IGNORECASE):
+                        page_param, page_style = "page", "path"
+                        break
+
         if page_param and urls:
             for n in range(2, max_pages + 1):
-                sep = "&" if "?" in listings_url else "?"
+                if page_style == "path":
+                    page_url = f"{listings_url.rstrip('/')}/page/{n}/"
+                else:
+                    sep = "&" if "?" in listings_url else "?"
+                    page_url = f"{listings_url}{sep}{page_param}={n}"
                 try:
-                    r = self._client.get(f"{listings_url}{sep}{page_param}={n}")
+                    r = self._client.get(page_url)
                     r.raise_for_status()
                     before = len(urls)
                     for l in pick_detail(page_links(r.text)):
