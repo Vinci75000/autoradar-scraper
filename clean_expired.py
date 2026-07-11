@@ -154,35 +154,30 @@ def main():
     # lavées (last_checked_at le plus ancien / jamais lavé d'abord). Découplé de
     # last_seen_at, que le scraper rafraîchit à chaque re-scrape — sinon une annonce
     # VENDUE mais dont la page existe encore ne vieillit jamais et échappe au wash.
-    print(f"[wash] fetching {BATCH_SIZE} active cars by oldest last_checked_at")
-    try:
-        result = (
-            supa.table("cars")
-            .select("id, src_url, mk, mo, last_checked_at")
-            .eq("status", "active")
-            .order("last_checked_at", desc=False, nullsfirst=True)
-            .limit(BATCH_SIZE)
-            .execute()
-        )
-    except TypeError:
-        # supabase-py ancien sans nullsfirst : NULLS triés en dernier en ASC —
-        # on fait donc 2 passes (jamais-lavées d'abord, puis les plus anciennes).
-        never = (supa.table("cars").select("id, src_url, mk, mo, last_checked_at")
-                 .eq("status", "active").is_("last_checked_at", "null")
-                 .limit(BATCH_SIZE).execute())
-        rows_never = never.data or []
-        rest = []
-        if len(rows_never) < BATCH_SIZE:
-            r2 = (supa.table("cars").select("id, src_url, mk, mo, last_checked_at")
-                  .eq("status", "active").not_.is_("last_checked_at", "null")
-                  .order("last_checked_at", desc=False)
-                  .limit(BATCH_SIZE - len(rows_never)).execute())
-            rest = r2.data or []
-        class _R:  # petit shim pour homogénéiser
-            data = rows_never + rest
-        result = _R()
-
-    cars = result.data or []
+    # Pagination : Supabase plafonne à ~1000 lignes par requête. On pagine par
+    # tranches jusqu'à BATCH_SIZE (le snapshot est figé avant tout write, donc
+    # l'ordre reste cohérent malgré les updates qui suivront).
+    print(f"[wash] fetching up to {BATCH_SIZE} active cars by oldest last_checked_at")
+    PAGE = 1000
+    cars = []
+    offset = 0
+    while len(cars) < BATCH_SIZE:
+        want = min(PAGE, BATCH_SIZE - len(cars))
+        q = (supa.table("cars")
+             .select("id, src_url, mk, mo, last_checked_at")
+             .eq("status", "active"))
+        try:
+            q = q.order("last_checked_at", desc=False, nullsfirst=True)
+        except TypeError:
+            q = q.order("last_checked_at", desc=False)  # ancien supabase-py : NULLS en dernier
+        page = q.range(offset, offset + want - 1).execute()
+        batch = page.data or []
+        if not batch:
+            break
+        cars.extend(batch)
+        offset += len(batch)
+        if len(batch) < want:
+            break
     print(f"[wash] {len(cars)} cars to check")
 
     if not cars:
@@ -250,6 +245,14 @@ def main():
         ).execute()
     if alive:
         print(f"[wash] {len(alive)} cars last_seen_at refreshed")
+
+    # Erreurs (timeout / injoignable) : on ne les expire PAS (impossible à vérifier),
+    # mais on marque last_checked_at pour qu'elles rotent en fin de file — sinon le
+    # curseur reste bloqué en tête par les URLs qui erreur en boucle.
+    for car in errors:
+        supa.table("cars").update({"last_checked_at": now_iso}).eq("id", car["id"]).execute()
+    if errors:
+        print(f"[wash] {len(errors)} errors — last_checked_at bumped (retry au prochain cycle)")
 
     duration = (datetime.now(timezone.utc) - started).total_seconds()
     print(f"[wash] done in {duration:.1f}s")
