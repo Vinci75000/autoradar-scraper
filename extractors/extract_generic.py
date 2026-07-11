@@ -157,6 +157,7 @@ except Exception:
     _BRAND_REG = dict(_BRAND_CANONICAL)
 _BRAND_LOOKUP = {k.lower(): v for k, v in _BRAND_REG.items()}
 _BRAND_KEYS = sorted(_BRAND_LOOKUP.keys(), key=lambda s: -len(s))
+_CANON_BRANDS = set(_BRAND_REG.values())
 
 
 _TITLE_SEP_RE = re.compile(r"\s*\|\s*|\s+[\u2022\u00b7\u2013\u2014]\s+|\s+-\s+")
@@ -647,13 +648,16 @@ class GenericJsonLdExtractor(Extractor):
         # --- end hardening -----------------------------------------------------
 
         car.raw = {"extractor": "generic_jsonld", "jsonld": bool(obj)}
-        if not car.mk:
-            # Fallback : marque depuis le slug d'URL (fiat-abarth-695, autobianchi-y10,
-            # volkswagen-t-roc...,svoc260.html) quand titre/JSON-LD n'ont rien donne.
+        if not car.mk or car.mk not in _CANON_BRANDS:
+            # Marque absente OU non-canonique (souvent le NOM DU DEALER capte par
+            # le JSON-LD, ex "HEMMELS") : re-derive depuis le slug d'URL
+            # (fiat-abarth-695, volkswagen-t-roc...,svoc260.html) puis le titre.
             _slug = urlparse(url).path.rstrip("/").rsplit("/", 1)[-1]
             _slug = re.sub(r",\w+\.html?$", "", _slug, flags=re.IGNORECASE)
             _slug = re.sub(r"[-_]+", " ", _slug).strip()
             _mk4, _mo4 = _brand_from_title(_slug)
+            if not _mk4 and _hint:
+                _mk4, _mo4 = _brand_from_title(_hint)
             if _mk4:
                 car.mk = _mk4
                 if not car.mo and _mo4:
