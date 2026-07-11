@@ -628,6 +628,16 @@ class GenericJsonLdExtractor(Extractor):
     @staticmethod
     def _enrich_html(soup: BeautifulSoup, car: CarListing) -> None:
         text = soup.get_text(" ", strip=True)
+        # Coupe la section "vehicules similaires" : sinon prix/annee/km de la
+        # fiche sujet sont pollues par les cartes liees (jusqu'a ~40 voitures).
+        _rel = re.search(
+            r"(?:dans la m[eê]me collection|m[eê]me collection|vous aimerez"
+            r"|autres v[eé]hicules|nos autres|v[eé]hicules similaires"
+            r"|[aä]hnliche fahrzeuge|potrebbe(?:ro)? interessart|veicoli simili"
+            r"|related vehicles?|you may also|similar (?:cars|vehicles))",
+            text, re.IGNORECASE)
+        if _rel:
+            text = text[:_rel.start()]
         if not car.yr:
             m = re.search(r"(?:Erstzulassung|Baujahr|First registration|Year of (?:construction|manufacture)|Mise en circulation|1(?:re|ere|ère)? mise en circulation|Immatriculation|Immatricolazione|Prima immatricolazione|Model year|Modelljahr|Année|Anno|Bouwjaar|Year)[^\d]{0,12}(?:\d{1,2}\s*[/.\-]\s*){0,2}((?:18|19|20)\d{2})", text, re.IGNORECASE)
             if m:
@@ -637,7 +647,7 @@ class GenericJsonLdExtractor(Extractor):
         if not car.km:
             m = re.search(r"(?:Kilometerstand|Mileage|Odometer|Kilométrage|Chilometraggio)\s*[:.]?\s*([\d.,]+)\s*km", text, re.IGNORECASE)
             if not m:
-                m = re.search(r"([\d.,]{3,})\s*km\b(?!\s*/?\s*h)", text, re.IGNORECASE)
+                m = re.search(r"([\d.,'’]{3,})\s*km\b(?!\s*/?\s*h)", text, re.IGNORECASE)
             if m:
                 c = re.sub(r"[^\d]", "", m.group(1))
                 if c:
@@ -646,7 +656,7 @@ class GenericJsonLdExtractor(Extractor):
                         car.km = km
         if car.px is None:
             best = None
-            for m in re.finditer(r"(?:€|EUR|CHF|£)\s*([\d][\d.,]{3,})|([\d][\d.,]{3,})\s*(?:€|EUR|CHF|£)", text):
+            for m in re.finditer(r"(?:€|EUR|CHF|£)\s*([\d][\d.,'’]{3,})|([\d][\d.,'’]{3,})\s*(?:€|EUR|CHF|£)", text):
                 val = _parse_price(m.group(1) or m.group(2))
                 if val and 1000 <= val <= 100_000_000 and (best is None or val > best):
                     best = val
