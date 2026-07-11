@@ -51,6 +51,16 @@ PEPITE_KEYWORDS_DE = [
     "sammlung", "raritat", "raritaet", "selten", "exklusiv", "prestige",
     "rennsport", "manufaktur", "veredelung", "tuning", "klassisch",
 ]
+PEPITE_KEYWORDS_CH = [
+    "collection", "classique", "prestige", "sport", "sportive", "youngtimer",
+    "oldtimer", "klassiker", "sportwagen", "sammler", "classica", "epoca",
+    "exclusif", "exclusive", "rare", "ancienne",
+]
+PEPITE_KEYWORDS_BE = [
+    "collection", "classique", "prestige", "sport", "sportive", "youngtimer",
+    "oldtimer", "klassiek", "klassieke", "sportwagen", "verzameling", "zeldzaam",
+    "exclusief", "exclusif", "ancienne", "rare",
+]
 CAR_PATH_HINTS = [
     "/auto", "/car", "/cars", "/annunci", "/inserzioni",
     "/vehicle", "/listing", "/coches", "/veicoli", "/macchina",
@@ -118,6 +128,25 @@ SEED_DE = [
     "https://www.cog-classics.com",
     "http://www.autosalon-isartal.de",
     "https://www.mirbach.de",
+]
+
+# Suisse — spécialistes collection/sport/prestige (multi-langue).
+SEED_CH = [
+    "https://auto-sport.ch",
+    "https://gscclassic.ch",
+    "https://www.carugati.ch",
+    "https://classica-motors.ch",
+    "https://leuba-collection.ch",
+    "http://www.garage-classics.ch",
+    "https://www.bahmancars.ch",
+]
+
+# Belgique — collection/youngtimer/prestige.
+SEED_BE = [
+    "https://www.classic-sportscars.be",
+    "https://www.marreyt.com",
+    "https://www.wilmots-heritage.be",
+    "https://www.classic-cruising-automobile.com",
 ]
 
 
@@ -274,13 +303,13 @@ def audit_source(url, keywords):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--country", choices=["it", "es", "fr", "de"], required=True)
+    ap.add_argument("--country", choices=["it", "es", "fr", "de", "ch", "be"], required=True)
     ap.add_argument("--output", required=True)
     ap.add_argument("--delay", type=float, default=2.5, help="Politeness delay between sources")
     args = ap.parse_args()
 
-    seeds = {"it": SEED_IT, "es": SEED_ES, "fr": SEED_FR, "de": SEED_DE}[args.country]
-    keywords = {"it": PEPITE_KEYWORDS_IT, "es": PEPITE_KEYWORDS_ES, "fr": PEPITE_KEYWORDS_FR, "de": PEPITE_KEYWORDS_DE}[args.country]
+    seeds = {"it": SEED_IT, "es": SEED_ES, "fr": SEED_FR, "de": SEED_DE, "ch": SEED_CH, "be": SEED_BE}[args.country]
+    keywords = {"it": PEPITE_KEYWORDS_IT, "es": PEPITE_KEYWORDS_ES, "fr": PEPITE_KEYWORDS_FR, "de": PEPITE_KEYWORDS_DE, "ch": PEPITE_KEYWORDS_CH, "be": PEPITE_KEYWORDS_BE}[args.country]
 
     results = []
     for i, url in enumerate(seeds, 1):
