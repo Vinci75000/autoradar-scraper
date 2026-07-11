@@ -41,6 +41,11 @@ PEPITE_KEYWORDS_ES = [
     "exclusivo", "exclusiva", "youngtimer", "oldtimer",
     "vintage", "deportivos",
 ]
+PEPITE_KEYWORDS_FR = [
+    "collection", "classique", "ancienne", "youngtimer", "oldtimer",
+    "sport", "sportive", "prestige", "exclusif", "exclusive", "rare",
+    "prepare", "preparee", "preparation", "supercar", "vintage", "gt",
+]
 CAR_PATH_HINTS = [
     "/auto", "/car", "/cars", "/annunci", "/inserzioni",
     "/vehicle", "/listing", "/coches", "/veicoli", "/macchina",
@@ -83,6 +88,19 @@ SEED_ES = [
     "https://www.coches.com",
     "https://www.escuderia.com",
     "https://www.carandclassic.com/es",
+]
+
+# Petites concessions prep / collection / prestige — identifiées à la main,
+# pas des annuaires. Le vrai gisement « perles » (cf. Centurion, Motors Corner).
+SEED_FR = [
+    "https://centurionmotors.fr",
+    "https://www.motors-corner.com",
+    "https://www.classic-a.fr",
+    "https://www.etincelle-automobiles.com",
+    "https://starkmotors.fr",
+    "https://capotsvintage.com",
+    "https://symbolcars.fr",
+    "https://www.qualityluxurycars06.com",
 ]
 
 
@@ -239,13 +257,13 @@ def audit_source(url, keywords):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--country", choices=["it", "es"], required=True)
+    ap.add_argument("--country", choices=["it", "es", "fr"], required=True)
     ap.add_argument("--output", required=True)
     ap.add_argument("--delay", type=float, default=2.5, help="Politeness delay between sources")
     args = ap.parse_args()
 
-    seeds = SEED_IT if args.country == "it" else SEED_ES
-    keywords = PEPITE_KEYWORDS_IT if args.country == "it" else PEPITE_KEYWORDS_ES
+    seeds = {"it": SEED_IT, "es": SEED_ES, "fr": SEED_FR}[args.country]
+    keywords = {"it": PEPITE_KEYWORDS_IT, "es": PEPITE_KEYWORDS_ES, "fr": PEPITE_KEYWORDS_FR}[args.country]
 
     results = []
     for i, url in enumerate(seeds, 1):
