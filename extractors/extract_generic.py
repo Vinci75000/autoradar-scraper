@@ -360,6 +360,9 @@ class GenericJsonLdExtractor(Extractor):
     def _discover(self, config: SourceConfig) -> list[str]:
         sel = config.selectors or {}
         listings_url = config.listings_url
+        if not listings_url:
+            logger.warning(f"{config.slug}: pas de listings_url — skip")
+            return []
         p = urlparse(listings_url)
         base = f"{p.scheme}://{p.netloc}"
         custom = sel.get("detail_url_regex")
@@ -423,12 +426,48 @@ class GenericJsonLdExtractor(Extractor):
 
         seen = set()
         urls = []
-        first = self._client.get(listings_url)
-        first.raise_for_status()
+        try:
+            first = self._client.get(listings_url)
+            first.raise_for_status()
+        except Exception:
+            # listings_url mort (404, vieux recon...) : retombe sur la racine du
+            # domaine, d'ou le saut home->stock pourra retrouver la page-stock.
+            root = f"{p.scheme}://{p.netloc}/"
+            if root.rstrip("/") == listings_url.rstrip("/"):
+                raise
+            first = self._client.get(root)
+            first.raise_for_status()
+            listings_url = root
+            p = urlparse(listings_url)
         for l in pick_detail(page_links(first.text)):
             if l not in seen:
                 seen.add(l)
                 urls.append(l)
+
+        # Home -> page-stock : si la page de depart donne peu de fiches, suivre
+        # le lien "nos vehicules / stock / annonces / fahrzeuge..." et
+        # redecouvrir de la. On n'adopte le saut que s'il rapporte PLUS de
+        # fiches (garde-fou anti-mauvais-lien). Un seul hop.
+        if len(urls) < 20:
+            stock = self._find_stock_link(first.text, listings_url, p.netloc)
+            if stock and stock.rstrip("/") != listings_url.rstrip("/"):
+                try:
+                    r2 = self._client.get(stock)
+                    r2.raise_for_status()
+                    new = pick_detail(page_links(r2.text))
+                    if len(set(new)) > len(urls):
+                        listings_url = stock
+                        p = urlparse(listings_url)
+                        first = r2
+                        seen, urls = set(), []
+                        for l in new:
+                            if l not in seen:
+                                seen.add(l)
+                                urls.append(l)
+                        logger.info(f"{config.slug}: hop home->stock {stock}")
+                except Exception as exc:
+                    logger.warning(f"{config.slug} stock-hop KO: {exc}")
+
         # Pagination : explicite (selectors) sinon auto-detectee depuis la page 1.
         # Debloque le catalogue complet des dealers dont le stock est pagine
         # (?page=N, ?paged=N... ou /page/N/) sans config par dealer.
@@ -470,6 +509,51 @@ class GenericJsonLdExtractor(Extractor):
                 time.sleep(self.INTER_REQUEST_DELAY_S)
         logger.info(f"{config.slug}: discovered {len(urls)} detail URLs")
         return urls
+
+    _STOCK_KW = re.compile(
+        r"(v[eé]hicule|voiture|stock|inventory|inventaire|annonce|occasion|"
+        r"showroom|for[-\s]?sale|fahrzeug|bestand|gebrauchtwagen|catalog|"
+        r"vetrina|vendita|our[-\s]?cars|le[-\s]?nostre[-\s]?auto|nos[-\s]?autos?)",
+        re.IGNORECASE,
+    )
+    _STOCK_STRONG = re.compile(
+        r"(stock|annonce|occasion|inventory|inventaire|vehicules?|voitures|"
+        r"fahrzeuge|for-sale|vendita|showroom)",
+        re.IGNORECASE,
+    )
+
+    @classmethod
+    def _find_stock_link(cls, html, listings_url, netloc):
+        """Depuis une home, trouve le meilleur lien vers la page-stock."""
+        soup = BeautifulSoup(html, "html.parser")
+        base = f"{urlparse(listings_url).scheme}://{netloc}"
+        host = netloc.replace("www.", "")
+        best, best_score = None, 0.0
+        for a in soup.find_all("a", href=True):
+            href = a["href"].split("#")[0]
+            if not href or href.startswith(("mailto:", "tel:", "javascript:")):
+                continue
+            full = href if href.startswith("http") else urljoin(base, href)
+            u = urlparse(full)
+            if u.netloc.replace("www.", "") != host:
+                continue
+            path = u.path.rstrip("/")
+            if not path or path == "/":
+                continue
+            text = a.get_text(" ", strip=True) or ""
+            if not cls._STOCK_KW.search(f"{path} {text}"):
+                continue
+            score = 0.0
+            if cls._STOCK_KW.search(path):
+                score += 2
+            if cls._STOCK_KW.search(text):
+                score += 1
+            if cls._STOCK_STRONG.search(path):
+                score += 2
+            score -= path.count("/") * 0.2
+            if score > best_score:
+                best_score, best = score, full
+        return best
 
     def _one(self, url: str, config: SourceConfig) -> Optional[CarListing]:
         resp = self._client.get(url)
