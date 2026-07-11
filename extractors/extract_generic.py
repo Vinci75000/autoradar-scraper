@@ -47,7 +47,8 @@ logger = logging.getLogger(__name__)
 _DETAIL_HINT_RE = re.compile(
     r"/(?:cars?|vehicles?|vehicule|voiture|voitures|auto|autos|fahrzeug|fahrzeuge|"
     r"stock|stocklist|inventory|occasion|occasions|veicoli|coche|coches|samochod|"
-    r"classic|oldtimer|youngtimer|for-sale|te-koop|a-vendre|sprzedaz)/",
+    r"classic|oldtimer|youngtimer|for-sale|te-koop|a-vendre|sprzedaz|"
+    r"produit|produkt|prodotto|producto|product|listing|listings|annonce|annonces)/",
     re.IGNORECASE,
 )
 _DETAIL_TAIL_RE = re.compile(r"/[a-z0-9][a-z0-9\-]{4,}/?$", re.IGNORECASE)
