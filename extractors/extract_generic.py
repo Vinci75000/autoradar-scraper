@@ -830,7 +830,9 @@ class GenericJsonLdExtractor(Extractor):
             offers = offers[0]
         if isinstance(offers, dict):
             px = _parse_price(offers.get("price"))
-            if px:
+            # garde-fou : certaines plateformes mettent une sentinelle "prix sur
+            # demande" (999999999) dans le JSON-LD -> on ignore hors plage reelle.
+            if px and 100 <= px <= 50_000_000:
                 car.px = px
             cu = offers.get("priceCurrency")
             if isinstance(cu, str):
