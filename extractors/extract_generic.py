@@ -352,10 +352,49 @@ class GenericJsonLdExtractor(Extractor):
         self._client = http_client or httpx.Client(
             timeout=self.DEFAULT_TIMEOUT, headers=self.DEFAULT_HEADERS, follow_redirects=True,
         )
+        self._browser_mode = False
+        self._pw = self._browser = self._page = None
+
+    # ── Fetch unifie : Chromium (SPA) si requires_browser, sinon httpx ──────
+    class _Resp:
+        __slots__ = ("text",)
+        def __init__(self, text): self.text = text
+        def raise_for_status(self): pass
+
+    def _ensure_browser(self):
+        if self._page is not None:
+            return
+        from playwright.sync_api import sync_playwright
+        self._pw = sync_playwright().start()
+        self._browser = self._pw.chromium.launch(headless=True)
+        self._page = self._browser.new_page(
+            user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                       "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+        )
+
+    def _close_browser(self):
+        try:
+            if self._browser: self._browser.close()
+            if self._pw: self._pw.stop()
+        except Exception:
+            pass
+        self._pw = self._browser = self._page = None
+
+    def _fetch(self, url):
+        if self._browser_mode:
+            self._ensure_browser()
+            try:
+                self._page.goto(url, wait_until="networkidle", timeout=30000)
+            except Exception:
+                self._page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                self._page.wait_for_timeout(1500)
+            return self._Resp(self._page.content())
+        return self._client.get(url)
 
     def extract(self, config: SourceConfig, limit: Optional[int] = None) -> ExtractionResult:
         result = ExtractionResult(source_slug=config.slug)
         t0 = time.monotonic()
+        self._browser_mode = bool(getattr(config, "requires_browser", False))
         try:
             urls = self._discover(config)
             result.pages_fetched = 1
@@ -376,6 +415,8 @@ class GenericJsonLdExtractor(Extractor):
             msg = f"{config.slug} listing catastrophic: {exc}"
             logger.error(msg)
             result.errors.append(msg)
+        finally:
+            self._close_browser()
         result.duration_s = time.monotonic() - t0
         return result
 
@@ -449,7 +490,7 @@ class GenericJsonLdExtractor(Extractor):
         seen = set()
         urls = []
         try:
-            first = self._client.get(listings_url)
+            first = self._fetch(listings_url)
             first.raise_for_status()
         except Exception:
             # listings_url mort (404, vieux recon...) : retombe sur la racine du
@@ -457,7 +498,7 @@ class GenericJsonLdExtractor(Extractor):
             root = f"{p.scheme}://{p.netloc}/"
             if root.rstrip("/") == listings_url.rstrip("/"):
                 raise
-            first = self._client.get(root)
+            first = self._fetch(root)
             first.raise_for_status()
             listings_url = root
             p = urlparse(listings_url)
@@ -474,7 +515,7 @@ class GenericJsonLdExtractor(Extractor):
             stock = self._find_stock_link(first.text, listings_url, p.netloc)
             if stock and stock.rstrip("/") != listings_url.rstrip("/"):
                 try:
-                    r2 = self._client.get(stock)
+                    r2 = self._fetch(stock)
                     r2.raise_for_status()
                     new = pick_detail(page_links(r2.text))
                     if len(set(new)) > len(urls):
@@ -516,7 +557,7 @@ class GenericJsonLdExtractor(Extractor):
                     sep = "&" if "?" in listings_url else "?"
                     page_url = f"{listings_url}{sep}{page_param}={n}"
                 try:
-                    r = self._client.get(page_url)
+                    r = self._fetch(page_url)
                     r.raise_for_status()
                     before = len(urls)
                     for l in pick_detail(page_links(r.text)):
@@ -578,7 +619,7 @@ class GenericJsonLdExtractor(Extractor):
         return best
 
     def _one(self, url: str, config: SourceConfig) -> Optional[CarListing]:
-        resp = self._client.get(url)
+        resp = self._fetch(url)
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, "html.parser")
         car = CarListing(src_url=url, src=config.slug)

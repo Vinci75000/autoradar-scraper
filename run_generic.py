@@ -16,7 +16,7 @@ import extractors  # noqa: F401  (declenche les @register)
 from scrape_symfio_pipeline import adapt_extractor_carlisting
 
 SELECT = ('slug,country,currency,language,timezone,city,tier,type,'
-          'listings_url,score_bonus,status,scrape_method')
+          'listings_url,score_bonus,status,scrape_method,requires_browser')
 
 
 def load_generic_sources(db, slug_filter=None):
@@ -117,6 +117,7 @@ def main():
             tier=src.get('tier'), type=src.get('type') or 'dealer',
             score_bonus=src.get('score_bonus') or 0, scrape_method='jsonld',
             platform=None, city=src.get('city'),
+            requires_browser=bool(src.get('requires_browser')),
         )
         try:
             ext = get_extractor(cfg)

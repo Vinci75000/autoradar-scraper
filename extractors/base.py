@@ -117,6 +117,7 @@ class SourceConfig:
     city: Optional[str] = None
     selectors: dict = field(default_factory=dict)
     notes: Optional[str] = None
+    requires_browser: bool = False
 
 
 # ─── Abstract base class ───────────────────────────────────────────────────────
