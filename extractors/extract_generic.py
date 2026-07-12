@@ -688,7 +688,12 @@ class GenericJsonLdExtractor(Extractor):
         car.mo = _clean_model(car.mo, _toks)
         if car.mo:
             car.mo = re.split(r"\s+(?:kaufen|zu\s+verkaufen|for\s+sale|te\s+koop)\b", car.mo, flags=re.IGNORECASE)[0].strip()
+            # annee en prefixe de titre (RnR: "2010 Maserati GranTurismo") -> retire
+            car.mo = re.sub(r"^(?:18|19|20)\d{2}\s+", "", car.mo).strip()
         if car.mk and car.mo:
+            # marque complete en tete (avec trait d'union : "Mercedes-Benz 190E")
+            if car.mo.lower().startswith(car.mk.lower()):
+                car.mo = car.mo[len(car.mk):].lstrip(" -").strip()
             for _w in car.mk.replace("-", " ").split():
                 if len(_w) >= 3 and car.mo.lower().startswith(_w.lower() + " "):
                     car.mo = car.mo[len(_w) + 1:].strip()
@@ -854,7 +859,8 @@ class GenericJsonLdExtractor(Extractor):
             r"|autres (?:v[eé]hicules|voitures|autos|mod[eè]les)|nos autres|ces autres"
             r"|pourraient vous int[ée]ress|v[eé]hicules similaires"
             r"|[aä]hnliche fahrzeuge|potrebbe(?:ro)? interessart|veicoli simili"
-            r"|related vehicles?|you may also|similar (?:cars|vehicles))",
+            r"|related vehicles?|you may also|similar (?:cars|vehicles)"
+            r"|other (?:classic )?cars|ander(?:e)? (?:auto|wagen)|ons aanbod)",
             text, re.IGNORECASE)
         if _rel:
             text = text[:_rel.start()]
@@ -865,7 +871,7 @@ class GenericJsonLdExtractor(Extractor):
                 if 1900 < y <= datetime.now().year + 1:
                     car.yr = y
         if not car.km:
-            _kmn = r"\d{1,3}(?:[ \u00a0\u202f\u2009.]\d{3})+|\d{3,}"
+            _kmn = r"\d{1,3}(?:[ \u00a0\u202f\u2009.,]\d{3})+|\d{3,}"
             m = re.search(rf"(?:Kilometerstand|Mileage|Odometer|Kilométrage|Chilometraggio)\s*[:.]?\s*({_kmn})\s*km", text, re.IGNORECASE)
             if not m:
                 m = re.search(rf"({_kmn})\s*km\b(?!\s*/?\s*h)", text, re.IGNORECASE)
@@ -876,7 +882,7 @@ class GenericJsonLdExtractor(Extractor):
                     if 0 <= km <= 2_000_000:
                         car.km = km
         # nombre = groupe milliers (149 000,00 / 189.900 / 12'500) ou entier.
-        _num = r"\d{1,3}(?:[ \u00a0\u202f\u2009.'’]\d{3})+(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?"
+        _num = r"\d{1,3}(?:[ \u00a0\u202f\u2009.,'’]\d{3})+(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?"
         if car.px is None:
             # Prix LIBELLE prioritaire (prix sujet, pas les cartes "similaires" sans libelle)
             _lab = re.search(rf"(?:Prix|Preis|Price|Prezzo|Prijs)\s*[:.]?\s*({_num})\s*(?:€|EUR|CHF|£)", text, re.IGNORECASE)
@@ -887,8 +893,15 @@ class GenericJsonLdExtractor(Extractor):
         if car.px is None:
             best = None
             for m in re.finditer(rf"(?:€|EUR|CHF|£)\s*({_num})|({_num})\s*(?:€|EUR|CHF|£)", text):
-                val = _parse_price(m.group(1) or m.group(2))
-                if val and 1000 <= val <= 100_000_000 and (best is None or val > best):
+                _raw = m.group(1) or m.group(2)
+                val = _parse_price(_raw)
+                if not val or not (1000 <= val <= 100_000_000):
+                    continue
+                # nombre nu a 4 chiffres dans la plage annee (2015) : c'est une
+                # annee, pas un prix. On l'ignore (evite px=2015 sur les fiches POA).
+                if 1900 <= val <= _CURRENT_YEAR + 1 and re.fullmatch(r"\d{4}", _raw):
+                    continue
+                if best is None or val > best:
                     best = val
             if best:
                 car.px = best
