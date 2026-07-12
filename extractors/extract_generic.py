@@ -865,9 +865,10 @@ class GenericJsonLdExtractor(Extractor):
                 if 1900 < y <= datetime.now().year + 1:
                     car.yr = y
         if not car.km:
-            m = re.search(r"(?:Kilometerstand|Mileage|Odometer|Kilométrage|Chilometraggio)\s*[:.]?\s*([\d.,]+)\s*km", text, re.IGNORECASE)
+            _kmn = r"\d{1,3}(?:[ \u00a0\u202f\u2009.]\d{3})+|\d{3,}"
+            m = re.search(rf"(?:Kilometerstand|Mileage|Odometer|Kilométrage|Chilometraggio)\s*[:.]?\s*({_kmn})\s*km", text, re.IGNORECASE)
             if not m:
-                m = re.search(r"([\d.,'’]{3,})\s*km\b(?!\s*/?\s*h)", text, re.IGNORECASE)
+                m = re.search(rf"({_kmn})\s*km\b(?!\s*/?\s*h)", text, re.IGNORECASE)
             if m:
                 c = re.sub(r"[^\d]", "", m.group(1))
                 if c:
