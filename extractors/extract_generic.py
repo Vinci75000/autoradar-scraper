@@ -186,6 +186,13 @@ def _brand_from_title(title):
 # Quality hardening helpers
 # ---------------------------------------------------------------------------
 _CURRENT_YEAR = datetime.now().year
+# Mots du cluster spec (km / boite / carburant) — sert au fallback annee "nue"
+# des sites a icones sans libelle (Elementor/Woo : "2005 18.000kms Auto Gasolina").
+_SPEC_NEAR = re.compile(
+    r"kms?\b|autom[aáà]t|schalt|manuel|manual|manuale|caixa|cambio|bo[iî]te|"
+    r"essence|diesel|gasol|benzin|petrol|hybrid|h[ií]brid|elektr|el[eé]ctric",
+    re.IGNORECASE,
+)
 
 _SOLD_RE = re.compile(
     r"\b(sold|verkauft|verkocht|vendu|venduto|vendido|reserved|reserviert|"
@@ -629,6 +636,22 @@ class GenericJsonLdExtractor(Extractor):
         _yt = _year_from_title(car.mo) or _year_from_title(_hint)
         if _yt and (car.yr is None or car.yr >= _CURRENT_YEAR):
             car.yr = _yt
+        # Dernier recours — annee "nue" du cluster spec (year collee a km / boite /
+        # carburant), sites a icones sans libelle (fsautomoveis...). Ne fire que si
+        # tout le reste a echoue : aucun risque de regression sur les dealers a
+        # libelle ou annee-titre.
+        if car.yr is None:
+            _txt = soup.get_text(" ", strip=True)
+            _rl = re.search(r"(?:m[eê]me collection|v[eé]hicules similaires|related|vous aimerez|potrebbe interessart|veicoli simili)", _txt, re.IGNORECASE)
+            if _rl:
+                _txt = _txt[:_rl.start()]
+            for _mm in re.finditer(r"(?:18|19|20)\d{2}", _txt):
+                _y = int(_mm.group(0))
+                if not (1900 < _y <= _CURRENT_YEAR + 1):
+                    continue
+                if _SPEC_NEAR.search(_txt[max(0, _mm.start() - 20):_mm.end() + 20]):
+                    car.yr = _y
+                    break
         # SOLD: drop si vendu (titre, modele, url)
         if _looks_sold(car.mo) or _looks_sold(_hint) or _looks_sold(url):
             logger.debug(f"sold, dropping {url}")
