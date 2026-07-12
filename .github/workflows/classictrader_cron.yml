@@ -50,4 +50,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run classictrader pipeline
-        run: python -u scripts/run_classictrader.py --limit 2000
+        run: |
+          python -u scripts/run_classictrader.py \
+            --limit ${{ github.event.inputs.limit || '2000' }} \
+            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
