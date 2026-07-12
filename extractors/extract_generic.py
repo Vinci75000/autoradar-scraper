@@ -690,6 +690,8 @@ class GenericJsonLdExtractor(Extractor):
             car.mo = re.split(r"\s+(?:kaufen|zu\s+verkaufen|for\s+sale|te\s+koop)\b", car.mo, flags=re.IGNORECASE)[0].strip()
             # annee en prefixe de titre (RnR: "2010 Maserati GranTurismo") -> retire
             car.mo = re.sub(r"^(?:18|19|20)\d{2}\s+", "", car.mo).strip()
+            # annee en suffixe entre parentheses ("Defender 300 TDI (1997)") -> retire
+            car.mo = re.sub(r"\s*\((?:18|19|20)\d{2}\)\s*$", "", car.mo).strip()
         if car.mk and car.mo:
             # marque complete en tete (avec trait d'union : "Mercedes-Benz 190E")
             if car.mo.lower().startswith(car.mk.lower()):
