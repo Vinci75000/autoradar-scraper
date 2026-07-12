@@ -851,7 +851,8 @@ class GenericJsonLdExtractor(Extractor):
         # fiche sujet sont pollues par les cartes liees (jusqu'a ~40 voitures).
         _rel = re.search(
             r"(?:dans la m[eê]me collection|m[eê]me collection|vous aimerez"
-            r"|autres v[eé]hicules|nos autres|v[eé]hicules similaires"
+            r"|autres (?:v[eé]hicules|voitures|autos|mod[eè]les)|nos autres|ces autres"
+            r"|pourraient vous int[ée]ress|v[eé]hicules similaires"
             r"|[aä]hnliche fahrzeuge|potrebbe(?:ro)? interessart|veicoli simili"
             r"|related vehicles?|you may also|similar (?:cars|vehicles))",
             text, re.IGNORECASE)
