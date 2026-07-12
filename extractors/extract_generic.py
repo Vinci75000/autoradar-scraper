@@ -875,12 +875,17 @@ class GenericJsonLdExtractor(Extractor):
                     km = int(c)
                     if 0 <= km <= 2_000_000:
                         car.km = km
+        # nombre = groupe milliers (149 000,00 / 189.900 / 12'500) ou entier.
+        _num = r"\d{1,3}(?:[ \u00a0\u202f\u2009.'’]\d{3})+(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?"
+        if car.px is None:
+            # Prix LIBELLE prioritaire (prix sujet, pas les cartes "similaires" sans libelle)
+            _lab = re.search(rf"(?:Prix|Preis|Price|Prezzo|Prijs)\s*[:.]?\s*({_num})\s*(?:€|EUR|CHF|£)", text, re.IGNORECASE)
+            if _lab:
+                _v = _parse_price(_lab.group(1))
+                if _v and 1000 <= _v <= 100_000_000:
+                    car.px = _v
         if car.px is None:
             best = None
-            # nombre = groupe milliers (149 000,00 / 189.900 / 12'500) ou entier.
-            # Le groupement 3-par-3 evite de coller le code chassis au prix :
-            # "W123 29 000,00" -> 29000, pas 12329000.
-            _num = r"\d{1,3}(?:[ \u00a0\u202f\u2009.'’]\d{3})+(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?"
             for m in re.finditer(rf"(?:€|EUR|CHF|£)\s*({_num})|({_num})\s*(?:€|EUR|CHF|£)", text):
                 val = _parse_price(m.group(1) or m.group(2))
                 if val and 1000 <= val <= 100_000_000 and (best is None or val > best):
