@@ -1484,7 +1484,36 @@ def _parse_generic_card(card, src: str, base_url: str, default_opts: list) -> Op
         mo  = mo_raw[:200] if mo_raw else mk
 
         t  = text.lower()
-        yr = _extract_year(t) or 1990
+
+        # Photo de la carte : lue depuis <img> (src, ou lazy-load data-*, ou
+        # srcset = on prend la plus grande). Absolutise l'URL. Ignore les
+        # placeholders inline (data:). Sans ça la fiche s'affichait sans photo.
+        photos = []
+        img = card.select_one('img')
+        if img:
+            psrc = (img.get('src') or img.get('data-src') or img.get('data-lazy-src')
+                    or img.get('data-lazy') or img.get('data-original') or '')
+            if (not psrc or psrc.startswith('data:')) and img.get('srcset'):
+                psrc = img['srcset'].split(',')[-1].strip().split(' ')[0]
+            if psrc and not psrc.startswith('data:'):
+                if psrc.startswith('//'):
+                    psrc = 'https:' + psrc
+                elif psrc.startswith('/'):
+                    psrc = base_url + psrc
+                photos.append(psrc)
+
+        # Annee : texte carte, sinon nom de fichier image ("...-1967-fastback.jpg"
+        # -> 1967, plus fiable que le 1990 fabrique), sinon defaut. On lit le
+        # basename seul pour eviter le "/2026/07/" du chemin media.
+        yr = _extract_year(t)
+        if not yr and photos:
+            # regex large (1850-2029) car _extract_year plafonne a 1990+ ; le
+            # (?![\dxX]) evite de prendre une dimension image ("1920x1080").
+            _my = re.search(r'(18[5-9]\d|19\d\d|20[0-2]\d)(?![\dxX])',
+                            photos[0].rsplit('/', 1)[-1])
+            if _my:
+                yr = int(_my.group(1))
+        yr = yr or 1990
         km = _extract_km(t)
         fu = _extract_fuel(t, FUEL_MAP_AS24)
         ge = _extract_gear(t, GEAR_MAP_AS24)
@@ -1499,7 +1528,7 @@ def _parse_generic_card(card, src: str, base_url: str, default_opts: list) -> Op
                  'Suisse'   if any(x in t for x in ['suisse','genève','zurich']) else 'France'
 
         return CarListing(mk=mk, mod=mod, mo=mo, yr=yr, km=km, px=px,
-            fu=fu, ge=ge, ci=city, co=co, src=src,
+            fu=fu, ge=ge, ci=city, co=co, src=src, photos=photos,
             src_url=url, age_label=_age_label(datetime.now()), ow=1, opts=default_opts[:])
     except Exception as e:
         log.debug(f'{src} parse: {e}')
