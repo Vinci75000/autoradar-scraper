@@ -475,7 +475,12 @@ class GenericJsonLdExtractor(Extractor):
                 prefix, _, last = path.rpartition("/")
                 if not fiche_like(last):
                     continue
-                groups.setdefault(prefix, []).append(l)
+                # normalise le prefixe en enlevant un id numerique terminal :
+                # /nos-modeles/10843 et /nos-modeles/13877 -> /nos-modeles, pour
+                # que les fiches /section/{id}/{slug} forment UN groupe (sinon
+                # chaque voiture est seule -> fallback qui rince la nav).
+                gkey = re.sub(r"/\d+$", "", prefix) or prefix
+                groups.setdefault(gkey, []).append(l)
             if not groups:
                 return []
             best = max(groups, key=lambda k: len(set(groups[k])))
@@ -870,7 +875,7 @@ class GenericJsonLdExtractor(Extractor):
                         car.km = km
         if car.px is None:
             best = None
-            for m in re.finditer(r"(?:€|EUR|CHF|£)\s*([\d][\d.,'’]{3,})|([\d][\d.,'’]{3,})\s*(?:€|EUR|CHF|£)", text):
+            for m in re.finditer(r"(?:€|EUR|CHF|£)\s*([\d][\d.,'’    ]{3,})|([\d][\d.,'’    ]{3,})\s*(?:€|EUR|CHF|£)", text):
                 val = _parse_price(m.group(1) or m.group(2))
                 if val and 1000 <= val <= 100_000_000 and (best is None or val > best):
                     best = val
