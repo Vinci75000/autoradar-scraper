@@ -1472,9 +1472,15 @@ def _parse_generic_card(card, src: str, base_url: str, default_opts: list) -> Op
         # Sans ça, "<h3>Maserati<span>LEVANTE...</span></h3>" donnerait "MaseratiLEVANTE..."
         title_raw = title_el.get_text(separator=' ', strip=True)
         if not title_raw: return None
-        # Retirer un préfixe année éventuel ("2018 Audi A4" → "Audi A4")
+        # Retirer un préfixe année éventuel ("2018 Audi A4" → "Audi A4") et le
+        # GARDER : c'est le millesime le plus fiable (le texte de carte contient
+        # souvent des dates de page 2026 qui polluaient _extract_year).
+        _title_yr = 0
         title_split = title_raw.split(maxsplit=1)
         if title_split and len(title_split[0]) == 4 and title_split[0].isdigit() and len(title_split) > 1:
+            _ty = int(title_split[0])
+            if 1850 <= _ty <= datetime.now().year + 1:
+                _title_yr = _ty
             title_raw = title_split[1]
         # Normaliser via le module dédié (mk canonique + mo nettoyé)
         mk, mo_raw = normalize_make_model(title_raw)
@@ -1502,17 +1508,19 @@ def _parse_generic_card(card, src: str, base_url: str, default_opts: list) -> Op
                     psrc = base_url + psrc
                 photos.append(psrc)
 
-        # Annee : texte carte, sinon nom de fichier image ("...-1967-fastback.jpg"
-        # -> 1967, plus fiable que le 1990 fabrique), sinon defaut. On lit le
-        # basename seul pour eviter le "/2026/07/" du chemin media.
-        yr = _extract_year(t)
+        # Annee : priorite (1) prefixe du titre ("1955 Land Rover" -> 1955), le
+        # plus fiable ; (2) nom de fichier image ("...-1967-fastback.jpg"); (3)
+        # texte de carte EN DERNIER (contient des dates de page comme 2026).
+        # Regex large (1850-2029) car _extract_year plafonne a 1990+ ; (?![\dxX])
+        # evite une dimension image ("1920x1080"). Defaut 1990.
+        yr = _title_yr
         if not yr and photos:
-            # regex large (1850-2029) car _extract_year plafonne a 1990+ ; le
-            # (?![\dxX]) evite de prendre une dimension image ("1920x1080").
             _my = re.search(r'(18[5-9]\d|19\d\d|20[0-2]\d)(?![\dxX])',
                             photos[0].rsplit('/', 1)[-1])
             if _my:
                 yr = int(_my.group(1))
+        if not yr:
+            yr = _extract_year(t)
         yr = yr or 1990
         km = _extract_km(t)
         fu = _extract_fuel(t, FUEL_MAP_AS24)
@@ -1523,7 +1531,7 @@ def _parse_generic_card(card, src: str, base_url: str, default_opts: list) -> Op
         url   = (base_url + href) if href.startswith('/') else (href or base_url)
 
         loc_el = card.select_one('[class*="location"],[class*="localit"],[class*="lieu"],[class*="country"]')
-        city   = loc_el.get_text(strip=True)[:30] if loc_el else 'France'
+        city   = loc_el.get_text(strip=True)[:30] if loc_el else ''  # vide plutot que "France" -> evite "France, France"
         co     = 'Belgique' if any(x in t for x in ['belgique','belgi']) else \
                  'Suisse'   if any(x in t for x in ['suisse','genève','zurich']) else 'France'
 

@@ -206,6 +206,8 @@ BRAND_REGISTRY = {
     "jeep":           "Jeep",
     "willys":         "Willys",         # predecesseur Jeep (M38, MB, CJ...)
     "willys-overland":"Willys",         # alias
+    "rambler":        "Rambler",        # sinon "Ram" avale le prefixe -> "bler"
+    "amc":            "AMC",
     "gmc":            "GMC",
     "oldsmobile":     "Oldsmobile",
     "auburn":         "Auburn",
