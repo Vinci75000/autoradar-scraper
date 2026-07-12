@@ -1482,6 +1482,10 @@ def _parse_generic_card(card, src: str, base_url: str, default_opts: list) -> Op
             if 1850 <= _ty <= datetime.now().year + 1:
                 _title_yr = _ty
             title_raw = title_split[1]
+        # "mi" isole = placeholder LesAnciennes (modele masque dans le H1, ex
+        # "Cadillac mi Coupe") -> jamais un vrai modele, on le retire.
+        title_raw = re.sub(r'\bmi\b', ' ', title_raw, flags=re.IGNORECASE)
+        title_raw = re.sub(r'\s{2,}', ' ', title_raw).strip()
         # Normaliser via le module dédié (mk canonique + mo nettoyé)
         mk, mo_raw = normalize_make_model(title_raw)
         if mk == "Inconnue":
