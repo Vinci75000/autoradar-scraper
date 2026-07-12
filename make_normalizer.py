@@ -194,6 +194,7 @@ BRAND_REGISTRY = {
     "ford":           "Ford",
     "chevrolet":      "Chevrolet",
     "chevy":          "Chevrolet",  # alias
+    "corvette":       "Corvette",   # marque a part entiere cote collection (C1..C8)
     "cadillac":       "Cadillac",
     "lincoln":        "Lincoln",
     "pontiac":        "Pontiac",
