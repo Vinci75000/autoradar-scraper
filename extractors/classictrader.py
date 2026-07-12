@@ -282,8 +282,9 @@ class ClassicTraderExtractor(AuctionExtractor):
         # is HYBRID (auctions + classifieds); title is the reliable discriminator
         # (auction marker words appear in templates of both modes too).
         if not self._is_auction_listing(raw_html):
-            logger.info(f"classictrader: skip {url} (fixed-price classifieds)")
-            return None
+            # Annonce prix-fixe (dealer). Classic Trader est hybride : on prend
+            # AUSSI les ventes fermes (pas que les encheres) -> feed complet.
+            return self._build_fixedprice_car(soup, url, raw_html, config)
 
         car = CarListing(src_url=url, src=config.slug, is_auction=True)
 
@@ -471,12 +472,10 @@ class ClassicTraderExtractor(AuctionExtractor):
             photos.append(og_url)
         car.photos = list(dict.fromkeys(p for p in photos if p))[:10]
 
-        # 10. Country / city — Classic Trader rarely exposes vehicle location
-        # publicly until winning. Default to source country (de).
-        car.co = (config.country or "de").lower()
-        # ci: pas de localisation fiable depuis le refacto Next.js de classictrader.
-        # À récupérer depuis __NEXT_DATA__ dans le sprint dédié. Pour l'instant None.
-        car.ci = ""
+        # 10. Country / city — depuis offers.offeredBy.address (JSON-LD).
+        _p, _c, _co, _ci = self._extract_offer_price_loc(jsonld_car)
+        car.co = (_co or config.country or "de").lower()
+        car.ci = _ci or ""
 
         # 11. Raw payload
         car.raw = {
@@ -496,6 +495,126 @@ class ClassicTraderExtractor(AuctionExtractor):
             logger.warning(f"classictrader: no brand for {url}, skip")
             return None
         return car
+
+    def _build_fixedprice_car(
+        self, soup: BeautifulSoup, url: str, raw_html: str, config: SourceConfig
+    ) -> Optional[CarListing]:
+        """Build a fixed-price (dealer) CarListing from a '/inserat/' page.
+
+        Donnees propres via JSON-LD @type=Car : marque/modele/annee/km, prix
+        (offers.price / priceSpecification, garde-fou sentinelle 999999999),
+        pays + ville (offers.offeredBy.address). is_auction=False.
+        """
+        url_data = self._parse_url(url)
+        if url_data is None:
+            return None
+        lang, brand_slug, family_slug, model_slug, year_url, lot_number = url_data
+        jc = self._extract_jsonld_car(raw_html)
+
+        car = CarListing(src_url=url, src=config.slug, is_auction=False)
+
+        # mk / mo
+        mk_raw = mo_raw = None
+        if jc:
+            bf = jc.get("brand") or {}
+            mk_raw = bf.get("name") if isinstance(bf, dict) else (bf if isinstance(bf, str) else None)
+            mo_raw = jc.get("model")
+        mk_raw = mk_raw or brand_slug.replace("-", " ")
+        mo_raw = mo_raw or model_slug.replace("-", " ")
+        car.mk, car.mo = normalize_make_model(f"{mk_raw} {mo_raw}")
+
+        # yr (URL curated) then JSON-LD model date as fallback
+        car.yr = year_url
+
+        # km (optionnel pour prix-fixe — beaucoup de classiques sans compteur fiable)
+        if jc:
+            mil = jc.get("mileageFromOdometer")
+            if isinstance(mil, dict) and mil.get("value") is not None:
+                car.km = self._parse_km(str(mil.get("value")))
+            elif mil is not None:
+                car.km = self._parse_km(str(mil))
+
+        # prix + devise + localisation (offers)
+        px, cu, co, ci = self._extract_offer_price_loc(jc)
+        car.px = px
+        car.cu = cu or "EUR"
+        car.co = (co or config.country or "de").lower()
+        car.ci = ci or ""
+
+        # description + photos (miroir du chemin enchere)
+        if jc and (desc := jc.get("description")):
+            clean = re.sub(r"<[^>]+>", " ", desc)
+            clean = re.sub(r"\s+", " ", clean).strip()
+            if clean:
+                car.de = clean[:5000]
+        photos: list[str] = []
+        if jc and (img := jc.get("image")):
+            if isinstance(img, dict) and (u := img.get("url")):
+                photos.append(u)
+            elif isinstance(img, str):
+                photos.append(img)
+            elif isinstance(img, list):
+                for p in img:
+                    if isinstance(p, dict) and (u := p.get("url")):
+                        photos.append(u)
+                    elif isinstance(p, str):
+                        photos.append(p)
+        og = soup.find("meta", property="og:image")
+        if og and (og_url := og.get("content")):
+            photos.append(og_url)
+        car.photos = list(dict.fromkeys(p for p in photos if p))[:10]
+
+        car.raw = {
+            "platform": "classictrader",
+            "mode": "fixed_price",
+            "lot_number": lot_number,
+            "lang": lang,
+            "brand_slug": brand_slug,
+            "family_slug": family_slug,
+            "model_slug": model_slug,
+        }
+        if jc and (vin := jc.get("vehicleIdentificationNumber")):
+            if isinstance(vin, str) and vin.lower() not in ("nicht angegeben", "n/a", ""):
+                car.raw["vin"] = vin
+
+        # px requis en aval (insert_car rejette px=None) : on skippe les "prix
+        # sur demande" plutot que de polluer avec un rejet.
+        if not car.mk or car.px is None:
+            return None
+        return car
+
+    @staticmethod
+    def _extract_offer_price_loc(jc: Optional[dict]):
+        """(price, currency, country, city) depuis le bloc offers du JSON-LD Car.
+
+        Garde-fou : ignore la sentinelle '999999999' (prix sur demande) et tout
+        hors plage reelle.
+        """
+        if not jc:
+            return None, None, None, None
+        o = jc.get("offers") or {}
+        if isinstance(o, list) and o:
+            o = o[0]
+        if not isinstance(o, dict):
+            return None, None, None, None
+        ps = o.get("priceSpecification") or {}
+        raw = ps.get("price") if isinstance(ps, dict) else None
+        if raw in (None, "", 0, "0"):
+            raw = o.get("price")
+        px = None
+        try:
+            v = float(str(raw).replace(",", "")) if raw is not None else None
+            if v and 100 <= v <= 50_000_000:
+                px = v
+        except (ValueError, TypeError):
+            px = None
+        cu = o.get("priceCurrency") or (ps.get("priceCurrency") if isinstance(ps, dict) else None) or "EUR"
+        if isinstance(cu, str):
+            cu = cu.upper()
+        addr = (o.get("offeredBy") or {}).get("address") or {}
+        if not isinstance(addr, dict):
+            addr = {}
+        return px, cu, addr.get("addressCountry"), addr.get("addressLocality")
 
     # ─── Pure helpers (testable) ──────────────────────────────────────────────
 
