@@ -1,0 +1,60 @@
+name: AutoRadar GENERIC navigateur (cron 04h UTC)
+
+# Dealers SPA/JS (requires_browser=true) : rendu Chromium via l'extracteur
+# generic (run_generic --browser-only). Separe du cron generique (httpx, pas de
+# Chromium) pour ne pas ralentir le batch principal ni le faire echouer.
+
+on:
+  schedule:
+    # 04:00 UTC — apres generic (01h30) et wash, sans chevauchement.
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Fiches max par dealer'
+        required: false
+        default: '200'
+
+concurrency:
+  group: batch-generic-browser
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies + Chromium
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Run GENERIC dealers (navigateur)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SENTRY_DSN_SCRAPER: ${{ secrets.SENTRY_DSN_SCRAPER }}
+          SENTRY_ENVIRONMENT: 'production'
+          SENTRY_COMPONENT: 'cron-generic-browser'
+          AUTORADAR_LLM_HOOK_ENABLED: "false"
+        run: |
+          python3 run_generic.py \
+            --browser-only \
+            --write \
+            --limit ${{ github.event.inputs.limit || '200' }} \
+            --delay 1.0
+        continue-on-error: true
