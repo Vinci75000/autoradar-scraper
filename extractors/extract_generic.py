@@ -639,6 +639,21 @@ class GenericJsonLdExtractor(Extractor):
                     if not car.mo and mo2:
                         car.mo = mo2
                     break
+        if not car.mk:
+            # marque dans un sous-titre (h2-h6) au-dessus du h1 modele
+            # ex Marc Luca : <h5>Mercedes-Benz</h5><h1>190E 2.5-16 Evolution I</h1>
+            _h1 = soup.find("h1")
+            _h1t = _h1.get_text(" ", strip=True) if _h1 else ""
+            for _hn in soup.find_all(re.compile(r"^h[2-6]$")):
+                _ht = _hn.get_text(" ", strip=True)
+                if not _ht:
+                    continue
+                mk5, mo5 = _brand_from_title(f"{_ht} {_h1t}".strip())
+                if mk5:
+                    car.mk = mk5
+                    if not car.mo and mo5:
+                        car.mo = mo5
+                    break
         meta = self._meta_desc(soup)
         if meta and car.px is None:
             m = re.search(r"(?:Preis|Price|Prix|Prezzo|Prijs)\s*[:.]?\s*([\d.,]+)\s*(?:eur|EUR|€)", meta, re.IGNORECASE)
