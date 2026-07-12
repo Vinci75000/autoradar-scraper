@@ -194,6 +194,7 @@ BRAND_REGISTRY = {
     "ford":           "Ford",
     "chevrolet":      "Chevrolet",
     "chevy":          "Chevrolet",  # alias
+    "cheverolet":     "Chevrolet",  # faute de frappe frequente (dealers)
     "corvette":       "Corvette",   # marque a part entiere cote collection (C1..C8)
     "cadillac":       "Cadillac",
     "lincoln":        "Lincoln",
@@ -203,6 +204,8 @@ BRAND_REGISTRY = {
     "chrysler":       "Chrysler",
     "plymouth":       "Plymouth",
     "jeep":           "Jeep",
+    "willys":         "Willys",         # predecesseur Jeep (M38, MB, CJ...)
+    "willys-overland":"Willys",         # alias
     "gmc":            "GMC",
     "oldsmobile":     "Oldsmobile",
     "auburn":         "Auburn",
