@@ -19,7 +19,7 @@ SELECT = ('slug,country,currency,language,timezone,city,tier,type,'
           'listings_url,score_bonus,status,scrape_method,requires_browser')
 
 
-def load_generic_sources(db, slug_filter=None, browser_only=False):
+def load_generic_sources(db, slug_filter=None, browser_only=False, shard=None):
     q = (db.table('sources').select(SELECT)
            .eq('scrape_method', 'jsonld')
            .eq('status', 'ready'))
@@ -30,9 +30,14 @@ def load_generic_sources(db, slug_filter=None, browser_only=False):
         return rows  # --slug force le dealer, quel que soit son mode
     # Sepration httpx / navigateur : le cron generique (pas de Chromium) exclut
     # les dealers requires_browser ; le cron navigateur ne prend qu'eux.
-    if browser_only:
-        return [r for r in rows if r.get('requires_browser')]
-    return [r for r in rows if not r.get('requires_browser')]
+    rows = [r for r in rows if bool(r.get('requires_browser')) == browser_only]
+    # Sharding : --shard i/N -> ne garde que la tranche i (repartition stable
+    # par crc32 du slug). Permet N jobs paralleles qui finissent sous le timeout.
+    if shard:
+        import zlib
+        i, n = [int(x) for x in str(shard).split('/')]
+        rows = [r for r in rows if zlib.crc32(r['slug'].encode()) % n == i]
+    return rows
 
 
 def write_report(C, ok_dealers, duration, threshold):
@@ -94,6 +99,7 @@ def main():
                     help="seuil d'alerte : alert=true si sources_ok_pct < THRESHOLD")
     ap.add_argument('--write', action='store_true', help='insere en base (sinon dry)')
     ap.add_argument('--browser-only', action='store_true', help='ne traite que les dealers requires_browser (cron navigateur)')
+    ap.add_argument('--shard', default=None, help='i/N : ne traite que la tranche i sur N (jobs paralleles)')
     ap.add_argument('--debug', action='store_true', help='logs DEBUG (raisons de rejet/drop)')
     args = ap.parse_args()
 
@@ -102,7 +108,7 @@ def main():
         logging.getLogger('httpx').setLevel(logging.WARNING)
 
     db = scraper.get_db()
-    sources = load_generic_sources(db, args.slug, browser_only=getattr(args, 'browser_only', False))
+    sources = load_generic_sources(db, args.slug, browser_only=getattr(args, 'browser_only', False), shard=getattr(args, 'shard', None))
     if args.max_dealers:
         sources = sources[:args.max_dealers]
     log.info(f"{len(sources)} generic sources | limit/dealer={args.limit} | "
