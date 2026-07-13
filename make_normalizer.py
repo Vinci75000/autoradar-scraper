@@ -209,6 +209,20 @@ BRAND_REGISTRY = {
     "rambler":        "Rambler",        # sinon "Ram" avale le prefixe -> "bler"
     "amc":            "AMC",
     "gmc":            "GMC",
+    # ── Longue traine collection (rejets LesAnciennes recuperes) ──
+    "pierce-arrow":   "Pierce-Arrow",
+    "pierce arrow":   "Pierce-Arrow",
+    "merkur":         "Merkur",          # marque Ford 80s (US)
+    "metz":           "Metz",            # brass era US
+    "flanders":       "Flanders",        # brass era US
+    "rauch-lang":     "Rauch-Lang",      # electrique ancien US
+    "studebaker":     "Studebaker",
+    "packard":        "Packard",
+    "corre":          "Corre",           # ancienne francaise (La Licorne)
+    "invicta":        "Invicta",         # britannique
+    "vegantune":      "Vegantune",       # specialiste Lotus (Evante)
+    "microlino":      "Microlino",       # micro-EV moderne
+    "rover":          "Rover",           # britannique (land/range rover matchent avant, plus longs)
     "oldsmobile":     "Oldsmobile",
     "auburn":         "Auburn",
     "international":   "International",

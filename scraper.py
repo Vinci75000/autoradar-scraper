@@ -1526,7 +1526,7 @@ def _parse_generic_card(card, src: str, base_url: str, default_opts: list) -> Op
         if not yr:
             yr = _extract_year(t)
         yr = yr or 1990
-        km = _extract_km(t)
+        km = _extract_km(t) or None  # 0 = non trouve sur la carte -> None (evite le faux "0 km · FAIBLE KM")
         fu = _extract_fuel(t, FUEL_MAP_AS24)
         ge = _extract_gear(t, GEAR_MAP_AS24)
 
