@@ -713,7 +713,9 @@ class GenericJsonLdExtractor(Extractor):
             _rl = re.search(r"(?:m[eê]me collection|v[eé]hicules similaires|related|vous aimerez|potrebbe interessart|veicoli simili)", _txt, re.IGNORECASE)
             if _rl:
                 _txt = _txt[:_rl.start()]
-            for _mm in re.finditer(r"(?:18|19|20)\d{2}", _txt):
+            # (?<!\d) / (?!\d) : frontiere numerique -> evite de matcher "2000"
+            # a l'interieur d'un kilometrage "52000 KM" (bug extenzcars).
+            for _mm in re.finditer(r"(?<!\d)(?:18|19|20)\d{2}(?!\d)", _txt):
                 _y = int(_mm.group(0))
                 if not (1900 < _y <= _CURRENT_YEAR + 1):
                     continue
