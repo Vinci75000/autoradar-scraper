@@ -152,7 +152,7 @@ def calculate_score(car: CarListing, market_avg: Optional[int] = None) -> dict:
     elif s_px <= 10: chips.append({"l": "Surévalué",      "t": "warn"})
     if car.ow == 1:  chips.append({"l": "1 propriétaire", "t": "pass"})
     elif car.ow >= 3:chips.append({"l": f"{car.ow} propr.", "t": "warn"})
-    if km_per_yr > 25000: chips.append({"l": "Km élevés", "t": "warn"})
+    if car.km is not None and (car.km / max(age, 1)) > 25000: chips.append({"l": "Km élevés", "t": "warn"})
 
     return {
         "sc": min(100, max(0, total)),
