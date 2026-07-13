@@ -101,7 +101,7 @@ class CarListing:
     def fingerprint(self) -> str:
         """Deduplicate: same car on multiple sources"""
         norm = lambda s: re.sub(r'[^a-z0-9]', '', s.lower())
-        km_bucket = round(self.km / 5000) * 5000
+        km_bucket = round((self.km or 0) / 5000) * 5000
         raw = f"{norm(self.mk)}{norm(self.mo[:12])}{self.yr}{km_bucket}"
         return hashlib.md5(raw.encode()).hexdigest()[:12]
 
@@ -109,8 +109,7 @@ class CarListing:
 # ── Trust score calculator ─────────────────────────────────────────────────
 def calculate_score(car: CarListing, market_avg: Optional[int] = None) -> dict:
     """Returns score 0-100 + breakdown + verdict"""
-    age = datetime.now().year - car.yr
-    km_per_yr = car.km / max(age, 1)
+    age = datetime.now().year - (car.yr or datetime.now().year)
 
     # ── Prix (25 pts) ──
     # POA-aware: if market_avg or car.px is None, fall back to neutral score.
@@ -124,8 +123,15 @@ def calculate_score(car: CarListing, market_avg: Optional[int] = None) -> dict:
     else:
         s_px = 16  # pas de référence (ou prix POA — Sprint A4-Italy / C1.3)
 
-    # ── Mécanique / fiabilité (30 pts) ──
-    s_me = max(10, 30 - int(km_per_yr / 3000))
+    # ── Mécanique / fiabilité (30 pts) + Kilométrage (10 pts) ──
+    # km peut etre None (non renseigne sur la carte) -> scores neutres, pas de crash.
+    if car.km is not None:
+        km_per_yr = car.km / max(age, 1)
+        s_me = max(10, 30 - int(km_per_yr / 3000))
+        s_km = max(1, 10 - int(car.km / 20000))
+    else:
+        s_me = 20   # neutre (km inconnu)
+        s_km = 6    # neutre
 
     # ── Historique propriétaires (20 pts) ──
     s_hi = {1: 20, 2: 15, 3: 8}.get(car.ow, 4)
@@ -133,9 +139,6 @@ def calculate_score(car: CarListing, market_avg: Optional[int] = None) -> dict:
     # ── Qualité annonce (15 pts) ──
     opts_count = len(car.opts or [])
     s_an = min(15, 8 + opts_count)
-
-    # ── Kilométrage (10 pts) ──
-    s_km = max(1, 10 - int(car.km / 20000))
 
     total = s_px + s_me + s_hi + s_an + s_km
 
@@ -220,7 +223,7 @@ def save_fingerprint(db: Client, car_id: str, car: CarListing):
         'mk_norm':  norm(car.mk),
         'mo_norm':  norm(car.mo[:20]),
         'yr_norm':  car.yr,
-        'km_bucket':round(car.km / 5000) * 5000,
+        'km_bucket':round((car.km or 0) / 5000) * 5000,
         'px_bucket': round(car.px / 500) * 500 if car.px is not None else None,
         'fp_hash':  car.fingerprint(),
     }).execute()
