@@ -34,6 +34,8 @@ def parse_args():
                    help="Cap on number of cars (default: None = full sitemap)")
     p.add_argument("--dry-run", action="store_true",
                    help="Extract only; do not call insert_car or touch DB")
+    p.add_argument("--shard", default=None,
+                   help="i/N : ne traite que la tranche i sur N (jobs paralleles)")
     return p.parse_args()
 
 
@@ -57,14 +59,14 @@ def main() -> int:
         scrape_method="httpx_bs4",
     )
 
-    print(f">> running classictrader pipeline test - limit={args.limit} dry_run={args.dry_run}\n",
+    print(f">> running classictrader pipeline - limit={args.limit} dry_run={args.dry_run} shard={args.shard}\n",
           flush=True)
 
     extractor = ClassicTraderExtractor()
 
     # ─── EXTRACTION ───
     t0 = time.monotonic()
-    result = extractor.extract(config, limit=args.limit)
+    result = extractor.extract(config, limit=args.limit, shard=args.shard)
     extract_duration = time.monotonic() - t0
 
     print(f"\n>> EXTRACTION DONE in {extract_duration:.2f}s")

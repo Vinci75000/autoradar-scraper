@@ -128,12 +128,22 @@ class ClassicTraderExtractor(AuctionExtractor):
 
     # ─── Public API ───────────────────────────────────────────────────────────
 
-    def extract(self, config: SourceConfig, limit: Optional[int] = None) -> ExtractionResult:
+    def extract(self, config: SourceConfig, limit: Optional[int] = None,
+                shard: Optional[str] = None) -> ExtractionResult:
         result = ExtractionResult(source_slug=config.slug)
         t0 = time.monotonic()
         try:
             urls = self._discover_detail_urls(config.listings_url)
             result.pages_fetched = 1
+            # Sharding : --shard i/N -> ne garde que la tranche i sur N
+            # (repartition stable par crc32 de l'URL). Permet N jobs paralleles
+            # qui couvrent les ~8400 fiches sous le timeout GitHub Actions.
+            if shard:
+                import zlib
+                i, n = (int(x) for x in str(shard).split("/"))
+                before = len(urls)
+                urls = [u for u in urls if zlib.crc32(u.encode()) % n == i]
+                logger.info(f"classictrader: shard {i}/{n} -> {len(urls)}/{before} URLs")
             if limit is not None:
                 urls = urls[:limit]
             for url in urls:

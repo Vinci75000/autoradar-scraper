@@ -1,9 +1,8 @@
-name: AutoRadar CarAndClassic Pipeline (cron 07h UTC)
+name: AutoRadar CarAndClassic Pipeline (cron 09h UTC)
 
-# classictrader.com canary — sitemap-mode crawl (~18.8k cars worldwide).
-# Schedule modeste (1x/jour 07h UTC) pour les 1-2 premieres semaines.
-# Apres validation, on consolidera dans marketplace_cron (avec dyler
-# et A4.2 classicdriver).
+# classictrader.com — sitemap-mode crawl (~8400 cars).
+# Sharde N=6 : 6 jobs paralleles (crc32 de l'URL), ~1400 fiches/shard,
+# ~23 min/shard << timeout 60 min. Couvre TOUT le stock chaque nuit.
 
 on:
   schedule:
@@ -11,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       limit:
-        description: 'Max URLs to process (empty = full run)'
+        description: 'Max URLs par shard (vide = shard complet)'
         required: false
         default: ''
       dry_run:
@@ -19,14 +18,17 @@ on:
         required: false
         default: 'false'
 
-concurrency:
-  group: classictrader-pipeline
-  cancel-in-progress: false
-
 jobs:
   run:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5]
+    concurrency:
+      group: classictrader-shard-${{ matrix.shard }}
+      cancel-in-progress: false
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
@@ -34,8 +36,6 @@ jobs:
       SENTRY_DSN: ${{ secrets.SENTRY_DSN_SCRAPER }}
       SENTRY_COMPONENT: classictrader
       AUTORADAR_LLM_HOOK_ENABLED: 'true'
-      LIMIT: ${{ github.event.inputs.limit }}
-      DRY_RUN: ${{ github.event.inputs.dry_run }}
 
     steps:
       - uses: actions/checkout@v4
@@ -49,8 +49,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run classictrader pipeline
+      - name: Run classictrader pipeline (shard ${{ matrix.shard }}/6)
         run: |
           python -u scripts/run_classictrader.py \
-            --limit ${{ github.event.inputs.limit || '2000' }} \
+            --shard ${{ matrix.shard }}/6 \
+            ${{ github.event.inputs.limit && format('--limit {0}', github.event.inputs.limit) || '' }} \
             ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
