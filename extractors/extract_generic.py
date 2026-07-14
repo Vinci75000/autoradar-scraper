@@ -577,7 +577,9 @@ class GenericJsonLdExtractor(Extractor):
                 except Exception as exc:
                     logger.warning(f"{config.slug} page {n} failed: {exc}")
                     break
-                time.sleep(self.INTER_REQUEST_DELAY_S)
+                # respecte le Crawl-delay du robots aussi pendant la pagination
+                # de decouverte (coherence : cf. elferspot Crawl-delay: 10).
+                time.sleep(float(sel.get("crawl_delay") or self.INTER_REQUEST_DELAY_S))
         logger.info(f"{config.slug}: discovered {len(urls)} detail URLs")
         return urls
 
