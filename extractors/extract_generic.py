@@ -395,6 +395,9 @@ class GenericJsonLdExtractor(Extractor):
         result = ExtractionResult(source_slug=config.slug)
         t0 = time.monotonic()
         self._browser_mode = bool(getattr(config, "requires_browser", False))
+        # Crawl-delay par-source : respecte le robots.txt du site (ex. elferspot
+        # impose Crawl-delay: 10). Defaut = INTER_REQUEST_DELAY_S (0.5s).
+        _delay = float((config.selectors or {}).get("crawl_delay") or self.INTER_REQUEST_DELAY_S)
         try:
             urls = self._discover(config)
             result.pages_fetched = 1
@@ -410,7 +413,7 @@ class GenericJsonLdExtractor(Extractor):
                     msg = f"{config.slug} detail failed for {url}: {exc}"
                     logger.warning(msg)
                     result.errors.append(msg)
-                time.sleep(self.INTER_REQUEST_DELAY_S)
+                time.sleep(_delay)
         except Exception as exc:
             msg = f"{config.slug} listing catastrophic: {exc}"
             logger.error(msg)
