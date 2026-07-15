@@ -30,10 +30,12 @@ from __future__ import annotations
 import json
 import logging
 import re
+import signal
 import time
 import unicodedata
+from contextlib import contextmanager
 from datetime import datetime
-from typing import Optional
+from typing import Callable, Optional
 from urllib.parse import urljoin, urlparse
 
 import httpx
@@ -41,6 +43,31 @@ from bs4 import BeautifulSoup
 
 from .base import CarListing, ExtractionResult, Extractor, SourceConfig
 from .registry import register
+
+
+class _UrlTimeout(Exception):
+    """Une fiche a depasse le budget temps (fetch pendu / regex ReDoS)."""
+
+
+@contextmanager
+def _time_limit(seconds: float):
+    """Coupe-circuit dur par-URL via SIGALRM (main thread, Unix). Empeche
+    qu'une seule page (serveur qui goutte, backtracking regex) ne gele tout
+    un run de plusieurs heures. seconds<=0 -> desactive."""
+    if not seconds or seconds <= 0:
+        yield
+        return
+
+    def _handler(signum, frame):
+        raise _UrlTimeout(f"timeout after {seconds}s")
+
+    old = signal.signal(signal.SIGALRM, _handler)
+    signal.setitimer(signal.ITIMER_REAL, seconds)
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, old)
 
 logger = logging.getLogger(__name__)
 
@@ -391,28 +418,45 @@ class GenericJsonLdExtractor(Extractor):
             return self._Resp(self._page.content())
         return self._client.get(url)
 
-    def extract(self, config: SourceConfig, limit: Optional[int] = None) -> ExtractionResult:
+    # Budget temps max par fiche (fetch+parse). Au-dela -> on abandonne la fiche
+    # et on continue : une page pendue ne gele plus un run de plusieurs heures.
+    URL_TIME_BUDGET_S = 90.0
+
+    def extract(self, config: SourceConfig, limit: Optional[int] = None,
+                on_car: Optional[Callable[[CarListing], None]] = None) -> ExtractionResult:
         result = ExtractionResult(source_slug=config.slug)
         t0 = time.monotonic()
         self._browser_mode = bool(getattr(config, "requires_browser", False))
         # Crawl-delay par-source : respecte le robots.txt du site (ex. elferspot
         # impose Crawl-delay: 10). Defaut = INTER_REQUEST_DELAY_S (0.5s).
         _delay = float((config.selectors or {}).get("crawl_delay") or self.INTER_REQUEST_DELAY_S)
+        # Le timeout SIGALRM est incompatible avec le mode navigateur (Playwright
+        # a ses propres timeouts / threads) -> on ne l'arme qu'en mode httpx.
+        _budget = 0 if self._browser_mode else self.URL_TIME_BUDGET_S
         try:
             urls = self._discover(config)
             result.pages_fetched = 1
             if limit is not None:
                 urls = urls[:limit]
             for url in urls:
+                car = None
                 try:
-                    car = self._one(url, config)
-                    if car is not None:
-                        result.cars.append(car)
+                    with _time_limit(_budget):
+                        car = self._one(url, config)
                     result.pages_fetched += 1
                 except Exception as exc:
                     msg = f"{config.slug} detail failed for {url}: {exc}"
                     logger.warning(msg)
                     result.errors.append(msg)
+                # Insert incremental : chaque fiche est ecrite des maintenant via
+                # on_car (progres live + un crash/timeout ne perd que la queue).
+                if car is not None:
+                    result.cars.append(car)
+                    if on_car is not None:
+                        try:
+                            on_car(car)
+                        except Exception as exc:
+                            logger.error(f"{config.slug} on_car KO: {exc}")
                 time.sleep(_delay)
         except Exception as exc:
             msg = f"{config.slug} listing catastrophic: {exc}"

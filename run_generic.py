@@ -134,9 +134,31 @@ def main():
             requires_browser=bool(src.get('requires_browser')),
             selectors=src.get('selectors') or {},
         )
+        # Insert incremental : appele par l'extracteur des qu'une fiche est prete
+        # (progres live + resilience : un crash/timeout ne perd que la queue).
+        def _sink(ext_car, _slug=slug):
+            try:
+                car = adapt_extractor_carlisting(ext_car)
+                if not car:
+                    C['rejected'] += 1
+                    return
+                C['adapted'] += 1
+                if not args.write:
+                    return
+                out = scraper.insert_car(db, car)
+                if out == 'rejected':
+                    C['rejected'] += 1
+                elif out:
+                    C['inserted'] += 1
+                else:
+                    C['duplicates'] += 1
+            except Exception as e:
+                log.error(f"  adapt/insert KO ({_slug}): {e}")
+                C['errors'] += 1
+
         try:
             ext = get_extractor(cfg)
-            res = ext.extract(cfg, limit=args.limit)
+            res = ext.extract(cfg, limit=args.limit, on_car=_sink)
         except Exception as e:
             log.error(f"{slug} extraction KO: {e}")
             C['errors'] += 1
@@ -147,26 +169,6 @@ def main():
         C['extracted'] += len(res.cars)
         if len(res.cars) > 0:
             ok_dealers += 1
-
-        for ext_car in res.cars:
-            try:
-                car = adapt_extractor_carlisting(ext_car)
-                if not car:
-                    C['rejected'] += 1
-                    continue
-                C['adapted'] += 1
-                if not args.write:
-                    continue
-                out = scraper.insert_car(db, car)
-                if out == 'rejected':
-                    C['rejected'] += 1
-                elif out:
-                    C['inserted'] += 1
-                else:
-                    C['duplicates'] += 1
-            except Exception as e:
-                log.error(f"  adapt/insert KO ({slug}): {e}")
-                C['errors'] += 1
 
         time.sleep(args.delay)
 
