@@ -92,6 +92,8 @@ def write_report(C, ok_dealers, duration, threshold):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--limit', type=int, default=30, help='fiches max par dealer')
+    ap.add_argument('--max-pages', type=int, default=None,
+                    help='override selectors.max_pages (cron: ne paginer que les recentes)')
     ap.add_argument('--slug', default=None, help='un seul dealer')
     ap.add_argument('--max-dealers', type=int, default=None, help='cap nb dealers')
     ap.add_argument('--delay', type=float, default=1.0, help='pause entre dealers (s)')
@@ -124,6 +126,9 @@ def main():
 
     for src in sources:
         slug = src['slug']
+        _sel = dict(src.get('selectors') or {})
+        if args.max_pages is not None:
+            _sel['max_pages'] = args.max_pages
         cfg = SourceConfig(
             slug=slug, listings_url=src['listings_url'],
             country=src.get('country') or 'de', currency=src.get('currency') or 'eur',
@@ -132,7 +137,7 @@ def main():
             score_bonus=src.get('score_bonus') or 0, scrape_method='jsonld',
             platform=None, city=src.get('city'),
             requires_browser=bool(src.get('requires_browser')),
-            selectors=src.get('selectors') or {},
+            selectors=_sel,
         )
         # Insert incremental : appele par l'extracteur des qu'une fiche est prete
         # (progres live + resilience : un crash/timeout ne perd que la queue).
@@ -141,6 +146,8 @@ def main():
                 car = adapt_extractor_carlisting(ext_car)
                 if not car:
                     C['rejected'] += 1
+                    log.info(f"  ✗ rejet: {ext_car.mk or '?'} {ext_car.mo or '?'} "
+                             f"(yr={ext_car.yr} km={ext_car.km} px={ext_car.px}) {ext_car.src_url}")
                     return
                 C['adapted'] += 1
                 if not args.write:

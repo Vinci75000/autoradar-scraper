@@ -69,6 +69,23 @@ def _time_limit(seconds: float):
         signal.setitimer(signal.ITIMER_REAL, 0)
         signal.signal(signal.SIGALRM, old)
 
+
+# Nom de pays (FR, minuscule) -> ISO 3166-1 alpha-2. Sert aux marketplaces
+# internationaux (elferspot) qui affichent le pays vendeur en clair.
+_COUNTRY_NAME_TO_ISO = {
+    "allemagne": "DE", "autriche": "AT", "belgique": "BE", "bulgarie": "BG",
+    "croatie": "HR", "danemark": "DK", "espagne": "ES", "estonie": "EE",
+    "états-unis": "US", "etats-unis": "US", "finlande": "FI", "france": "FR",
+    "grèce": "GR", "grece": "GR", "hongrie": "HU", "irlande": "IE",
+    "italie": "IT", "lettonie": "LV", "liechtenstein": "LI", "lituanie": "LT",
+    "luxembourg": "LU", "monaco": "MC", "norvège": "NO", "norvege": "NO",
+    "pays-bas": "NL", "pologne": "PL", "portugal": "PT",
+    "république tchèque": "CZ", "republique tcheque": "CZ", "roumanie": "RO",
+    "royaume-uni": "GB", "slovaquie": "SK", "slovénie": "SI", "slovenie": "SI",
+    "suède": "SE", "suede": "SE", "suisse": "CH", "canada": "CA", "japon": "JP",
+    "australie": "AU", "émirats arabes unis": "AE", "emirats arabes unis": "AE",
+}
+
 logger = logging.getLogger(__name__)
 
 _DETAIL_HINT_RE = re.compile(
@@ -727,6 +744,14 @@ class GenericJsonLdExtractor(Extractor):
             og = soup.find("meta", attrs={"property": "og:image"})
             if og and og.get("content"):
                 car.photos = [og["content"]]
+        # Pays par-annonce : marketplaces internationaux (elferspot) affichent
+        # le pays vendeur en clair. Gate par selector pour ne rien casser ailleurs.
+        if not car.co:
+            _csel = (config.selectors or {}).get("country_selector")
+            if _csel:
+                _cel = soup.select_one(_csel)
+                if _cel:
+                    car.co = _COUNTRY_NAME_TO_ISO.get(_cel.get_text(strip=True).lower())
         car.ci = car.ci or config.city
         car.co = car.co or config.country
         car.cu = car.cu or (config.currency.upper() if config.currency else "EUR")

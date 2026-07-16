@@ -1,0 +1,54 @@
+name: AutoRadar Elferspot (cron 06h UTC — recentes)
+
+# elferspot.com — marketplace Porsche (~4100 fiches). Le seed complet se fait
+# a la main (run local ~12 h). Ce cron ne rafraichit QUE les plus recentes :
+# --max-pages 4 (les 4 premieres pages = ~160 annonces fraiches, en tete de
+# /rechercher/) + --limit 150. Respecte le Crawl-delay 10 s (~150 x 10s = 25 min
+# + decouverte 4 pages x 10s ≈ 27 min << timeout 60 min).
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      max_pages:
+        description: 'Pages de /rechercher/ a paginer (4 = ~160 recentes)'
+        required: false
+        default: '4'
+      limit:
+        description: 'Fiches max a traiter'
+        required: false
+        default: '150'
+
+concurrency:
+  group: elferspot-cron
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN_SCRAPER }}
+      SENTRY_COMPONENT: elferspot
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run elferspot (recentes)
+        run: |
+          python -u run_generic.py --slug elferspot \
+            --max-pages ${{ github.event.inputs.max_pages || '4' }} \
+            --limit ${{ github.event.inputs.limit || '150' }} \
+            --write
