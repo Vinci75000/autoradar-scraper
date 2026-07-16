@@ -224,6 +224,22 @@ def is_ok(r):
     return (not r['had_error']) and (r['new'] > 0 or r['duplicates'] > 0)
 
 
+def refresh_admin_caches():
+    """Rafraîchit le cache KPIs de l'admin après le batch.
+    Best-effort : ne casse jamais le run (le cron 5 min reste le filet)."""
+    try:
+        url = os.getenv('SUPABASE_URL', 'https://qqbssqcuxllmtapqkmkz.supabase.co')
+        key = os.getenv('SUPABASE_SERVICE_KEY', '')
+        if not key:
+            print("↻ refresh_admin_caches ignoré (SUPABASE_SERVICE_KEY absente)")
+            return
+        from supabase import create_client
+        create_client(url, key).rpc('refresh_admin_caches').execute()
+        print("↻ Cache KPIs admin rafraîchi")
+    except Exception as e:
+        print(f"↻ refresh_admin_caches échec (non bloquant) : {e}")
+
+
 def main():
     parser = argparse.ArgumentParser(description='AutoRadar Batch Runner unifié')
     parser.add_argument('--batch', required=True, choices=list(BATCH_CONFIGS.keys()),
@@ -402,6 +418,9 @@ def main():
         print()
         print(f"📄 Rapport : {report_path}")
         print(f"📄 Summary : {summary_path}")
+
+    # ─── Hook · rafraîchit le cache KPIs admin (best-effort) ───
+    refresh_admin_caches()
 
     if ok_pct < args.threshold:
         if not args.quiet:
