@@ -1,14 +1,13 @@
 name: AutoRadar Elferspot (cron 06h UTC — recentes)
 
-# elferspot.com — marketplace Porsche (~4100 fiches). Le seed complet se fait
-# a la main (run local ~12 h). Ce cron ne rafraichit QUE les plus recentes :
-# --max-pages 4 (les 4 premieres pages = ~160 annonces fraiches, en tete de
-# /rechercher/) + --limit 150. Respecte le Crawl-delay 10 s (~150 x 10s = 25 min
-# + decouverte 4 pages x 10s ≈ 27 min << timeout 60 min).
+# elferspot.com — marketplace Porsche (~4100 fiches).
+# NOTE : elferspot est protege par BunnyShield qui renvoie 403 sur les IP
+# datacenter de GitHub Actions -> le cron planifie NE MARCHE PAS ici. Le
+# rafraichissement des recentes tourne en cron LOCAL (run_elferspot_cron.sh,
+# IP residentielle). Ce workflow reste en dispatch manuel uniquement (au cas ou
+# les IP evoluent / pour test).
 
 on:
-  schedule:
-    - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
       max_pages:
