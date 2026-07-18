@@ -101,7 +101,8 @@ def adapt_extractor_carlisting(
     mod = mo
 
     yr = ext_car.yr  # pas de fausse annee courante : sans millesime parsable -> rejet (doctrine "a venir jamais faux")
-    km = ext_car.km if ext_car.km is not None else 0
+    km = ext_car.km  # inconnu: None, pas 0 (meme doctrine que POA ci-dessous) :
+    # une classique sans kilometrage annonce n'est pas une voiture a 0 km.
     px = int(ext_car.px) if ext_car.px else None  # POA: None, pas 0
 
     # Pre-filter: avoid sending obvious junk to insert_car (waste of geocode
@@ -109,7 +110,7 @@ def adapt_extractor_carlisting(
     if yr is None or yr < 1900 or yr > datetime.now().year:
         log.debug(f'pre-filter rejected (yr={yr}): {ext_car.mk} {mo}')
         return None
-    if km < 0 or km > 500000:
+    if km is not None and (km < 0 or km > 500000):
         log.debug(f'pre-filter rejected (km={km}): {ext_car.mk} {mo}')
         return None
 
