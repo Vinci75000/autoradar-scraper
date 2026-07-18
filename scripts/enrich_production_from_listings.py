@@ -43,15 +43,13 @@ def main():
     # 1. Collecte des comptes serie-limitee par model_id (pagination keyset).
     counts = defaultdict(Counter)   # model_id -> Counter({750: 3, ...})
     scanned = 0
-    last_id = 0
+    off = 0
     while True:
-        q = (db.table("cars").select("id,mo,ref_model_id")
-             .gt("id", last_id).order("id").limit(1000))
-        rows = q.execute().data or []
+        rows = (db.table("cars").select("id,mo,ref_model_id")
+                .order("id").range(off, off + 999).execute()).data or []
         if not rows:
             break
         for r in rows:
-            last_id = r["id"]
             scanned += 1
             mid = r.get("ref_model_id")
             if not mid:
@@ -63,6 +61,7 @@ def main():
             break
         if len(rows) < 1000:
             break
+        off += 1000
     print(f"scanne {scanned} cars | modeles avec notation serie: {len(counts)}\n")
 
     # 2. Fill conservateur : modele limited/special + production_total vide.
