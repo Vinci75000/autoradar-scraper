@@ -61,14 +61,18 @@ def main():
         return rare
 
     scanned = updated = skip_alrdy = skip_notrare = skip_noyr = skip_err = 0
-    off = 0
+    # Pagination keyset (id UUID > last) : evite le statement timeout Supabase
+    # sur les offsets profonds (34k+ lignes).
+    last_id = "00000000-0000-0000-0000-000000000000"
     while True:
         rows = (db.table("cars").select(sel)
                 .not_.is_("ref_model_id", "null")
-                .order("id").range(off, off + 999).execute()).data or []
+                .gt("id", last_id)
+                .order("id").limit(1000).execute()).data or []
         if not rows:
             break
         for r in rows:
+            last_id = r["id"]
             scanned += 1
             if r.get("feat_serie_limitee"):       # deja rare cote annonce
                 skip_alrdy += 1
@@ -104,7 +108,6 @@ def main():
             break
         if len(rows) < 1000:
             break
-        off += 1000
 
     print(f"\nFINI — {'ECRIT' if args.write else 'DRY'} : {scanned} scannes | "
           f"{updated} enrichis (rareté réf) | {skip_alrdy} déjà rares | "
