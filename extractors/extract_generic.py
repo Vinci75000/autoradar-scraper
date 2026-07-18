@@ -207,6 +207,26 @@ _CANON_BRANDS = set(_BRAND_REG.values())
 _TITLE_SEP_RE = re.compile(r"\s*\|\s*|\s+[\u2022\u00b7\u2013\u2014]\s+|\s+-\s+")
 
 
+def _dedupe_model(mo):
+    """Nettoie les modeles issus de `name` concatene (DealerK & co) :
+      - tags vendeur "*SEDILI RACING", "*ITALIANA", "*Listino 107.000"
+      - modele double : "Panamera Panamera 4S" -> "Panamera 4S"
+      - token final deja vu : "296 GTS 3.0 DCT GTS" -> "296 GTS 3.0 DCT"
+    """
+    if not mo:
+        return mo
+    mo = re.sub(r"\s*\*[^*]*", " ", mo)
+    toks = mo.split()
+    out = []
+    for t in toks:
+        if out and t.lower() == out[-1].lower():
+            continue
+        out.append(t)
+    if len(out) > 2 and out[-1].lower() in {x.lower() for x in out[:-1]}:
+        out.pop()
+    return re.sub(r"\s{2,}", " ", " ".join(out)).strip(" -|\u00b7\u2013:") or None
+
+
 def _brand_from_title(title):
     if not title:
         return None, None
@@ -973,7 +993,7 @@ class GenericJsonLdExtractor(Extractor):
         # --- quality hardening -------------------------------------------------
         _toks = _dealer_tokens(config)
         _hint = _title_hint(soup)
-        car.mo = _clean_model(car.mo, _toks)
+        car.mo = _dedupe_model(_clean_model(car.mo, _toks))
         if car.mo:
             car.mo = re.split(r"\s+(?:kaufen|zu\s+verkaufen|for\s+sale|te\s+koop)\b", car.mo, flags=re.IGNORECASE)[0].strip()
             # annee en prefixe de titre (RnR: "2010 Maserati GranTurismo") -> retire
