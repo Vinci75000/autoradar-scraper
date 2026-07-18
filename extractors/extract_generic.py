@@ -1089,13 +1089,31 @@ class GenericJsonLdExtractor(Extractor):
         if isinstance(model, dict):
             model = model.get("name")
         name = obj.get("name")
-        if model and isinstance(model, str):
-            car.mo = model.strip()[:120]
-        elif name and isinstance(name, str):
+        _from_name = None
+        if name and isinstance(name, str):
             n = name.strip()
             if car.mk and n.lower().startswith(car.mk.lower() + " "):
                 n = n[len(car.mk) + 1:].strip()
-            car.mo = n[:120]
+            n = re.sub(r"\s+(?:18|19|20)\d{2}$", "", n).strip()
+            _from_name = n or None
+        _from_model = None
+        if model and isinstance(model, str):
+            m = model.strip()
+            # Certaines plateformes (DealerK) exposent un slug d'URL dans
+            # `model` : "cayenne-coupe", "rs-3-sportback", "f430". On le rend
+            # lisible plutot que de l'afficher tel quel.
+            if re.fullmatch(r"[a-z0-9][a-z0-9\-]*", m):
+                m = " ".join(
+                    w.upper() if (len(w) <= 3 and not w.isdigit()) else w.capitalize()
+                    for w in m.replace("-", " ").split()
+                )
+            _from_model = m or None
+        # `name` porte la variante qui fait le prix (GT3 Touring, HGTC, Evo) :
+        # on le prefere des qu'il est plus riche que `model`.
+        if _from_name and (not _from_model or len(_from_name) > len(_from_model)):
+            car.mo = _from_name[:120]
+        elif _from_model:
+            car.mo = _from_model[:120]
         for k in ("vehicleModelDate", "modelDate", "productionDate", "releaseDate", "dateVehicleFirstRegistered"):
             if obj.get(k):
                 y = _year_from(obj[k])
