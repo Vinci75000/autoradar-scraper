@@ -284,6 +284,24 @@ def save_fingerprint(db: Client, car_id: str, car: CarListing):
     }).execute()
 
 
+# ── Nettoyage modele : coupe la description marketing collee au titre ────────
+_MODEL_SEP_RE = re.compile(r"\s*//|\s*\||\s*;|\s[-\u2013\u2014]\s|\s*%[0-9A-Fa-f]{2}")
+
+def trim_model_desc(mo):
+    """Beaucoup de marchands collent toute la description dans le titre
+    ("911 2.7 S // 1974 // deutsche Erstauslieferung // ..."). On coupe au
+    premier separateur franc (// | ; tiret entoure d'espaces, ou reste
+    d'URL-encoding %2B). Ne touche PAS aux tirets internes de modele
+    (Mercedes-Benz, Werks-Turbo-Look) ni aux titres sans separateur (dyler,
+    qui releve d'une curation persona, pas d'une troncature)."""
+    if not mo or not isinstance(mo, str):
+        return mo
+    m = _MODEL_SEP_RE.search(mo)
+    if m and m.start() > 0:
+        mo = mo[:m.start()]
+    return re.sub(r"\s{2,}", " ", mo).strip(" -|\u00b7\u2013,:") or mo
+
+
 # ── Insert to Supabase ───────────────────────────────────────────────────────
 def insert_car(db: Client, car: CarListing) -> Optional[str]:
     # ─── Validation anti-pollution ───
@@ -291,6 +309,7 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
     if not is_valid:
         log.info(f'  ✗ Rejeté: {car.mk} {car.mo} — {reason}')
         return 'rejected'
+    car.mo = trim_model_desc(car.mo)
 
     # L1 src_url — meme annonce deja en base : on rafraichit (prix + last_seen_at)
     # au lieu de skipper sec. Garde le prix a jour + nourrit le wash (clean_expired).
