@@ -532,6 +532,9 @@ class GenericJsonLdExtractor(Extractor):
                 _skipped_multi += 1
                 continue
             text = _card.get_text(" ", strip=True)
+            # Espaces insecables / fines : "porsche\u00a0992" ne matchait aucune
+            # marque (startswith("porsche ") echoue sur NBSP) -> marque perdue.
+            text = re.sub(r"[\s\u00a0\u202f\u2007\u2009]+", " ", text).strip()
             # Carte deja vendue / reservee : on passe. Sans ca on ingere des
             # annonces mortes (ex. Nannetti affiche "RECENTLY SOLD" en liste).
             if srx.search(text):
