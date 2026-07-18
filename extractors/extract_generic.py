@@ -439,6 +439,30 @@ class GenericJsonLdExtractor(Extractor):
     # et on continue : une page pendue ne gele plus un run de plusieurs heures.
     URL_TIME_BUDGET_S = 90.0
 
+    def _sold_slugs(self, config: SourceConfig) -> set:
+        """Slugs des fiches vendues, lus depuis selectors.sold_list_url (page qui
+        liste les vendues avec les memes URLs detail). Vide si non configure."""
+        slu = (config.selectors or {}).get("sold_list_url")
+        if not slu:
+            return set()
+        try:
+            r = self._fetch(slu)
+            r.raise_for_status()
+        except Exception as exc:
+            logger.warning(f"{config.slug} sold_list KO: {exc}")
+            return set()
+        dre = (config.selectors or {}).get("detail_url_regex")
+        rx = re.compile(dre) if dre else None
+        out = set()
+        for a in BeautifulSoup(r.text, "html.parser").find_all("a", href=True):
+            h = a["href"].split("#")[0].split("?")[0]
+            if rx and not rx.search(h):
+                continue
+            slug = h.rstrip("/").rsplit("/", 1)[-1]
+            if slug:
+                out.add(slug)
+        return out
+
     def extract(self, config: SourceConfig, limit: Optional[int] = None,
                 on_car: Optional[Callable[[CarListing], None]] = None) -> ExtractionResult:
         result = ExtractionResult(source_slug=config.slug)
@@ -453,6 +477,16 @@ class GenericJsonLdExtractor(Extractor):
         try:
             urls = self._discover(config)
             result.pages_fetched = 1
+            # Fiches vendues : si selectors.sold_list_url pointe une page qui liste
+            # les vendues avec les memes URLs detail (David archive sous /referenzen/),
+            # on la fetch une fois et on retire ces fiches AVANT extraction.
+            # Signal fiable, sans badge par-page ; gate -> aucun impact ailleurs.
+            _sold = self._sold_slugs(config)
+            if _sold:
+                _before = len(urls)
+                urls = [u for u in urls if u.rstrip("/").rsplit("/", 1)[-1] not in _sold]
+                logger.info(f"{config.slug}: {_before - len(urls)} vendues retirees "
+                            f"(reste {len(urls)}) via sold_list")
             if limit is not None:
                 urls = urls[:limit]
             for url in urls:
