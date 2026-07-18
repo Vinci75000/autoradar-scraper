@@ -108,6 +108,27 @@ class CarListing:
 
 
 # ── Trust score calculator ─────────────────────────────────────────────────
+def feature_sc_bonus(features: dict):
+    """Bascule ADDITIVE (B) : bonus au sc affiche depuis les signaux feat_
+    detectes (carnet, matching, provenance). Retourne (bonus_borne<=10, chips).
+    AJOUTE seulement, jamais de retrait. first_owner NON repris (deja s_hi)."""
+    fb, fc = 0, []
+    features = features or {}
+    if features.get('feat_matching_numbers'):
+        fb += 3; fc.append({"l": "Matching numbers", "t": "pass"})
+    if features.get('feat_carnet_complet'):
+        fb += 3; fc.append({"l": "CARNET complet", "t": "pass"})
+    elif features.get('feat_carnet_present'):
+        fb += 2; fc.append({"l": "CARNET présent", "t": "pass"})
+    if features.get('feat_factures_completes'):
+        fb += 2; fc.append({"l": "Factures", "t": "pass"})
+    if features.get('feat_suivi_constructeur'):
+        fb += 3; fc.append({"l": "Suivi constructeur", "t": "pass"})
+    elif features.get('feat_suivi_specialiste'):
+        fb += 2; fc.append({"l": "Suivi spécialiste", "t": "pass"})
+    return min(10, fb), fc
+
+
 def calculate_score(car: CarListing, market_avg: Optional[int] = None) -> dict:
     """Returns score 0-100 + breakdown + verdict"""
     age = datetime.now().year - (car.yr or datetime.now().year)
@@ -358,24 +379,12 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
         row['feat_extractor_version'] = EXTRACTOR_VERSION
 
         # ── Bascule ADDITIVE (B) : enrichir le sc AFFICHE par les signaux feat_
-        # detectes (carnet, matching, provenance). Bonus bornes -> on AJOUTE
-        # seulement, jamais de retrait -> zero regression. La rareté est deja
-        # dans calculate_score (phase 3). first_owner NON repris (deja dans s_hi).
-        _fb, _fc = 0, []
-        if features.get('feat_matching_numbers'):
-            _fb += 3; _fc.append({"l": "Matching numbers", "t": "pass"})
-        if features.get('feat_carnet_complet'):
-            _fb += 3; _fc.append({"l": "CARNET complet", "t": "pass"})
-        elif features.get('feat_carnet_present'):
-            _fb += 2; _fc.append({"l": "CARNET présent", "t": "pass"})
-        if features.get('feat_factures_completes'):
-            _fb += 2; _fc.append({"l": "Factures", "t": "pass"})
-        if features.get('feat_suivi_constructeur'):
-            _fb += 3; _fc.append({"l": "Suivi constructeur", "t": "pass"})
-        elif features.get('feat_suivi_specialiste'):
-            _fb += 2; _fc.append({"l": "Suivi spécialiste", "t": "pass"})
+        # detectes (carnet, matching, provenance). On AJOUTE seulement (borne
+        # +10), jamais de retrait -> zero regression. Rareté deja dans
+        # calculate_score (phase 3).
+        _fb, _fc = feature_sc_bonus(features)
         if _fb:
-            row['sc'] = min(100, (row.get('sc') or 0) + min(10, _fb))
+            row['sc'] = min(100, (row.get('sc') or 0) + _fb)
             row['ch'] = (row.get('ch') or []) + _fc
     except Exception as e:
         log.warning(
