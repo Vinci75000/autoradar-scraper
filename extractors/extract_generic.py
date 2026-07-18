@@ -496,6 +496,7 @@ class GenericJsonLdExtractor(Extractor):
         soup = BeautifulSoup(resp.text, "html.parser")
         base = config.listings_url
         out, seen = [], set()
+        _skipped_multi = 0
         for a in soup.find_all("a", href=True):
             href = a["href"].split("#")[0].split("?")[0]
             if not dre.search(href):
@@ -505,16 +506,30 @@ class GenericJsonLdExtractor(Extractor):
                 continue
             # Le <a> est souvent vide (lien image/titre) : les specs vivent dans
             # un ancetre. On remonte au plus petit conteneur portant le marqueur.
+            # Frontiere de carte : le plus petit ancetre qui porte le marqueur ET
+            # ne contient QU'UN seul lien annonce. Sans cette 2e condition on
+            # remonte jusqu'au conteneur de la liste et les N voitures heritent
+            # toutes des donnees de la premiere (constate chez Milano Classiche :
+            # 5 URLs distinctes, meme titre, meme prix).
             _card = None
             _n = a
             for _ in range(8):
                 _n = _n.parent
                 if _n is None:
                     break
-                if mrx.search(_n.get_text(" ")):
-                    _card = _n
-                    break
+                if not mrx.search(_n.get_text(" ")):
+                    continue
+                _links = {
+                    _x["href"].split("#")[0].split("?")[0]
+                    for _x in _n.find_all("a", href=True)
+                    if dre.search(_x["href"].split("#")[0].split("?")[0])
+                }
+                if len(_links) > 1:
+                    break  # conteneur de liste, pas une carte -> on abandonne
+                _card = _n
+                break
             if _card is None:
+                _skipped_multi += 1
                 continue
             text = _card.get_text(" ", strip=True)
             # Carte deja vendue / reservee : on passe. Sans ca on ingere des
@@ -573,6 +588,9 @@ class GenericJsonLdExtractor(Extractor):
             car.co = car.co or config.country
             car.ci = car.ci or config.city
             out.append(car)
+        if _skipped_multi:
+            logger.info("%s: %d liens sans carte propre (conteneur partage)",
+                        config.slug, _skipped_multi)
         return out
 
     def extract(self, config: SourceConfig, limit: Optional[int] = None,
