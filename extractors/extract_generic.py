@@ -744,6 +744,26 @@ class GenericJsonLdExtractor(Extractor):
             og = soup.find("meta", attrs={"property": "og:image"})
             if og and og.get("content"):
                 car.photos = [og["content"]]
+        # Fallback galerie : sites WP sans og:image (David Sportscars) exposent
+        # leurs photos en <a href="*.jpg"> / <img>. On ramasse les jpg/webp en
+        # excluant logos/placeholders, dedup, cap 10. Gated (car.photos vide) ->
+        # aucun impact sur les dealers qui ont deja og:image / JSON-LD image.
+        if not car.photos:
+            _seen, _ph = set(), []
+            _cands = [a.get("href") for a in soup.find_all("a", href=True)]
+            _cands += [im.get("src") or im.get("data-src") or im.get("data-lazy-src")
+                       for im in soup.find_all("img")]
+            for _s in _cands:
+                if not _s or not re.search(r"\.(?:jpe?g|webp)(?:\?|$)", _s, re.I):
+                    continue
+                if re.search(r"logo|platzhalter|placeholder|sprite|icon|avatar", _s, re.I):
+                    continue
+                _full = _s if _s.startswith("http") else urljoin(url, _s)
+                if _full not in _seen:
+                    _seen.add(_full)
+                    _ph.append(_full)
+            if _ph:
+                car.photos = _ph[:10]
         # Derniere chance annee : slug d'URL type .../modele-2026-6136661/
         # (annee juste avant l'id numerique terminal). Recupere les modeles neufs
         # dont la page ne porte pas d'annee en clair -> evite de jeter de vraies
@@ -949,7 +969,7 @@ class GenericJsonLdExtractor(Extractor):
             r"(?:dans la m[eê]me collection|m[eê]me collection|vous aimerez"
             r"|autres (?:v[eé]hicules|voitures|autos|mod[eè]les)|nos autres|ces autres"
             r"|pourraient vous int[ée]ress|v[eé]hicules similaires"
-            r"|[aä]hnliche fahrzeuge|potrebbe(?:ro)? interessart|veicoli simili"
+            r"|(?:[aä]hnliche|weitere|verwandte|mehr) fahrzeuge|potrebbe(?:ro)? interessart|veicoli simili"
             r"|related vehicles?|you may also|similar (?:cars|vehicles)"
             r"|other (?:classic )?cars|ander(?:e)? (?:auto|wagen)|ons aanbod)",
             text, re.IGNORECASE)
