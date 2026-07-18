@@ -68,7 +68,7 @@ TIER_LUXURY = TIER_SUPERCAR | {
     'bmw', 'audi', 'jaguar',
     'land rover', 'land-rover', 'range rover', 'range-rover',
     'lexus', 'volvo', 'tesla', 'cadillac', 'lincoln',
-    'chevrolet',  # Corvette C8 Z06/ZR1 >=100k EUR legitime chez premium dealers (autostrada, autoseredin)
+    'chevrolet', 'corvette',  # Corvette C8 E-Ray/Z06/ZR1 >=100k EUR legitime (le normaliseur sort mk=Corvette)
     'mini',
     # Préparateurs / tuners reconnus
     'brabus', 'alpina', 'mansory', 'ruf', 'techart',
@@ -86,7 +86,8 @@ TITLE_BLACKLIST = [
     r'\bbatterie\s+\d', r'\bplaquette\s+de\s+frein\b',
     # Accessoires / décoration / livres
     r'\bportfolio\b', r'\bposter\b', r'\bmaquette\b', r'\bminiature\b',
-    r'\b1[/:]\d+\b',
+    r'\b1[/:](?:12|18|24|32|43|64|87)\b',  # echelles die-cast SEULEMENT (pas
+    # les series limitees "1 of 750" -> 1/750, 1/250, 1/11... = halo cars)
     r'\blivre\b', r'\bmagazine\b', r'\brevue\b', r'\bmanuel\b',
     r'\bautocollant\b', r'\bsticker\b', r'\bport[\s-]cl[ée]s?\b',
     # Lots
