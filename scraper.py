@@ -356,6 +356,27 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
         row['feat_chips'] = chips_from_features(features, listing_tier, km_tier)
         row['feat_extracted_at'] = datetime.utcnow().isoformat() + 'Z'
         row['feat_extractor_version'] = EXTRACTOR_VERSION
+
+        # ── Bascule ADDITIVE (B) : enrichir le sc AFFICHE par les signaux feat_
+        # detectes (carnet, matching, provenance). Bonus bornes -> on AJOUTE
+        # seulement, jamais de retrait -> zero regression. La rareté est deja
+        # dans calculate_score (phase 3). first_owner NON repris (deja dans s_hi).
+        _fb, _fc = 0, []
+        if features.get('feat_matching_numbers'):
+            _fb += 3; _fc.append({"l": "Matching numbers", "t": "pass"})
+        if features.get('feat_carnet_complet'):
+            _fb += 3; _fc.append({"l": "CARNET complet", "t": "pass"})
+        elif features.get('feat_carnet_present'):
+            _fb += 2; _fc.append({"l": "CARNET présent", "t": "pass"})
+        if features.get('feat_factures_completes'):
+            _fb += 2; _fc.append({"l": "Factures", "t": "pass"})
+        if features.get('feat_suivi_constructeur'):
+            _fb += 3; _fc.append({"l": "Suivi constructeur", "t": "pass"})
+        elif features.get('feat_suivi_specialiste'):
+            _fb += 2; _fc.append({"l": "Suivi spécialiste", "t": "pass"})
+        if _fb:
+            row['sc'] = min(100, (row.get('sc') or 0) + min(10, _fb))
+            row['ch'] = (row.get('ch') or []) + _fc
     except Exception as e:
         log.warning(
             f'feature_extractor failed for {car.mk} {car.mo}: {e} '
