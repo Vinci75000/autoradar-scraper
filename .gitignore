@@ -109,3 +109,4 @@ liquidity.py
 # runtime / scratch
 dyler_tried.txt
 reports/generic/generic_2026*
+*.csv
