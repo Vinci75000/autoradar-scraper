@@ -60,7 +60,7 @@ def main():
         refcache[mid] = rare
         return rare
 
-    scanned = updated = skip_alrdy = skip_notrare = 0
+    scanned = updated = skip_alrdy = skip_notrare = skip_noyr = skip_err = 0
     off = 0
     while True:
         rows = (db.table("cars").select(sel)
@@ -76,22 +76,30 @@ def main():
             if not ref_is_rare(r["ref_model_id"]):
                 skip_notrare += 1
                 continue
-            features = {k: r.get(k) for k in feat_keys}
-            features["feat_serie_limitee"] = True
-            lt = get_listing_tier(r.get("yr"), r.get("px"))
-            kt = get_km_tier(r.get("km"), lt)
-            new_score = score_from_features(features, lt, kt)
-            new_chips = chips_from_features(features, lt, kt)
-            old = r.get("feat_score")
-            tag = "" if args.write else "[DRY] "
-            print(f"  {tag}car {str(r['id'])[:8]}  feat_score {old} -> {new_score}")
-            if args.write:
-                db.table("cars").update({
-                    "feat_serie_limitee": True,
-                    "feat_score": new_score,
-                    "feat_chips": new_chips,
-                }).eq("id", r["id"]).execute()
-            updated += 1
+            if r.get("yr") is None:        # get_listing_tier a besoin de l'annee
+                skip_noyr += 1
+                continue
+            try:
+                features = {k: r.get(k) for k in feat_keys}
+                features["feat_serie_limitee"] = True
+                lt = get_listing_tier(r.get("yr"), r.get("px"))
+                kt = get_km_tier(r.get("km"), lt)
+                new_score = score_from_features(features, lt, kt)
+                new_chips = chips_from_features(features, lt, kt)
+                old = r.get("feat_score")
+                tag = "" if args.write else "[DRY] "
+                print(f"  {tag}car {str(r['id'])[:8]}  feat_score {old} -> {new_score}")
+                if args.write:
+                    db.table("cars").update({
+                        "feat_serie_limitee": True,
+                        "feat_score": new_score,
+                        "feat_chips": new_chips,
+                    }).eq("id", r["id"]).execute()
+                updated += 1
+            except Exception as exc:
+                skip_err += 1
+                if skip_err <= 5:
+                    print(f"  ! skip car {str(r.get('id'))[:8]}: {exc}")
         if args.limit_scan and scanned >= args.limit_scan:
             break
         if len(rows) < 1000:
@@ -100,7 +108,7 @@ def main():
 
     print(f"\nFINI — {'ECRIT' if args.write else 'DRY'} : {scanned} scannes | "
           f"{updated} enrichis (rareté réf) | {skip_alrdy} déjà rares | "
-          f"{skip_notrare} modèle non-rare")
+          f"{skip_notrare} modèle non-rare | {skip_noyr} sans année | {skip_err} erreurs")
 
 
 if __name__ == "__main__":
