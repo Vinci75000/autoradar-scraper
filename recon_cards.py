@@ -13,17 +13,21 @@ UA = "Mozilla/5.0 (compatible; AutoRadarBot/1.0; +https://carnet.life/about)"
 HEADERS = {"User-Agent": UA, "Accept-Language": "en;q=0.9,it;q=0.8,fr;q=0.8"}
 
 CIBLES = [
-    ("ruotedasogno",    "https://www.ruotedasogno.com/tipo/auto/",        True),
-    ("soccol",          "https://www.soccol.it/stock/",                   True),
-    ("milanoclassiche", "https://www.milanoclassiche.com/showroom/",      True),
-    ("thecollection",   "https://www.thecollection.srl/catalogo/",        True),
-    ("goldengarage",    "https://www.goldengarage.eu/auto-in-vendita",    True),
-    ("nannetti",        "https://www.andreanannetti.com/stock-attuale/",  True),
-    ("autoluce",        "https://www.autoluce.com/auto",                  True),
-    ("luzzago",         "https://luzzago.com/",                           False),
-    ("bresciaclassic",  "https://www.bresciaclassiccars.com/",            False),
-    ("classicaritalia", "https://classicaritalia.it/",                    False),
-    ("royalgarage",     "https://www.royalgarage.it/",                    False),
+    ("dreikommazwei",     "https://www.dreikommazwei.de", True),
+    ("atelier-automobile","https://www.atelier-automobile.de/automobile/", True),
+    ("thiesen",           "https://www.thiesen-automobile.com/cars/", True),
+    ("autotradition",     "https://www.autotradition.de/", True),
+    ("cargold",           "https://www.cargold-collection.com/stocklist/", True),
+    ("movisti",           "https://www.movisti.de/", False),
+    ("wallner",           "https://www.wallnerclassic.de", False),
+    ("motorlegenden",     "https://motorlegenden.de", False),
+    ("kultgarage",        "https://kultgarage.de/", False),
+    ("steenbuck",         "https://steenbuck-automobiles.de/", False),
+    ("legendenwerk",      "https://legendenwerk.de/", False),
+    ("depot3",            "https://www.depot3.de/", False),
+    ("gath",              "https://www.automobile-gath.de/", False),
+    ("dresdner",          "https://klassiker-handel.de/", False),
+    ("herr-stern",        "https://www.herrstern.de/", False),
 ]
 
 PRICE = re.compile(r"(?:€|EUR)\s?\d[\d.\s']{2,}|\d[\d.\s']{4,}\s?(?:€|EUR)")
