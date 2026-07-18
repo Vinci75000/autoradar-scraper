@@ -866,6 +866,18 @@ class GenericJsonLdExtractor(Extractor):
         re.IGNORECASE,
     )
 
+    # Une page d'archive n'est PAS une page de stock. Sans ce garde, le saut
+    # home->stock atterrissait sur "verkaufte-klassische-fahrzeuge" (= vendues)
+    # et la source ne ramenait que des voitures mortes, silencieusement.
+    _SOLD_KW = re.compile(
+        r"verkauft|verkaufte|verkaufsarchiv|referenzen"
+        r"|\bsold\b|sold-|-sold|past-|previously|archiv"
+        r"|vendut[ei]|archivio"
+        r"|vendue?s?\b|r[\u00e9e]alisations"
+        r"|vendid[oa]s|verkocht|sprzedane",
+        re.IGNORECASE,
+    )
+
     @classmethod
     def _find_stock_link(cls, html, listings_url, netloc):
         """Depuis une home, trouve le meilleur lien vers la page-stock."""
@@ -887,6 +899,8 @@ class GenericJsonLdExtractor(Extractor):
             text = a.get_text(" ", strip=True) or ""
             if not cls._STOCK_KW.search(f"{path} {text}"):
                 continue
+            if cls._SOLD_KW.search(f"{path} {text}"):
+                continue  # archive des vendues : jamais une page de stock
             score = 0.0
             if cls._STOCK_KW.search(path):
                 score += 2

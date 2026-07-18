@@ -442,6 +442,13 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
 
         log.info(f'✓ Inserted: {car.mk} {car.mo} {car.yr} — score {score_data["sc"]} — {car.px if car.px is not None else "POA"}€')
         return car_id
+    # Chemin muet historique : l'insert ne renvoie rien et personne n'en sait
+    # rien. run_generic comptait ces echecs comme des "duplicates", ce qui a
+    # masque des sources entieres. On parle, maintenant.
+    log.warning(
+        f'\u26a0 Insert sans retour ({car.src}): {car.mk} {car.mo} {car.yr} '
+        f'| res.data={res.data!r} | url={car.src_url}'
+    )
     return None
 
 
