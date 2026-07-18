@@ -1005,6 +1005,7 @@ class GenericJsonLdExtractor(Extractor):
             r"|pourraient vous int[ée]ress|v[eé]hicules similaires"
             r"|(?:[aä]hnliche|weitere|verwandte|mehr) fahrzeuge|potrebbe(?:ro)? interessart|veicoli simili"
             r"|related vehicles?|you may also|similar (?:cars|vehicles)"
+            r"|have you seen these cars|discover more|more (?:cars|vehicles)"
             r"|other (?:classic )?cars|ander(?:e)? (?:auto|wagen)|ons aanbod)",
             text, re.IGNORECASE)
         if _rel:
@@ -1035,6 +1036,14 @@ class GenericJsonLdExtractor(Extractor):
                 _v = _parse_price(_lab.group(1))
                 if _v and 1000 <= _v <= 100_000_000:
                     car.px = _v
+            # Variante devise-avant-nombre : "Price € 74,900" (Bavaria Motors,
+            # format anglo virgule). Devise obligatoire -> pas de faux match "Price 2024".
+            if car.px is None:
+                _lab2 = re.search(rf"(?:Prix|Preis|Price|Prezzo|Prijs)\s*[:.]?\s*(?:€|EUR|CHF|£)\s*({_num})", text, re.IGNORECASE)
+                if _lab2:
+                    _v = _parse_price(_lab2.group(1))
+                    if _v and 1000 <= _v <= 100_000_000:
+                        car.px = _v
         if car.px is None:
             best = None
             for m in re.finditer(rf"(?:€|EUR|CHF|£)\s*({_num})|({_num})\s*(?:€|EUR|CHF|£)", text):
