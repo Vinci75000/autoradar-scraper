@@ -300,7 +300,8 @@ _PERSONA_MARKER = re.compile(
     r"Black Edition|First Edition|Exclusive|Vignale|Individual|Cabrio|Coup[e\u00e9]|"
     r"Roadster|Spider|Shooting Brake|Convertible|Challenger|Charger|Mustang|"
     r"Camaro|Corvette|\bHemi\b|\bR/T\b|\bSRT|Hellcat|F.?Sport|Supercharged|"
-    r"\bV8\b|\bV10\b|\bV12\b|Bi-?turbo|Quadrifoglio|\bQV\b|\bLED\b|Matrix|"
+    r"\bV8\b|\bV10\b|\bV12\b|Bi-?turbo|Quadrifoglio|\bQV\b|M[- ]?Sport|\bHSE\b|"
+    r"Macan|Cayenne|Panamera|Taycan|\bGTS\b|Turbo ?S\b|\bLED\b|Matrix|"
     r"\bNavi|Leder|Cuir|Pelle|Leather|Panorama|\bPano\b|\bACC\b|Keyless|Bose|"
     r"Burmester|Harman|Head.?up|Virtual Cockpit|Digital Cockpit",
     re.IGNORECASE,
