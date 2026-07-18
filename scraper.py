@@ -284,6 +284,37 @@ def save_fingerprint(db: Client, car_id: str, car: CarListing):
     }).execute()
 
 
+# ── Filtre persona : "belle dans sa categorie" pour marketplaces mass-market ─
+# dyler & co listent tout l'occasion moderne (Corsa base, Duster, Vito...).
+# Regle Sly : une moderne bon marche n'entre QUE si elle porte un marqueur de
+# finition / option / carrosserie / perf desirable. Pas la puissance : la
+# belle version, bien configuree, "un peu differente des autres du meme modele".
+# Les classiques (< 2012) et les cheres (>= 25k) passent toujours.
+MASS_MARKET_SRC = {"dyler"}
+_PERSONA_YEAR = 2012
+_PERSONA_PRICE = 25000
+_PERSONA_MARKER = re.compile(
+    r"GTI|GTE|GTD|Abarth|Type ?R|\bRS ?[0-9]|\bAMG|Cupra|\bJCW\b|John Cooper|"
+    r"MX-?5|124 Spider|Alpine|\bA110\b|\bGR ?[0-9A-Za-z]|\b86\b|\bBRZ\b|Supra|"
+    r"Nismo|Polestar|N[- ]?Line|ST[- ]?Line|R[- ]?Line|S[- ]?Line|GT[- ]?Line|"
+    r"Black Edition|First Edition|Exclusive|Vignale|Individual|Cabrio|Coup[e\u00e9]|"
+    r"Roadster|Spider|Shooting Brake|Convertible|Challenger|Charger|Mustang|"
+    r"Camaro|Corvette|\bHemi\b|\bR/T\b|\bSRT|Hellcat|F.?Sport|Supercharged|"
+    r"\bV8\b|\bV10\b|\bV12\b|Bi-?turbo|Quadrifoglio|\bQV\b|\bLED\b|Matrix|"
+    r"\bNavi|Leder|Cuir|Pelle|Leather|Panorama|\bPano\b|\bACC\b|Keyless|Bose|"
+    r"Burmester|Harman|Head.?up|Virtual Cockpit|Digital Cockpit",
+    re.IGNORECASE,
+)
+
+def persona_ok(mk, mo, yr, px):
+    """True si la voiture merite le feed CARNET. Voir MASS_MARKET_SRC."""
+    if not yr or yr < _PERSONA_YEAR:
+        return True
+    if px is not None and px >= _PERSONA_PRICE:
+        return True
+    return bool(mo and _PERSONA_MARKER.search(mo))
+
+
 # ── Nettoyage modele : coupe la description marketing collee au titre ────────
 _MODEL_SEP_RE = re.compile(r"\s*//|\s*\||\s*;|\s[-\u2013\u2014]\s|\s*%[0-9A-Fa-f]{2}")
 
@@ -310,6 +341,9 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
         log.info(f'  ✗ Rejeté: {car.mk} {car.mo} — {reason}')
         return 'rejected'
     car.mo = trim_model_desc(car.mo)
+    if car.src in MASS_MARKET_SRC and not persona_ok(car.mk, car.mo, car.yr, car.px):
+        log.info(f'  \u2298 Hors persona ({car.src}): {car.mk} {car.mo} {car.yr} {car.px}')
+        return 'rejected'
 
     # L1 src_url — meme annonce deja en base : on rafraichit (prix + last_seen_at)
     # au lieu de skipper sec. Garde le prix a jour + nourrit le wash (clean_expired).
