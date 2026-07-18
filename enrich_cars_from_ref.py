@@ -102,20 +102,22 @@ def main():
     by_mk, nref = build_index(db)
     print(f"Index: {nref} modeles enrichis, {len(by_mk)} marques")
 
-    # Charger cars
+    # Charger cars — pagination keyset (id UUID > last) : evite le statement
+    # timeout Supabase sur les offsets profonds (34k+ lignes, cron GitHub).
     cars = []
-    off = 0
+    last_id = "00000000-0000-0000-0000-000000000000"
     while True:
         q = db.table('cars').select('id,mk,mo')
         if not args.all_status: q = q.eq('status', 'active')
         if args.mk: q = q.ilike('mk', f'%{args.mk}%')
         if args.resume: q = q.is_('ref_match_conf', 'null')
-        q = q.order('id').range(off, off+998)
-        res = q.execute()
-        batch = res.data or []
+        q = q.gt('id', last_id).order('id').limit(999)
+        batch = q.execute().data or []
         cars.extend(batch)
-        if len(batch) < 999: break
-        off += 999
+        if batch:
+            last_id = batch[-1]['id']
+        if len(batch) < 999:
+            break
     print(f"Annonces a traiter : {len(cars)}")
 
     matched = 0; updated = 0
