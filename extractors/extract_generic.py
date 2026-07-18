@@ -1160,21 +1160,32 @@ class GenericJsonLdExtractor(Extractor):
         if _rel:
             text = text[:_rel.start()]
         if not car.yr:
-            m = re.search(r"(?:Erstzulassung|Baujahr|First registration|Year of (?:construction|manufacture)|Mise en circulation|1(?:re|ere|ère)? mise en circulation|Immatriculation|Immatricolazione|Prima immatricolazione|Model year|Modelljahr|mod[eè]le|Année|Anno|Bouwjaar|Year)[^\d]{0,12}(?:\d{1,2}\s*[/.\-]\s*){0,2}((?:18|19|20)\d{2})", text, re.IGNORECASE)
+            m = re.search(r"(?:Anno di costruzione|Anno di fabbricazione|Anno modello|Data di immatricolazione|Erstzulassung|Baujahr|First registration|Year of (?:construction|manufacture)|Mise en circulation|1(?:re|ere|ère)? mise en circulation|Immatriculation|Immatricolazione|Prima immatricolazione|Model year|Modelljahr|mod[eè]le|Année|Anno|Bouwjaar|Year)[^\d]{0,12}(?:\d{1,2}\s*[/.\\-]\s*){0,2}((?:18|19|20)\d{2})", text, re.IGNORECASE)
             if m:
                 y = int(m.group(1))
                 if 1900 < y <= datetime.now().year + 1:
                     car.yr = y
         if not car.km:
             _kmn = r"\d{1,3}(?:[ \u00a0\u202f\u2009.,]\d{3})+|\d{3,}"
-            m = re.search(rf"(?:Kilometerstand|Mileage|Odometer|Kilométrage|Chilometraggio)\s*[:.]?\s*({_kmn})\s*km", text, re.IGNORECASE)
+            # Libelle d'abord, unite acceptee AVANT ou APRES la valeur :
+            # l'italien ecrit "Chilometraggio: KM 149.000" / "Km percorsi: 4245".
+            m = re.search(
+                rf"(?:Kilometerstand|Mileage|Odometer|Kilom[ée]trage|Chilometraggio"
+                rf"|Chilometri|Km\s+percorsi|Kilometraje)\s*[:.]?\s*(?:km\s*)?({_kmn})",
+                text, re.IGNORECASE)
             if not m:
-                m = re.search(rf"({_kmn})\s*km\b(?!\s*/?\s*h)", text, re.IGNORECASE)
+                # Repli "45.000 km". Exclut le cas ou "km" est un LIBELLE qui suit :
+                # "Anno di costruzione: 1968 Km percorsi: 4245" donnait km=1968.
+                m = re.search(
+                    rf"({_kmn})\s*km\b(?!\s*/?\s*h)(?!\s*(?:percors|percorrenz|gefahren))",
+                    text, re.IGNORECASE)
             if m:
                 c = re.sub(r"[^\d]", "", m.group(1))
                 if c:
                     km = int(c)
-                    if 0 <= km <= 2_000_000:
+                    # Un km strictement egal a l'annee du vehicule est le faux
+                    # positif classique (annee collee au mot "km").
+                    if 0 <= km <= 2_000_000 and not (car.yr and km == car.yr):
                         car.km = km
         # nombre = groupe milliers (149 000,00 / 189.900 / 12'500) ou entier.
         _num = r"\d{1,3}(?:[ \u00a0\u202f\u2009.,'’]\d{3})+(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?"
