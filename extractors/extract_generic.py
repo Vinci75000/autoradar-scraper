@@ -463,6 +463,75 @@ class GenericJsonLdExtractor(Extractor):
                 out.add(slug)
         return out
 
+    def _extract_cards(self, config: SourceConfig) -> list:
+        """Mode carte-liste : extrait les voitures directement des cartes de la
+        page listing, sans visiter les pages detail. Pour les sites dont les
+        fiches redirigent / sont en SPA mais dont le listing est server-rendered
+        avec toute la donnee par carte (ex. Esser Automotive : titre +
+        Erstzulassung + Kilometerstand + prix €). Gate par selectors.card_mode."""
+        sel = config.selectors or {}
+        dre = re.compile(sel.get("detail_url_regex") or r"/[^/]+/?$")
+        mrx = re.compile(sel.get("card_marker")
+                         or r"Erstzulassung|Kilometerstand|Baujahr|Mileage|Prix|Preis|Price",
+                         re.IGNORECASE)
+        resp = self._fetch(config.listings_url)
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, "html.parser")
+        base = config.listings_url
+        out, seen = [], set()
+        for a in soup.find_all("a", href=True):
+            href = a["href"].split("#")[0].split("?")[0]
+            if not dre.search(href):
+                continue
+            full = href if href.startswith("http") else urljoin(base, href)
+            if full in seen:
+                continue
+            # Le <a> est souvent vide (lien image/titre) : les specs vivent dans
+            # un ancetre. On remonte au plus petit conteneur portant le marqueur.
+            _card = None
+            _n = a
+            for _ in range(8):
+                _n = _n.parent
+                if _n is None:
+                    break
+                if mrx.search(_n.get_text(" ")):
+                    _card = _n
+                    break
+            if _card is None:
+                continue
+            text = _card.get_text(" ", strip=True)
+            seen.add(full)
+            car = CarListing(src_url=full, src=config.slug)
+            _ti = re.split(r"\b(?:Erstzulassung|Kilometerstand|Baujahr|Mileage)\b",
+                           text, 1)[0].strip(" -|·•–")
+            mk, mo = _brand_from_title(_ti)
+            car.mk = mk
+            car.mo = (mo or _ti)[:120] or None
+            ym = re.search(r"(?:Erstzulassung|Baujahr|Year)\s*[:.]?\s*(?:\d{1,2}\s*/\s*)?"
+                           r"((?:18|19|20)\d{2})", text, re.IGNORECASE)
+            if ym:
+                car.yr = int(ym.group(1))
+            km = re.search(r"(?:Kilometerstand|Mileage|Kilom[eé]trage)\s*[:.]?\s*"
+                           r"([\d.\s'’ ]{3,})\s*km", text, re.IGNORECASE)
+            if km:
+                _v = re.sub(r"[^\d]", "", km.group(1))
+                if _v and int(_v) <= 2_000_000:
+                    car.km = int(_v)
+            pr = re.search(r"(?<!\d)(\d{1,3}(?:[.\s ]\d{3})+)\s*€", text)
+            if pr:
+                _p = _parse_price(pr.group(1))
+                if _p and 1000 <= _p <= 100_000_000:
+                    car.px = _p
+            img = a.find("img")
+            if img:
+                _s = img.get("src") or img.get("data-src") or img.get("data-lazy-src") or ""
+                if re.search(r"\.(?:jpe?g|webp|png)", _s, re.IGNORECASE) and not re.search(r"logo|placeholder|platzhalter", _s, re.IGNORECASE):
+                    car.photos = [_s if _s.startswith("http") else urljoin(base, _s)]
+            car.co = car.co or config.country
+            car.ci = car.ci or config.city
+            out.append(car)
+        return out
+
     def extract(self, config: SourceConfig, limit: Optional[int] = None,
                 on_car: Optional[Callable[[CarListing], None]] = None) -> ExtractionResult:
         result = ExtractionResult(source_slug=config.slug)
@@ -475,6 +544,22 @@ class GenericJsonLdExtractor(Extractor):
         # a ses propres timeouts / threads) -> on ne l'arme qu'en mode httpx.
         _budget = 0 if self._browser_mode else self.URL_TIME_BUDGET_S
         try:
+            # Mode carte-liste (selectors.card_mode) : extraction directe depuis
+            # les cartes du listing, sans pages detail (Esser : fiches redirigent).
+            if (config.selectors or {}).get("card_mode"):
+                cards = self._extract_cards(config)
+                if limit is not None:
+                    cards = cards[:limit]
+                result.pages_fetched = 1
+                for car in cards:
+                    result.cars.append(car)
+                    if on_car is not None:
+                        try:
+                            on_car(car)
+                        except Exception as exc:
+                            logger.error(f"{config.slug} on_car KO: {exc}")
+                result.duration_s = time.monotonic() - t0
+                return result
             urls = self._discover(config)
             result.pages_fetched = 1
             # Fiches vendues : si selectors.sold_list_url pointe une page qui liste
