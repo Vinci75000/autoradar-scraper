@@ -34,6 +34,7 @@ from feature_extractor import (
     extract_features,
     score_from_features,
     chips_from_features,
+    limited_edition_of,
 )
 
 # ── Stealth helper (works with v1.x stealth_sync and v2.x Stealth class) ──
@@ -140,7 +141,19 @@ def calculate_score(car: CarListing, market_avg: Optional[int] = None) -> dict:
     opts_count = len(car.opts or [])
     s_an = min(15, 8 + opts_count)
 
-    total = s_px + s_me + s_hi + s_an + s_km
+    # ── Rareté (série limitée) — bonus modeste, croissant avec l'âge ──────────
+    # La rareté pèse surtout sur le prix de demain, mais un peu déjà aujourd'hui,
+    # et de plus en plus a mesure que le modele vieillit (les gens realisent
+    # qu'il est rare). Depuis la notation "1/N" de l'annonce.
+    rare_of = limited_edition_of(f"{car.mk or ''} {car.mo or ''}")
+    if rare_of:
+        s_rare = min(10, 2 + age // 4)      # 2 aujourd'hui, +1 tous les 4 ans, cap 10
+        if rare_of <= 100:                  # ultra-rare (<=100 ex.)
+            s_rare = min(12, s_rare + 2)
+    else:
+        s_rare = 0
+
+    total = s_px + s_me + s_hi + s_an + s_km + s_rare
 
     if   total >= 85: verdict = "Excellent achat"
     elif total >= 70: verdict = "Bon rapport qualité"
@@ -153,6 +166,7 @@ def calculate_score(car: CarListing, market_avg: Optional[int] = None) -> dict:
     if car.ow == 1:  chips.append({"l": "1 propriétaire", "t": "pass"})
     elif car.ow >= 3:chips.append({"l": f"{car.ow} propr.", "t": "warn"})
     if car.km is not None and (car.km / max(age, 1)) > 25000: chips.append({"l": "Km élevés", "t": "warn"})
+    if rare_of: chips.append({"l": f"Série limitée · 1/{rare_of}", "t": "pass"})
 
     return {
         "sc": min(100, max(0, total)),
