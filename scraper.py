@@ -250,6 +250,26 @@ def is_duplicate(db: Client, car: CarListing) -> bool:
     return len(res.data) > 0
 
 
+def find_duplicate(db: Client, car: CarListing):
+    """Meme voiture deja en base via une AUTRE source (empreinte mk+mo+yr+km).
+
+    Renvoie la fiche existante, pas un booleen : l'appelant doit pouvoir la
+    RAFRAICHIR. Avant, on se contentait de skipper -> une voiture toujours en
+    vente, revue chaque nuit par le site du marchand mais deja connue via un
+    marketplace, n'etait jamais retouchee et finissait par expirer. C'est ce
+    qui a eteint 24 sources allemandes (~650 annonces) sans que rien n'alerte.
+    """
+    fp = car.fingerprint()
+    res = (db.table('car_fingerprints').select('car_id')
+             .eq('fp_hash', fp).limit(1).execute())
+    if not res.data:
+        return None
+    row = (db.table('cars')
+             .select('id, px, status, times_seen, exit_reason, src')
+             .eq('id', res.data[0]['car_id']).limit(1).execute())
+    return row.data[0] if row.data else None
+
+
 def save_fingerprint(db: Client, car_id: str, car: CarListing):
     norm = lambda s: re.sub(r'[^a-z0-9]', '', s.lower())
     db.table('car_fingerprints').insert({
@@ -302,8 +322,20 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
         db.table('cars').update(_upd).eq('id', _rid).execute()
         return None
 
-    if is_duplicate(db, car):
-        log.info(f'Duplicate: {car.mk} {car.mo} {car.yr} — skipped')
+    _dup = find_duplicate(db, car)
+    if _dup:
+        # Anti-resurrection : une vendue ne revient pas, meme par une autre source.
+        if _dup.get('status') == 'expired' and _dup.get('exit_reason') == 'sold':
+            log.info(f'\u2298 Vendu, non ressuscite: {car.mk} {car.mo} {car.yr}')
+            return None
+        _upd = {'last_seen_at': datetime.utcnow().isoformat() + 'Z',
+                'status': 'active', 'expires_at': None,
+                'times_seen': (_dup.get('times_seen') or 0) + 1}
+        if car.px is not None and car.px != _dup.get('px'):
+            _upd['px'] = car.px
+        db.table('cars').update(_upd).eq('id', _dup['id']).execute()
+        log.info(f'\u21bb Doublon rafraichi (source {_dup.get("src")}): '
+                 f'{car.mk} {car.mo} {car.yr}')
         return None
 
     lat, lng = geocode(car.ci, car.co)

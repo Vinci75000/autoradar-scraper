@@ -1,0 +1,40 @@
+name: AutoRadar SANTE des sources (cron 03h00 UTC)
+
+# Passe APRES le cron generique (01h30) et les crons dedies. Son seul role :
+# dire tout haut quelles sources se sont eteintes.
+#
+# Volontairement SANS continue-on-error. Un job qui masque ses echecs derriere
+# du vert est ce qui a laisse 24 marchands allemands muets pendant des semaines.
+# Ici, si une source s'eteint, le workflow ECHOUE et GitHub envoie la notif.
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      max_silent:
+        description: 'Sources muettes tolerees avant echec'
+        required: false
+        default: '3'
+
+jobs:
+  sante:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Rapport de sante
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          python -u health_sources.py \
+            --max-silent ${{ github.event.inputs.max_silent || '3' }}
