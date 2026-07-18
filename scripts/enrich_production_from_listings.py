@@ -17,6 +17,7 @@ Usage :
     python -u scripts/enrich_production_from_listings.py --write    # ecrit
     python -u scripts/enrich_production_from_listings.py --write --limit-scan 20000
 """
+import re
 import sys
 import argparse
 from pathlib import Path
@@ -64,10 +65,19 @@ def main():
         off += 1000
     print(f"scanne {scanned} cars | modeles avec notation serie: {len(counts)}\n")
 
-    # 2. Fill conservateur : modele limited/special + production_total vide.
-    filled = skip_full = skip_notlimited = 0
+    # 2. Fill conservateur. Guards :
+    #    - accord >= MIN_AGREE annonces (un compte vu 1x est suspect : parse
+    #      foireux / code chassis). Vraie protection anti-bruit.
+    #    - anti-chassis : le compte ne doit pas etre un nombre du nom du modele
+    #      (ex. 997 GT3 RS -> 997, 296 GTS -> 296).
+    #    - modele deja flagge limited/special + production_total vide.
+    MIN_AGREE = 2
+    filled = skip_full = skip_notlimited = skip_singleton = skip_chassis = 0
     for mid, c in counts.items():
         n, seen = c.most_common(1)[0]
+        if seen < MIN_AGREE:
+            skip_singleton += 1
+            continue
         m = (db.table("models_canonical")
              .select("id,mk,mo,production_total,is_limited,is_special_edition")
              .eq("id", mid).limit(1).execute()).data
@@ -79,6 +89,9 @@ def main():
             continue
         if not (m.get("is_limited") or m.get("is_special_edition")):
             skip_notlimited += 1
+            continue
+        if str(n) in set(re.findall(r"\d+", f"{m.get('mk','')} {m.get('mo','')}")):
+            skip_chassis += 1
             continue
         tag = "" if args.write else "[DRY] "
         print(f"  {tag}{m['mk']} {m['mo']}  ->  production_total={n}  (vu {seen}x)")
@@ -92,7 +105,8 @@ def main():
 
     print(f"\nFINI — {'ECRIT' if args.write else 'DRY'} : "
           f"{filled} a remplir | {skip_full} deja rempli | "
-          f"{skip_notlimited} pas flagge limited/special (ignore par prudence)")
+          f"{skip_notlimited} pas limited/special | {skip_singleton} vu 1x (suspect) | "
+          f"{skip_chassis} compte=code chassis")
 
 
 if __name__ == "__main__":
