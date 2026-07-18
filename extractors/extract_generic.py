@@ -1014,6 +1014,13 @@ class GenericJsonLdExtractor(Extractor):
                 if len(_w) >= 3 and car.mo.lower().startswith(_w.lower() + " "):
                     car.mo = car.mo[len(_w) + 1:].strip()
                     break
+            # marque repetee A L'INTERIEUR du modele : "500 Fiat Spiaggina",
+            # "Silverado Chevrolet single cab" (concatenation DealerK).
+            _bt = {w.lower() for w in car.mk.replace("-", " ").split() if len(w) >= 3}
+            if _bt:
+                _rest = [w for w in car.mo.split() if w.lower() not in _bt]
+                if _rest and len(_rest) < len(car.mo.split()):
+                    car.mo = " ".join(_rest)
         # annee: prefere "Bj./Baujahr" du titre si JSON-LD a donne l'annee courante ou rien
         _yt = _year_from_title(car.mo) or _year_from_title(_hint)
         if _yt and (car.yr is None or car.yr >= _CURRENT_YEAR):
