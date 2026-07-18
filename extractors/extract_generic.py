@@ -209,21 +209,27 @@ _TITLE_SEP_RE = re.compile(r"\s*\|\s*|\s+[\u2022\u00b7\u2013\u2014]\s+|\s+-\s+")
 
 def _dedupe_model(mo):
     """Nettoie les modeles issus de `name` concatene (DealerK & co) :
-      - tags vendeur "*SEDILI RACING", "*ITALIANA", "*Listino 107.000"
-      - modele double : "Panamera Panamera 4S" -> "Panamera 4S"
-      - token final deja vu : "296 GTS 3.0 DCT GTS" -> "296 GTS 3.0 DCT"
+      - tags vendeur "*SEDILI RACING", "*ITALIANA"
+      - famille en tete : "901/911/912 930 Turbo" -> "930 Turbo"
+      - token repete n'importe ou : "GLC Coupe - C254 GLC Coupe 300 d" -> une fois
+      - millesime de generation en milieu : l'annee vit deja dans car.yr
     """
     if not mo:
         return mo
     mo = re.sub(r"\s*\*[^*]*", " ", mo)
     toks = mo.split()
-    out = []
+    if len(toks) > 2 and "/" in toks[0]:
+        toks = toks[1:]
+    seen, out = set(), []
     for t in toks:
-        if out and t.lower() == out[-1].lower():
+        k = unicodedata.normalize("NFKD", t.lower()).encode("ascii", "ignore").decode()
+        if k in seen:
             continue
+        seen.add(k)
         out.append(t)
-    if len(out) > 2 and out[-1].lower() in {x.lower() for x in out[:-1]}:
-        out.pop()
+    if len(out) > 3:
+        out = [t for i, t in enumerate(out)
+               if not (0 < i < len(out) - 1 and re.fullmatch(r"(?:19|20)\d{2}", t))]
     return re.sub(r"\s{2,}", " ", " ".join(out)).strip(" -|\u00b7\u2013:") or None
 
 
