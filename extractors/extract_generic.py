@@ -388,6 +388,7 @@ _LBL_YEAR = r"Erstzulassung|Baujahr|Year|Anno|Immatricolazione|Ann[ée]e|A[ñn]o
 _LBL_KM = r"Kilometerstand|Mileage|Kilom[ée]trage|Chilometraggio|Kilometraje|Km"
 _LBL_PX = r"Prezzo|Preis|Price|Prix|Precio"
 _LBL_MISC = r"Carburante|Alimentazione|Fuel|Kraftstoff|Carburant|Combustible"
+_NUM_GRP = (r"\d{1,3}(?:\.\d{3})+|\d{1,3}(?:[\s\u00a0\u202f]\d{3})+")
 _CARD_MARKER_DEFAULT = "|".join((_LBL_YEAR, _LBL_KM, _LBL_PX))
 _TITLE_SPLIT_RX = re.compile(
     r"\b(?:" + "|".join((_LBL_YEAR, _LBL_KM, _LBL_PX, _LBL_MISC)) + r")\b", re.IGNORECASE)
@@ -523,6 +524,19 @@ class GenericJsonLdExtractor(Extractor):
             seen.add(full)
             car = CarListing(src_url=full, src=config.slug)
             _ti = _TITLE_SPLIT_RX.split(text, 1)[0].strip(" -|·•–:")
+            # Titres "annee en tete" sans etiquette (ex. Soccol :
+            # "2025 lamborghini urus 329.000€") : on recupere l'annee puis on
+            # nettoie annee et prix du titre avant de parser la marque.
+            _lead_yr = None
+            _m = re.match(r"((?:18|19|20)\d{2})\b\s*", _ti)
+            if _m:
+                _lead_yr = int(_m.group(1))
+                _ti = _ti[_m.end():]
+            # On ne rogne un nombre du titre que s'il touche un € : sinon on
+            # amputerait le modele ("ferrari 365" -> "ferrari").
+            _ti = re.sub(r"€\s*(?:" + _NUM_GRP + r")(?:,\d{2})?"
+                         r"|(?:" + _NUM_GRP + r")(?:,\d{2})?\s*€", "", _ti)
+            _ti = re.sub(r"\s{2,}", " ", _ti).strip(" -|·•–:")
             mk, mo = _brand_from_title(_ti)
             car.mk = mk
             car.mo = (mo or _ti)[:120] or None
@@ -530,6 +544,8 @@ class GenericJsonLdExtractor(Extractor):
                            r"((?:18|19|20)\d{2})", text, re.IGNORECASE)
             if ym:
                 car.yr = int(ym.group(1))
+            elif _lead_yr:
+                car.yr = _lead_yr
             # Etiquette d'abord ("Km : 135.001-140.000" -> borne basse), puis
             # la forme suffixee ("45.000 km") en repli.
             km = re.search(r"(?:" + _LBL_KM + r")\s*[:.]?\s*([\d.\s’']{3,})",
@@ -540,9 +556,9 @@ class GenericJsonLdExtractor(Extractor):
                 _v = re.sub(r"[^\d]", "", km.group(1))
                 if _v and int(_v) <= 2_000_000:
                     car.km = int(_v)
-            for _rx in (r"(?:" + _LBL_PX + r")\s*[:.]?\s*€?\s*(\d{1,3}(?:[.\s]\d{3})+)(?:,\d{2})?",
-                        r"€\s*(\d{1,3}(?:[.\s]\d{3})+)(?:,\d{2})?",
-                        r"(?<!\d)(\d{1,3}(?:[.\s]\d{3})+)(?:,\d{2})?\s*€"):
+            for _rx in (r"(?:" + _LBL_PX + r")\s*[:.]?\s*€?\s*(" + _NUM_GRP + r")(?:,\d{2})?",
+                        r"€\s*(" + _NUM_GRP + r")(?:,\d{2})?",
+                        r"(?<!\d)(" + _NUM_GRP + r")(?:,\d{2})?\s*€"):
                 pr = re.search(_rx, text, re.IGNORECASE)
                 if pr:
                     _p = _parse_price(pr.group(1))
