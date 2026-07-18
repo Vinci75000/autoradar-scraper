@@ -204,7 +204,8 @@ _BRAND_KEYS = sorted(_BRAND_LOOKUP.keys(), key=lambda s: -len(s))
 _CANON_BRANDS = set(_BRAND_REG.values())
 
 
-_TITLE_SEP_RE = re.compile(r"\s*\|\s*|\s+[\u2022\u00b7\u2013\u2014]\s+|\s+-\s+")
+_TITLE_SEP_RE = re.compile(
+    r"\s*\|\s*|\s*[\u00ab\u00bb]\s*|\s+[\u2022\u00b7\u2013\u2014]\s+|\s+-\s+")
 
 
 def _dedupe_model(mo):
