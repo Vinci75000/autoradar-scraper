@@ -744,6 +744,17 @@ class GenericJsonLdExtractor(Extractor):
             og = soup.find("meta", attrs={"property": "og:image"})
             if og and og.get("content"):
                 car.photos = [og["content"]]
+        # Derniere chance annee : slug d'URL type .../modele-2026-6136661/
+        # (annee juste avant l'id numerique terminal). Recupere les modeles neufs
+        # dont la page ne porte pas d'annee en clair -> evite de jeter de vraies
+        # voitures (elferspot rejetait des 992 GT3/Turbo S 2026 pour yr=None).
+        if car.yr is None:
+            _um = re.search(r"-((?:18|19|20)\d{2})-\d+/?$", url)
+            if _um:
+                _uy = int(_um.group(1))
+                if 1900 < _uy <= _CURRENT_YEAR + 1:
+                    car.yr = _uy
+
         # Pays par-annonce : marketplaces internationaux (elferspot) affichent
         # le pays vendeur en clair. Gate par selector pour ne rien casser ailleurs.
         if not car.co:
