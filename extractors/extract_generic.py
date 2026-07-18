@@ -1160,7 +1160,7 @@ class GenericJsonLdExtractor(Extractor):
         if _rel:
             text = text[:_rel.start()]
         if not car.yr:
-            m = re.search(r"(?:Anno di costruzione|Anno di fabbricazione|Anno modello|Data di immatricolazione|Erstzulassung|Baujahr|First registration|Year of (?:construction|manufacture)|Mise en circulation|1(?:re|ere|ère)? mise en circulation|Immatriculation|Immatricolazione|Prima immatricolazione|Model year|Modelljahr|mod[eè]le|Année|Anno|Bouwjaar|Year)[^\d]{0,12}(?:\d{1,2}\s*[/.\\-]\s*){0,2}((?:18|19|20)\d{2})", text, re.IGNORECASE)
+            m = re.search(r"(?:Anno di costruzione|Anno di fabbricazione|Anno modello|usat[ao] del|Data di immatricolazione|Erstzulassung|Baujahr|First registration|Year of (?:construction|manufacture)|Mise en circulation|1(?:re|ere|ère)? mise en circulation|Immatriculation|Immatricolazione|Prima immatricolazione|Model year|Modelljahr|mod[eè]le|Année|Anno|Bouwjaar|Year)[^\d]{0,12}(?:\d{1,2}\s*[/.\\-]\s*){0,2}((?:18|19|20)\d{2})", text, re.IGNORECASE)
             if m:
                 y = int(m.group(1))
                 if 1900 < y <= datetime.now().year + 1:
@@ -1177,7 +1177,7 @@ class GenericJsonLdExtractor(Extractor):
                 # Repli "45.000 km". Exclut le cas ou "km" est un LIBELLE qui suit :
                 # "Anno di costruzione: 1968 Km percorsi: 4245" donnait km=1968.
                 m = re.search(
-                    rf"({_kmn})\s*km\b(?!\s*/?\s*h)(?!\s*(?:percors|percorrenz|gefahren))",
+                    rf"({_kmn})\s*(?:km|chilometri)\b(?!\s*/?\s*h)(?!\s*(?:percors|percorrenz|gefahren))",
                     text, re.IGNORECASE)
             if m:
                 c = re.sub(r"[^\d]", "", m.group(1))
