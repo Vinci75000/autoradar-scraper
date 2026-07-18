@@ -301,7 +301,7 @@ _PERSONA_MARKER = re.compile(
     r"Roadster|Spider|Shooting Brake|Convertible|Challenger|Charger|Mustang|"
     r"Camaro|Corvette|\bHemi\b|\bR/T\b|\bSRT|Hellcat|F.?Sport|Supercharged|"
     r"\bV8\b|\bV10\b|\bV12\b|Bi-?turbo|Quadrifoglio|\bQV\b|M[- ]?Sport|\bHSE\b|"
-    r"Macan|Cayenne|Panamera|Taycan|\bGTS\b|Turbo ?S\b|\bLED\b|Matrix|"
+    r"Macan|Cayenne|Panamera|Taycan|\bGTS\b|Turbo ?S\b|\bOPC\b|\bLED\b|Matrix|"
     r"\bNavi|Leder|Cuir|Pelle|Leather|Panorama|\bPano\b|\bACC\b|Keyless|Bose|"
     r"Burmester|Harman|Head.?up|Virtual Cockpit|Digital Cockpit",
     re.IGNORECASE,
@@ -313,7 +313,9 @@ def persona_ok(mk, mo, yr, px):
         return True
     if px is not None and px >= _PERSONA_PRICE:
         return True
-    return bool(mo and _PERSONA_MARKER.search(mo))
+    # On teste MARQUE + MODELE : certaines signatures desirables vivent dans la
+    # marque (Cupra, Abarth, Alpine, Mercedes-AMG, Polestar), pas dans le modele.
+    return bool(_PERSONA_MARKER.search(f"{mk or ''} {mo or ''}"))
 
 
 # ── Nettoyage modele : coupe la description marketing collee au titre ────────
