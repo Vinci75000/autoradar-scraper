@@ -380,6 +380,23 @@ def _title_hint(soup):
     return t.get_text(" ", strip=True) if t else ""
 
 
+# ── Etiquettes multilingues du mode carte-liste (DE/EN/IT/FR/ES) ─────────────
+# Le card_mode etait germanophone en dur (Erstzulassung/Kilometerstand/Baujahr) :
+# les cartes italiennes ("Anno : 1980", "Km : 135.001", "Prezzo : 10.500,00 €")
+# ne rendaient ni annee, ni km, ni prix. Surchargeable via selectors.card_marker.
+_LBL_YEAR = r"Erstzulassung|Baujahr|Year|Anno|Immatricolazione|Ann[ée]e|A[ñn]o"
+_LBL_KM = r"Kilometerstand|Mileage|Kilom[ée]trage|Chilometraggio|Kilometraje|Km"
+_LBL_PX = r"Prezzo|Preis|Price|Prix|Precio"
+_LBL_MISC = r"Carburante|Alimentazione|Fuel|Kraftstoff|Carburant|Combustible"
+_CARD_MARKER_DEFAULT = "|".join((_LBL_YEAR, _LBL_KM, _LBL_PX))
+_TITLE_SPLIT_RX = re.compile(
+    r"\b(?:" + "|".join((_LBL_YEAR, _LBL_KM, _LBL_PX, _LBL_MISC)) + r")\b", re.IGNORECASE)
+# Cartes deja vendues : on ne les ingere pas (elles polluent le feed et
+# ressusciteraient des annonces mortes). Surchargeable via selectors.sold_marker.
+_SOLD_MARKER_DEFAULT = (r"\b(?:VENDUT[AO]|VENDID[AO]|VERKAUFT|SOLD|RECENTLY\s+SOLD|"
+                        r"VENDUES?|RISERVAT[AO]|RESERVIERT|RESERVED)\b")
+
+
 @register("generic_jsonld")
 class GenericJsonLdExtractor(Extractor):
     """Config-driven JSON-LD-first extractor for the long tail of dealers."""
@@ -471,9 +488,8 @@ class GenericJsonLdExtractor(Extractor):
         Erstzulassung + Kilometerstand + prix €). Gate par selectors.card_mode."""
         sel = config.selectors or {}
         dre = re.compile(sel.get("detail_url_regex") or r"/[^/]+/?$")
-        mrx = re.compile(sel.get("card_marker")
-                         or r"Erstzulassung|Kilometerstand|Baujahr|Mileage|Prix|Preis|Price",
-                         re.IGNORECASE)
+        mrx = re.compile(sel.get("card_marker") or _CARD_MARKER_DEFAULT, re.IGNORECASE)
+        srx = re.compile(sel.get("sold_marker") or _SOLD_MARKER_DEFAULT, re.IGNORECASE)
         resp = self._fetch(config.listings_url)
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, "html.parser")
@@ -500,28 +516,39 @@ class GenericJsonLdExtractor(Extractor):
             if _card is None:
                 continue
             text = _card.get_text(" ", strip=True)
+            # Carte deja vendue / reservee : on passe. Sans ca on ingere des
+            # annonces mortes (ex. Nannetti affiche "RECENTLY SOLD" en liste).
+            if srx.search(text):
+                continue
             seen.add(full)
             car = CarListing(src_url=full, src=config.slug)
-            _ti = re.split(r"\b(?:Erstzulassung|Kilometerstand|Baujahr|Mileage)\b",
-                           text, 1)[0].strip(" -|·•–")
+            _ti = _TITLE_SPLIT_RX.split(text, 1)[0].strip(" -|·•–:")
             mk, mo = _brand_from_title(_ti)
             car.mk = mk
             car.mo = (mo or _ti)[:120] or None
-            ym = re.search(r"(?:Erstzulassung|Baujahr|Year)\s*[:.]?\s*(?:\d{1,2}\s*/\s*)?"
+            ym = re.search(r"(?:" + _LBL_YEAR + r")\s*[:.]?\s*(?:\d{1,2}\s*/\s*)?"
                            r"((?:18|19|20)\d{2})", text, re.IGNORECASE)
             if ym:
                 car.yr = int(ym.group(1))
-            km = re.search(r"(?:Kilometerstand|Mileage|Kilom[eé]trage)\s*[:.]?\s*"
-                           r"([\d.\s'’ ]{3,})\s*km", text, re.IGNORECASE)
+            # Etiquette d'abord ("Km : 135.001-140.000" -> borne basse), puis
+            # la forme suffixee ("45.000 km") en repli.
+            km = re.search(r"(?:" + _LBL_KM + r")\s*[:.]?\s*([\d.\s’']{3,})",
+                           text, re.IGNORECASE)
+            if not km:
+                km = re.search(r"([\d.\s’']{3,})\s*km\b", text, re.IGNORECASE)
             if km:
                 _v = re.sub(r"[^\d]", "", km.group(1))
                 if _v and int(_v) <= 2_000_000:
                     car.km = int(_v)
-            pr = re.search(r"(?<!\d)(\d{1,3}(?:[.\s ]\d{3})+)\s*€", text)
-            if pr:
-                _p = _parse_price(pr.group(1))
-                if _p and 1000 <= _p <= 100_000_000:
-                    car.px = _p
+            for _rx in (r"(?:" + _LBL_PX + r")\s*[:.]?\s*€?\s*(\d{1,3}(?:[.\s]\d{3})+)(?:,\d{2})?",
+                        r"€\s*(\d{1,3}(?:[.\s]\d{3})+)(?:,\d{2})?",
+                        r"(?<!\d)(\d{1,3}(?:[.\s]\d{3})+)(?:,\d{2})?\s*€"):
+                pr = re.search(_rx, text, re.IGNORECASE)
+                if pr:
+                    _p = _parse_price(pr.group(1))
+                    if _p and 1000 <= _p <= 100_000_000:
+                        car.px = _p
+                        break
             img = a.find("img")
             if img:
                 _s = img.get("src") or img.get("data-src") or img.get("data-lazy-src") or ""
