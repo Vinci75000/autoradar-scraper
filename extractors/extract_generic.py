@@ -1226,7 +1226,7 @@ class GenericJsonLdExtractor(Extractor):
         if _rel:
             text = text[:_rel.start()]
         if not car.yr:
-            m = re.search(r"(?:Anno di costruzione|Anno di fabbricazione|Anno modello|usat[ao] del|Data di immatricolazione|Erstzulassung|Baujahr|First registration|Year of (?:construction|manufacture)|Mise en circulation|1(?:re|ere|ère)? mise en circulation|Immatriculation|Immatricolazione|Prima immatricolazione|Model year|Modelljahr|mod[eè]le|Année|Anno|Bouwjaar|Year)[^\d]{0,12}(?:\d{1,2}\s*[/.\\-]\s*){0,2}((?:18|19|20)\d{2})", text, re.IGNORECASE)
+            m = re.search(r"(?:Anno di costruzione|Anno di fabbricazione|Anno modello|usat[ao] del|Data di immatricolazione|Erstzulassung|Baujahr|First registration|Year of (?:construction|manufacture)|Mise en circulation|1(?:re|ere|ère)? mise en circulation|Immatriculation|Immatricolazione|Prima immatricolazione|Model year|Modelljahr|mod[eè]le|A[ñn]o|Matriculaci[óo]n|Fecha matriculaci[óo]n|Année|Anno|Bouwjaar|Year)[^\d]{0,12}(?:\d{1,2}\s*[/.\\-]\s*){0,2}((?:18|19|20)\d{2})", text, re.IGNORECASE)
             if m:
                 y = int(m.group(1))
                 if 1900 < y <= datetime.now().year + 1:
@@ -1257,7 +1257,7 @@ class GenericJsonLdExtractor(Extractor):
         _num = r"\d{1,3}(?:[ \u00a0\u202f\u2009.,'’]\d{3})+(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?"
         if car.px is None:
             # Prix LIBELLE prioritaire (prix sujet, pas les cartes "similaires" sans libelle)
-            _lab = re.search(rf"(?:Prix|Preis|Price|Prezzo|Prijs)\s*[:.]?\s*({_num})\s*(?:€|EUR|CHF|£)", text, re.IGNORECASE)
+            _lab = re.search(rf"(?:Prix|Preis|Price|Prezzo|Prijs|Precio)\s*[:.]?\s*({_num})\s*[.\-]*\s*(?:€|EUR|CHF|£)", text, re.IGNORECASE)
             if _lab:
                 _v = _parse_price(_lab.group(1))
                 if _v and 1000 <= _v <= 100_000_000:
@@ -1265,7 +1265,7 @@ class GenericJsonLdExtractor(Extractor):
             # Variante devise-avant-nombre : "Price € 74,900" (Bavaria Motors,
             # format anglo virgule). Devise obligatoire -> pas de faux match "Price 2024".
             if car.px is None:
-                _lab2 = re.search(rf"(?:Prix|Preis|Price|Prezzo|Prijs)\s*[:.]?\s*(?:€|EUR|CHF|£)\s*({_num})", text, re.IGNORECASE)
+                _lab2 = re.search(rf"(?:Prix|Preis|Price|Prezzo|Prijs|Precio)\s*[:.]?\s*(?:€|EUR|CHF|£)\s*({_num})", text, re.IGNORECASE)
                 if _lab2:
                     _v = _parse_price(_lab2.group(1))
                     if _v and 1000 <= _v <= 100_000_000:
