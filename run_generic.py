@@ -1,4 +1,4 @@
-import sys, time, json, shutil, logging, argparse
+import sys, time, json, shutil, logging, argparse, inspect
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -165,7 +165,18 @@ def main():
 
         try:
             ext = get_extractor(cfg)
-            res = ext.extract(cfg, limit=args.limit, on_car=_sink)
+            # Tolerance de signature : seuls generic/classictrader/dyler acceptent
+            # on_car (insert incremental). Les ~15 extracteurs dedies gardent la
+            # signature (config, limit) -> on repli sur l'appel classique + sink
+            # a posteriori. Sans ca, run_generic les plantait avec un TypeError
+            # avale par ce try/except, et la source sortait 0 en silence chaque
+            # nuit (c'est ce qui a eteint cargold/hollmann/mechatronik...).
+            if 'on_car' in inspect.signature(ext.extract).parameters:
+                res = ext.extract(cfg, limit=args.limit, on_car=_sink)
+            else:
+                res = ext.extract(cfg, limit=args.limit)
+                for _c in res.cars:
+                    _sink(_c)
         except Exception as e:
             log.error(f"{slug} extraction KO: {e}")
             C['errors'] += 1
