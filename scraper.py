@@ -319,7 +319,7 @@ def persona_ok(mk, mo, yr, px):
 
 
 # ── Nettoyage modele : coupe la description marketing collee au titre ────────
-_MODEL_SEP_RE = re.compile(r"\s*//|\s*\||\s*;|\s[-\u2013\u2014]\s|\s*%[0-9A-Fa-f]{2}")
+_MODEL_SEP_RE = re.compile(r"\s*//|\s/\s|\s*\||\s*;|\s[-\u2013\u2014]\s|\s*%[0-9A-Fa-f]{2}")
 
 def trim_model_desc(mo):
     """Beaucoup de marchands collent toute la description dans le titre
