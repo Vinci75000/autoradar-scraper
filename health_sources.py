@@ -62,6 +62,8 @@ def main():
     ap.add_argument("--max-silent", type=int, default=0,
                     help="nb de sources muettes tolerees avant echec")
     ap.add_argument("--quiet", action="store_true", help="n'afficher que les problemes")
+    ap.add_argument("--slugs", choices=["muettes", "vides", "muettes+vides"],
+                    help="n'imprimer que les slugs (pour scripting), un par ligne")
     args = ap.parse_args()
 
     db = get_db()
@@ -87,6 +89,17 @@ def main():
     muettes.sort(key=lambda e: -e[1]["total"])
     vides.sort(key=lambda e: e[0]["slug"])
     ok.sort(key=lambda e: -e[1]["active"])
+
+    if args.slugs:
+        want = args.slugs.split("+")
+        pool = []
+        if "muettes" in want:
+            pool += [s["slug"] for s, _c in muettes]
+        if "vides" in want:
+            pool += [s["slug"] for s, _c in vides]
+        for slug in pool:
+            print(slug)
+        return 0
 
     scope = f" [{args.country}]" if args.country else ""
     print(f"SANTE DES SOURCES{scope} — {len(srcs)} en status=ready")
