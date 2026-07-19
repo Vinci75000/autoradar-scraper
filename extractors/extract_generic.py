@@ -1226,7 +1226,7 @@ class GenericJsonLdExtractor(Extractor):
         if _rel:
             text = text[:_rel.start()]
         if not car.yr:
-            m = re.search(r"(?:Anno di costruzione|Anno di fabbricazione|Anno modello|usat[ao] del|Data di immatricolazione|Erstzulassung|Baujahr|First registration|Year of (?:construction|manufacture)|Mise en circulation|1(?:re|ere|ère)? mise en circulation|Immatriculation|Immatricolazione|Prima immatricolazione|Model year|Modelljahr|mod[eè]le|A[ñn]o|Matriculaci[óo]n|Fecha matriculaci[óo]n|Année|Anno|Bouwjaar|Year)[^\d]{0,12}(?:\d{1,2}\s*[/.\\-]\s*){0,2}((?:18|19|20)\d{2})", text, re.IGNORECASE)
+            m = re.search(r"(?:Anno di costruzione|Anno di fabbricazione|Anno modello|usat[ao] del|Data di immatricolazione|Erstzulassung|Baujahr|First registration|Year of (?:construction|manufacture)|Mise en circulation|1(?:re|ere|ère)? mise en circulation|Immatriculation|Immatricolazione|Prima immatricolazione|Model year|Modelljahr|mod[eè]le|A[ñn]o|Matriculaci[óo]n|Fecha matriculaci[óo]n|registered\s+in|first\s+registered(?:\s+in)?|matriculad[oa]\s+em|Année|Anno|Bouwjaar|Year)[^\d]{0,12}(?:\d{1,2}\s*[/.\\-]\s*){0,2}((?:18|19|20)\d{2})", text, re.IGNORECASE)
             if m:
                 y = int(m.group(1))
                 if 1900 < y <= datetime.now().year + 1:
