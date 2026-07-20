@@ -21,7 +21,10 @@ Extraction détail — JSON-LD @type=Vehicle (vérifié au sniff 27/05/26) :
   model                   → mo
   vehicleModelDate        → yr
   mileageFromOdometer     → km   (⚠ placeholder "1" SYSTÉMATIQUE)
-  offers.price            → bid_current
+  offers.price            → réserve tant que 0 enchère, puis best_bid (ambigu → non utilisé)
+  sellable.best_bid.amount → bid_current (source fiable, blob HTML embarqué)
+  sellable.bids[]          → bid_count
+  sellable.reserve_met     → reserve_met
   offers.priceCurrency    → cu
   offers.priceValidUntil  → closes_at (ISO 8601)
   image                   → photos[0]
@@ -39,14 +42,16 @@ Statut auction depuis offers.priceValidUntil vs NOW :
   > now         → live
   <= now        → ended   (sweeper fera ended→sold via reserve_met)
 
-Reserve / bid_count / watchers : NON exposés par benzin → None / 0 / None.
-Distinction sold vs ended post-clôture limitée tant que reserve_met indispo.
-Reverse-eng API privée benzin = sprint dédié (backlog).
+bid_current / bid_count / reserve_met : lus dans le blob `sellable` embarqué
+dans le HTML (best_bid réel), et NON dans offers.price qui vaut la réserve
+tant qu'aucune enchère n'est passée (bug historique : réserve affichée comme bid).
+watchers : toujours non exposé → None.
 
 Devise native EUR (FR) — pas d'estimations (modèle BaT type).
 """
 from __future__ import annotations
 
+import html
 import json
 import logging
 import re
@@ -153,10 +158,62 @@ class BenzinExtractor(AuctionExtractor):
         status, _ = self._derive_status_from_offers(offers)
         if status in ("ended", "sold"):
             return None
-        bid_current = self._extract_price(offers)
-        return {
-            "bid_current": bid_current,
-        }
+        sellable = self._extract_sellable(r.text)
+        if sellable is not None:
+            best = sellable.get("best_bid") or None
+            bid_current = (best or {}).get("amount") if best else (sellable.get("start_price") or None)
+            return {
+                "bid_current": bid_current,
+                "bid_count": len(sellable.get("bids") or []),
+                "reserve_met": sellable.get("reserve_met"),
+            }
+        return {"bid_current": self._extract_price(offers)}
+
+    # ─── Sellable blob · état vivant de l'enchère ─────────────────────────────
+
+    def _extract_sellable(self, raw_html: str):
+        """best_bid / bids[] / reserve_met / start_price depuis le blob HTML.
+
+        Benzin embarque l'objet `sellable` dans le HTML (échappé &quot;). C'est
+        la seule source fiable du bid : offers.price du JSON-LD vaut la RÉSERVE
+        tant qu'aucune enchère n'est passée (→ faux bid gonflé), puis le best_bid.
+        """
+        u = html.unescape(raw_html)
+        idx = u.find('"sellable":')
+        while idx != -1:
+            j = u.find("{", idx)
+            if j == -1:
+                return None
+            depth = 0
+            in_str = False
+            esc = False
+            for k in range(j, len(u)):
+                c = u[k]
+                if in_str:
+                    if esc:
+                        esc = False
+                    elif c == "\\":
+                        esc = True
+                    elif c == '"':
+                        in_str = False
+                elif c == '"':
+                    in_str = True
+                elif c == "{":
+                    depth += 1
+                elif c == "}":
+                    depth -= 1
+                    if depth == 0:
+                        try:
+                            obj = json.loads(u[j:k + 1])
+                        except Exception:
+                            obj = None
+                        if isinstance(obj, dict) and (
+                            "bids" in obj or "best_bid" in obj or "reserve_met" in obj
+                        ):
+                            return obj
+                        break
+            idx = u.find('"sellable":', idx + 1)
+        return None
 
     # ─── Discovery ────────────────────────────────────────────────────────────
 
@@ -255,8 +312,21 @@ class BenzinExtractor(AuctionExtractor):
         price = self._extract_price(offers)
         car.cu = (offers.get("priceCurrency") or "EUR").upper()
 
-        bid_current = price if status in ("live", "upcoming") else None
-        sold_price = price if status in ("sold", "ended") else None
+        # État vivant depuis le blob `sellable` (best_bid réel), pas la réserve.
+        sellable = self._extract_sellable(raw_html)
+        best = (sellable or {}).get("best_bid") or None
+        bid_count = len((sellable or {}).get("bids") or [])
+        reserve_met = sellable.get("reserve_met") if sellable else None
+        start_price = (sellable or {}).get("start_price") or None
+
+        if sellable is not None:
+            live_bid = (best or {}).get("amount") if best else start_price
+            bid_current = live_bid if status in ("live", "upcoming") else None
+            sold_price = ((best or {}).get("amount") or price) if status in ("sold", "ended") else None
+        else:
+            # fallback défensif si le blob change de forme
+            bid_current = price if status in ("live", "upcoming") else None
+            sold_price = price if status in ("sold", "ended") else None
 
         source_data: dict = {"currency": car.cu, "platform": "benzin"}
         if vin := jsonld.get("vehicleIdentificationNumber"):
@@ -268,8 +338,8 @@ class BenzinExtractor(AuctionExtractor):
             estimate_low=None,
             estimate_high=None,
             bid_current=bid_current,
-            bid_count=0,
-            reserve_met=None,
+            bid_count=bid_count,
+            reserve_met=reserve_met,
             watchers=None,
             sold_price=sold_price,
             closes_at=closes_at,
