@@ -3,8 +3,8 @@ name: AutoRadar Cote Refresh (cron 09h UTC)
 # Cote Carnet - rafraichissement quotidien de la table cote_segments
 # (mediane / p25 / p75 par segment mk,mo) via RPC Postgres
 # refresh_cote_segments(). Tout le calcul est cote DB, le job CI ne
-# fait que declencher et logger les stats (segments_count, cars_processed,
-# duration_ms).
+# fait que declencher les RPC et logger. refresh_cote() peut durer
+# plusieurs minutes (plafond 20min) -> timeout job releve a 25min.
 #
 # Schedule 09h UTC = apres tous les crons d'ingestion (dealers 00h+12h,
 # symfio 03h, yellow 04h, phase-a 08h, green 22h) pour avoir les donnees
@@ -23,7 +23,7 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 25
 
     permissions:
       contents: read

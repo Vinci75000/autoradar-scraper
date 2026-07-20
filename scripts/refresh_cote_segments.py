@@ -1,15 +1,16 @@
-"""Refresh market_snapshot (KPI du bandeau « Le marché ») via RPC Supabase.
+"""Refresh cote (par annonce) + market_snapshot (KPI bandeau « Le marché »).
 
-Appelle refresh_market_snapshot() : médiane / cette-semaine / marchands / pays
-recalculés DIRECTEMENT depuis `cars` (live), + n_deals. Le script déclenche la
-RPC et logge les stats.
+Cron quotidien. Deux RPC Postgres, dans l'ordre :
 
-RETIRÉ : l'ancienne RPC refresh_cote_segments() n'est plus appelée. Elle
-écrivait dans des colonnes (mk/mo/median_px) qui N'EXISTENT PLUS dans
-cote_segments (schéma riche marque/modele/p50/sample). cote_segments a été
-décommissionné le 26/06 (seed partiellement faux, cf. cote_gen.py « NON câblé »).
-La chaîner ici faisait planter le cron (statement timeout, puis TRUNCATE/FK) et
-gelait le snapshot depuis fin juin.
+  1. refresh_cote()            -> matérialise cote_low/mid/high + deal_pct sur
+                                  chaque annonce active (canonical_id + percentiles
+                                  par cohorte modèle×décennie, n>=5). Timeout 20min.
+  2. refresh_market_snapshot() -> médiane / cette-semaine / marchands / pays / deals
+                                  du bandeau, calculés live depuis `cars`.
+
+RETIRÉ : refresh_cote_segments() (v2.1) — écrivait dans des colonnes fantômes
+(mk/mo/median_px) et s'appuyait sur cote_segments, seed décommissionné le 26/06.
+Ne plus jamais l'appeler.
 
 Usage:
     python -u scripts/refresh_cote_segments.py        # cron-friendly unbuffered
@@ -46,14 +47,23 @@ def main() -> int:
     url = os.environ.get('SUPABASE_URL')
     key = os.environ.get('SUPABASE_SERVICE_KEY')
     if not url or not key:
-        print('[refresh_market] missing SUPABASE_URL or SUPABASE_SERVICE_KEY',
+        print('[refresh] missing SUPABASE_URL or SUPABASE_SERVICE_KEY',
               file=sys.stderr)
         return 1
 
     sb = create_client(url, key)
 
-    # KPI du bandeau « Le marché » — médiane / fresh7 / sources / pays calculés
-    # live depuis `cars`. (refresh_cote_segments() retiré : code mort, cf. docstring.)
+    # 1) Cote par annonce — matérialise cote_low/mid/high + deal_pct sur cars.
+    print('[refresh_cote] calling RPC refresh_cote()...')
+    started = time.time()
+    try:
+        sb.rpc('refresh_cote', {}).execute()
+    except Exception as e:
+        print(f'[refresh_cote] RPC failed: {e}', file=sys.stderr)
+        return 1
+    print(f'[refresh_cote] done in {int((time.time() - started) * 1000)} ms (incl. network)')
+
+    # 2) KPI du bandeau Marché (lit cars live + deal_pct fraîchement matérialisé).
     print('[refresh_market] calling RPC refresh_market_snapshot()...')
     started = time.time()
     try:
@@ -74,6 +84,7 @@ def main() -> int:
     print(f'[refresh_market] total_ms    = {elapsed_ms} ms (incl. network)')
     print(json.dumps(d, ensure_ascii=False))
     return 0
+
 
 if __name__ == '__main__':
     sys.exit(main())
