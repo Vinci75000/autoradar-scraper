@@ -1,12 +1,17 @@
-"""Refresh table cote_segments via RPC Supabase refresh_cote_segments().
+"""Refresh market_snapshot (KPI du bandeau « Le marché ») via RPC Supabase.
 
-Sprint B.3 step 2 - wrapper pour le cron cote_refresh.yml. Appelle la SQL
-function qui materialise (mk, mo, n, median_px, p25, p75, min_px, max_px)
-depuis cars active. Tout le calcul est fait cote Postgres, le script ne
-fait que declencher la RPC et logger les stats retournees.
+Appelle refresh_market_snapshot() : médiane / cette-semaine / marchands / pays
+recalculés DIRECTEMENT depuis `cars` (live), + n_deals. Le script déclenche la
+RPC et logge les stats.
+
+RETIRÉ : l'ancienne RPC refresh_cote_segments() n'est plus appelée. Elle
+écrivait dans des colonnes (mk/mo/median_px) qui N'EXISTENT PLUS dans
+cote_segments (schéma riche marque/modele/p50/sample). cote_segments a été
+décommissionné le 26/06 (seed partiellement faux, cf. cote_gen.py « NON câblé »).
+La chaîner ici faisait planter le cron (statement timeout, puis TRUNCATE/FK) et
+gelait le snapshot depuis fin juin.
 
 Usage:
-    python scripts/refresh_cote_segments.py
     python -u scripts/refresh_cote_segments.py        # cron-friendly unbuffered
 
 Env vars (loaded from .env at repo root):
@@ -41,56 +46,34 @@ def main() -> int:
     url = os.environ.get('SUPABASE_URL')
     key = os.environ.get('SUPABASE_SERVICE_KEY')
     if not url or not key:
-        print('[refresh_cote] missing SUPABASE_URL or SUPABASE_SERVICE_KEY',
+        print('[refresh_market] missing SUPABASE_URL or SUPABASE_SERVICE_KEY',
               file=sys.stderr)
         return 1
 
     sb = create_client(url, key)
 
-    print('[refresh_cote] calling RPC refresh_cote_segments()...')
+    # KPI du bandeau « Le marché » — médiane / fresh7 / sources / pays calculés
+    # live depuis `cars`. (refresh_cote_segments() retiré : code mort, cf. docstring.)
+    print('[refresh_market] calling RPC refresh_market_snapshot()...')
     started = time.time()
     try:
-        result = sb.rpc('refresh_cote_segments', {}).execute()
+        result = sb.rpc('refresh_market_snapshot', {}).execute()
     except Exception as e:
-        print(f'[refresh_cote] RPC failed: {e}', file=sys.stderr)
+        print(f'[refresh_market] RPC failed: {e}', file=sys.stderr)
         return 1
 
     elapsed_ms = int((time.time() - started) * 1000)
-    data = result.data or {}
-
-    segments  = data.get('segments_count')
-    cars      = data.get('cars_processed')
-    server_ms = data.get('duration_ms')
-    updated   = data.get('updated_at')
-
-    print(f'[refresh_cote] segments_count  = {segments}')
-    print(f'[refresh_cote] cars_processed  = {cars}')
-    print(f'[refresh_cote] server_duration = {server_ms} ms')
-    print(f'[refresh_cote] total_elapsed   = {elapsed_ms} ms (incl. network)')
-    print(f'[refresh_cote] updated_at      = {updated}')
-    print(json.dumps(data, ensure_ascii=False))
-
-    # ─── market_snapshot : KPI Marche pre-calcules (meme run, meme client) ───
-    print('[refresh_market] calling RPC refresh_market_snapshot()...')
-    try:
-        m_started = time.time()
-        m_result = sb.rpc('refresh_market_snapshot', {}).execute()
-        m_elapsed = int((time.time() - m_started) * 1000)
-        m_data = m_result.data or {}
-        print(f'[refresh_market] median_px   = {m_data.get("median_px")}')
-        print(f'[refresh_market] n_total     = {m_data.get("n_total")}')
-        print(f'[refresh_market] n_sources   = {m_data.get("n_sources")}')
-        print(f'[refresh_market] n_countries = {m_data.get("n_countries")}')
-        print(f'[refresh_market] n_deals     = {m_data.get("n_deals")}')
-        print(f'[refresh_market] server_ms   = {m_data.get("duration_ms")} ms')
-        print(f'[refresh_market] total_ms    = {m_elapsed} ms (incl. network)')
-        print(json.dumps(m_data, ensure_ascii=False))
-    except Exception as e:
-        # ne jamais faire echouer le cron cote si market echoue
-        print(f'[refresh_market] RPC failed (non-fatal): {e}', file=sys.stderr)
-
+    d = result.data or {}
+    print(f'[refresh_market] median_px   = {d.get("median_px")}')
+    print(f'[refresh_market] n_total     = {d.get("n_total")}')
+    print(f'[refresh_market] n_fresh7    = {d.get("n_fresh7")}')
+    print(f'[refresh_market] n_sources   = {d.get("n_sources")}')
+    print(f'[refresh_market] n_countries = {d.get("n_countries")}')
+    print(f'[refresh_market] n_deals     = {d.get("n_deals")}')
+    print(f'[refresh_market] server_ms   = {d.get("duration_ms")} ms')
+    print(f'[refresh_market] total_ms    = {elapsed_ms} ms (incl. network)')
+    print(json.dumps(d, ensure_ascii=False))
     return 0
-
 
 if __name__ == '__main__':
     sys.exit(main())
