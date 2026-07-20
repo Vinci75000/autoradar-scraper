@@ -127,6 +127,7 @@ def adapt_extractor_carlisting(
         co=ext_car.co or 'de',
         src=ext_car.src,
         src_url=ext_car.src_url,
+        photos=ext_car.photos or [],
         age_label=scraper._age_label(datetime.now()),
         ow=1,
         opts=[],
