@@ -1,0 +1,61 @@
+name: AutoRadar Photos Refresh (cron 09h UTC)
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+    inputs:
+      src:
+        description: "Source(s) (virgules) ou 'all'"
+        required: false
+        default: 'all'
+      all_active:
+        description: 'Repasser TOUTES les actives (pas seulement <=1 photo)'
+        type: boolean
+        required: false
+        default: false
+      max:
+        description: 'Cap par source (0 = tout)'
+        required: false
+        default: '0'
+
+concurrency:
+  group: photos-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          playwright install chromium
+          playwright install-deps chromium
+      - name: Run photos refresh
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SENTRY_DSN_SCRAPER: ${{ secrets.SENTRY_DSN_SCRAPER }}
+          SENTRY_ENVIRONMENT: 'production'
+          SENTRY_COMPONENT: 'cron-photos-refresh'
+        run: |
+          SRC="${{ github.event.inputs.src || 'all' }}"
+          MAXV="${{ github.event.inputs.max || '0' }}"
+          ARGS="--src \"$SRC\" --apply --delay 0.6 --max $MAXV --skip \"Auto Selection,dyler\""
+          if [ "${{ github.event.inputs.all_active }}" = "true" ]; then ARGS="$ARGS --all-active"; fi
+          echo "Running: python -u scripts/refresh_listings.py $ARGS"
+          eval "python -u scripts/refresh_listings.py $ARGS"
