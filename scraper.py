@@ -28,7 +28,7 @@ init_sentry()
 from validation import validate_listing, get_listing_tier, get_km_tier
 from batches import get_sources_for_batch, get_pages_for_batch, is_red_source, RED_SOURCES, get_pages_for_source
 from dealers import DEALERS, get_dealer_by_name, get_dealer_names, get_active_dealers
-from make_normalizer import normalize_make_model
+from make_normalizer import normalize_make_model, BRAND_REGISTRY
 from feature_extractor import (
     EXTRACTOR_VERSION,
     extract_features,
@@ -338,6 +338,15 @@ def trim_model_desc(mo):
 
 # ── Insert to Supabase ───────────────────────────────────────────────────────
 def insert_car(db: Client, car: CarListing) -> Optional[str]:
+    # ─── Canonicalisation marque (alias site → forme registry) ───
+    # Les scrapers marketplace passent la marque brute du site (Seat, Skoda,
+    # Citroen, Mercedes). Le validate exige la forme canonique exacte
+    # (SEAT, Škoda, Citroën, Mercedes-Benz). On mappe alias → canon ici,
+    # une fois pour toutes les sources, avant validation.
+    if car.mk:
+        _canon = BRAND_REGISTRY.get(car.mk.strip().lower())
+        if _canon:
+            car.mk = _canon
     # ─── Validation anti-pollution ───
     is_valid, reason = validate_listing(car)
     if not is_valid:
