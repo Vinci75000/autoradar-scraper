@@ -118,6 +118,22 @@ def sold_verdict(html: str):
 
 
 # ─── HTTP probe ──────────────────────────────────────────────────────
+def _redirected_away(orig: str, final: str) -> bool:
+    """Vrai si l'annonce a redirigé et que son id de fiche a disparu de l'URL
+    finale — ex. dyler renvoie une fiche supprimée/vendue vers la page de
+    résultats (/cars/porsche/911-for-sale). HTTP 200 + aucun marqueur « vendu »
+    → le wash passait à côté. Id (5+ chiffres) absent de l'URL finale = morte.
+    Robuste aux redirects http→https / params : si l'id est encore là, vivant."""
+    if not final:
+        return False
+    if final.rstrip('/') == orig.rstrip('/'):
+        return False
+    m = re.search(r'/(\d{5,})(?:/|$)', orig)
+    if not m:
+        return False
+    return m.group(1) not in final
+
+
 def ping_url(url: str) -> dict:
     """Détecte si une URL d'annonce est morte.
     Returns {'status': int, 'is_dead': bool, 'reason': str}.
@@ -165,6 +181,13 @@ def ping_url(url: str) -> dict:
                     "status": page_resp.status_code,
                     "is_dead": True,
                     "reason": f"http_{page_resp.status_code}",
+                }
+
+            if _redirected_away(url, str(getattr(page_resp, 'url', '') or '')):
+                return {
+                    'status': page_resp.status_code,
+                    'is_dead': True,
+                    'reason': 'redirect_search',
                 }
 
             marker = sold_verdict(page_resp.text)
