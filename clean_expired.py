@@ -21,6 +21,7 @@ Usage local :
   python scraper/clean_expired.py
 """
 import os
+import re
 import sys
 import time
 from datetime import datetime, timedelta, timezone
@@ -43,21 +44,77 @@ DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
 
 USER_AGENT = "Mozilla/5.0 (compatible; CarnetBot/1.0; +https://carnet.life)"
 
-# Markers HTML qui indiquent une annonce vendue / réservée — multilingue EU
-SOLD_MARKERS = [
-    # DE
-    "verkauft", "reserviert", "nicht mehr verfügbar",
-    # EN
-    "sold", "no longer available", "reserved", "this listing has been removed",
-    # FR
-    "vendu", "vendue", "réservée", "reservée", "annonce supprimée",
-    # IT
-    "venduto", "venduta", "riservato", "non più disponibile",
-    # NL
-    "verkocht", "gereserveerd", "niet meer beschikbaar",
-    # ES
-    "vendido", "vendida", "reservado",
+# ─── Détection "vendu" — durcie contre les faux positifs ─────────────
+# HISTORIQUE : l'ancienne version faisait `marker in html_lower` sur TOUT le
+# HTML brut, avec "reserved" et "sold" dans la liste. Résultat :
+#   - "reserved"  ⊂ "all rights reserved"  (footer légal quasi universel)
+#   - "sold"      ⊂ "sold-individually"    (classe WooCommerce), "sold out",
+#                    "sold by", menus "Sold cars"
+# → des milliers d'annonces VIVES (davidsportscars, dg8cars, ~192 dealers)
+#   marquées "sold" à tort, dealers éteints en base. Ne jamais revenir à ça.
+#
+# Nouvelle doctrine (alignée sur audit_dead_listings.py) :
+#   1. on NEUTRALISE le bruit footer/e-commerce AVANT toute recherche ;
+#   2. marqueurs NON ambigus ("no longer available"…) : valables partout ;
+#   3. marqueurs ambigus ("verkauft/sold/reserved/vendu"…) : valables SEULEMENT
+#      dans <title>/<h1>, ou sur une page-placeholder courte (<1200 car. visibles).
+#   Biais volontaire : au moindre doute, VIVANTE. Un faux négatif (annonce vendue
+#   gardée un tour de plus) est rattrapé au re-scrape ; un faux positif tue du réel.
+
+_NOISE = re.compile(
+    r"all rights reserved|tous droits r[ée]serv[ée]s|alle rechte vorbehalten|"
+    r"tutti i diritti riservati|alle rechten voorbehouden|todos los derechos reservados|"
+    r"sold[-_ ](?:individually|out|separately|by|as)|add[-_ ]to[-_ ]cart|"
+    r"sold[-_]listings?|sold[-_]archive|\bsold\s+cars?\b|"
+    r"/(?:verkauft|sold|venduto|verkocht|vendus?)/",
+    re.I,
+)
+# Marqueurs "mort" NON ambigus : la page ELLE-MÊME dit qu'elle n'existe plus.
+_HARD_DEAD = [
+    "no longer available", "this listing has been removed", "listing not found",
+    "nicht mehr verfügbar", "annonce supprimée", "cette annonce n'est plus",
+    "non più disponibile", "niet meer beschikbaar", "ya no está disponible",
 ]
+# Marqueurs "vendu/réservé" AMBIGUS : ne valent que dans le titre / h1 / page courte.
+_SOFT_DEAD = [
+    "verkauft", "reserviert", "sold", "reserved", "vendu", "vendue",
+    "réservée", "reservée", "venduto", "venduta", "riservato",
+    "verkocht", "gereserveerd", "vendido", "vendida", "reservado",
+]
+
+# Compat : conservé pour d'éventuels imports externes (non utilisé ici).
+SOLD_MARKERS = _SOFT_DEAD + _HARD_DEAD
+
+
+def _grab(html: str, tag: str) -> str:
+    m = re.search(rf"(?is)<{tag}[^>]*>(.*?)</{tag}>", html)
+    if not m:
+        return ""
+    return re.sub(r"\s+", " ", re.sub(r"(?s)<[^>]+>", " ", m.group(1))).strip().lower()
+
+
+def _visible_text(html: str) -> str:
+    h = re.sub(r"(?is)<(script|style|template|noscript)[^>]*>.*?</\1>", " ", html)
+    return re.sub(r"\s+", " ", re.sub(r"(?s)<[^>]+>", " ", h)).strip()
+
+
+def sold_verdict(html: str):
+    """Retourne le marqueur "mort" trouvé, ou None si la page semble vivante."""
+    clean = _NOISE.sub(" ", html.lower())
+    for m in _HARD_DEAD:
+        if m in clean:
+            return m
+    head = _NOISE.sub(" ", _grab(html, "title") + " ¦ " + _grab(html, "h1"))
+    for m in _SOFT_DEAD:
+        if re.search(r"\b" + re.escape(m) + r"\b", head):
+            return m
+    vis = _visible_text(html)
+    if len(vis) < 1200:  # vraie page-placeholder "vendu", pas une fiche riche
+        c = _NOISE.sub(" ", vis.lower())
+        for m in _SOFT_DEAD:
+            if re.search(r"\b" + re.escape(m) + r"\b", c):
+                return m
+    return None
 
 
 # ─── HTTP probe ──────────────────────────────────────────────────────
@@ -110,14 +167,13 @@ def ping_url(url: str) -> dict:
                     "reason": f"http_{page_resp.status_code}",
                 }
 
-            html_lower = page_resp.text.lower()
-            for marker in SOLD_MARKERS:
-                if marker in html_lower:
-                    return {
-                        "status": page_resp.status_code,
-                        "is_dead": True,
-                        "reason": f"marker:{marker}",
-                    }
+            marker = sold_verdict(page_resp.text)
+            if marker:
+                return {
+                    "status": page_resp.status_code,
+                    "is_dead": True,
+                    "reason": f"marker:{marker}",
+                }
 
         return {"status": resp.status_code, "is_dead": False, "reason": "alive"}
 
