@@ -54,14 +54,18 @@ def main() -> int:
     sb = create_client(url, key)
 
     # 1) Cote par annonce — matérialise cote_low/mid/high + deal_pct sur cars.
+    # DÉCOUPLÉ : si refresh_cote() échoue (ex. lock timeout sur cars), on NE
+    # bloque PAS le bandeau — seul n_deals dépend de deal_pct. Médiane/marchands/
+    # pays/cette-semaine sont recalculés live par refresh_market_snapshot() ci-dessous.
     print('[refresh_cote] calling RPC refresh_cote()...')
     started = time.time()
+    cote_ok = True
     try:
         sb.rpc('refresh_cote', {}).execute()
+        print(f'[refresh_cote] done in {int((time.time() - started) * 1000)} ms (incl. network)')
     except Exception as e:
-        print(f'[refresh_cote] RPC failed: {e}', file=sys.stderr)
-        return 1
-    print(f'[refresh_cote] done in {int((time.time() - started) * 1000)} ms (incl. network)')
+        cote_ok = False
+        print(f'[refresh_cote] RPC failed (bandeau rafraîchi quand même, n_deals figé): {e}', file=sys.stderr)
 
     # 2) KPI du bandeau Marché (lit cars live + deal_pct fraîchement matérialisé).
     print('[refresh_market] calling RPC refresh_market_snapshot()...')
@@ -83,6 +87,8 @@ def main() -> int:
     print(f'[refresh_market] server_ms   = {d.get("duration_ms")} ms')
     print(f'[refresh_market] total_ms    = {elapsed_ms} ms (incl. network)')
     print(json.dumps(d, ensure_ascii=False))
+    if not cote_ok:
+        print('[refresh] WARN: bandeau OK mais refresh_cote a échoué — deal_pct/sous-la-cote figés. À investiguer (lock sur cars).', file=sys.stderr)
     return 0
 
 
