@@ -385,7 +385,7 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
         _upd = {'last_seen_at': datetime.utcnow().isoformat() + 'Z',
                 'status': 'active', 'expires_at': None, 'times_seen': _seen}
         if car.px is not None and car.px != _old_px:
-            _upd['px'] = car.px
+            _upd['px'] = _as_int(car.px)
             log.info(f'↻ Updated: {car.mk} {car.mo} {car.yr} — {_old_px} → {car.px}€')
         else:
             log.info(f'↻ Seen: {car.mk} {car.mo} {car.yr} — last_seen refreshed')
@@ -405,7 +405,7 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
                 'status': 'active', 'expires_at': None,
                 'times_seen': (_dup.get('times_seen') or 0) + 1}
         if car.px is not None and car.px != _dup.get('px'):
-            _upd['px'] = car.px
+            _upd['px'] = _as_int(car.px)
         db.table('cars').update(_upd).eq('id', _dup['id']).execute()
         log.info(f'\u21bb Doublon rafraichi (source {_dup.get("src")}): '
                  f'{car.mk} {car.mo} {car.yr}')
