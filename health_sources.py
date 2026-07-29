@@ -60,7 +60,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--country", help="filtrer par pays (ex. de, it, fr)")
     ap.add_argument("--max-silent", type=int, default=0,
-                    help="nb de sources muettes tolerees avant echec")
+                    help="nb de sources muettes SIGNIFICATIVES tolerees avant echec")
+    ap.add_argument("--min-known", type=int, default=8,
+                    help="une muette ne compte comme grave que si elle avait "
+                         ">= ce nb d'annonces connues (sinon = rotation d'un petit dealer)")
     ap.add_argument("--quiet", action="store_true", help="n'afficher que les problemes")
     ap.add_argument("--slugs", choices=["muettes", "vides", "muettes+vides"],
                     help="n'imprimer que les slugs (pour scripting), un par ligne")
@@ -87,6 +90,8 @@ def main():
             ok.append(entry)
 
     muettes.sort(key=lambda e: -e[1]["total"])
+    muettes_graves = [e for e in muettes if e[1]["total"] >= args.min_known]
+    muettes_mineures = [e for e in muettes if e[1]["total"] < args.min_known]
     vides.sort(key=lambda e: e[0]["slug"])
     ok.sort(key=lambda e: -e[1]["active"])
 
@@ -107,9 +112,16 @@ def main():
     print(f"  OK {len(ok)}   |   MUETTES {len(muettes)}   |   VIDES {len(vides)}")
     print("=" * 72)
 
-    if muettes:
-        print(f"\n--- MUETTES ({len(muettes)}) : ont produit, 0 active aujourd'hui ---")
-        for s, c in muettes:
+    if muettes_graves:
+        print(f"\n--- MUETTES SIGNIFICATIVES ({len(muettes_graves)}) : "
+              f">= {args.min_known} connues, 0 active — A REGARDER ---")
+        for s, c in muettes_graves:
+            print(f"  {s['slug']:34s} {c['total']:5d} connues  0 active"
+                  f"   [{s.get('country') or '--'}]")
+    if muettes_mineures and not args.quiet:
+        print(f"\n--- muettes mineures ({len(muettes_mineures)}) : "
+              f"< {args.min_known} connues (rotation petit dealer, non bloquant) ---")
+        for s, c in muettes_mineures:
             print(f"  {s['slug']:34s} {c['total']:5d} connues  0 active"
                   f"   [{s.get('country') or '--'}]")
 
@@ -127,11 +139,13 @@ def main():
     total_actives = sum(c["active"] for _s, c in ok)
     print(f"\n{total_actives} annonces actives au total.")
 
-    if len(muettes) > args.max_silent:
-        print(f"\nECHEC : {len(muettes)} sources muettes "
-              f"(seuil tolere : {args.max_silent}).")
+    if len(muettes_graves) > args.max_silent:
+        print(f"\nECHEC : {len(muettes_graves)} muettes significatives "
+              f"(>= {args.min_known} connues, seuil tolere : {args.max_silent}). "
+              f"{len(muettes_mineures)} mineures ignorees.")
         return 1
-    print("\nOK : aucune source muette au-dela du seuil.")
+    print(f"\nOK : {len(muettes_graves)} muette(s) significative(s), "
+          f"seuil {args.max_silent}. {len(muettes_mineures)} mineures ignorees.")
     return 0
 
 
