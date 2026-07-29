@@ -338,6 +338,14 @@ def trim_model_desc(mo):
 
 # ── Insert to Supabase ───────────────────────────────────────────────────────
 def insert_car(db: Client, car: CarListing) -> Optional[str]:
+    def _as_int(v):
+        # JSON-LD & co livrent px/km en float ('31500.0') ou str ; la colonne
+        # est integer -> coercion propre, None si vide/NaN.
+        if v is None: return None
+        try: f=float(v)
+        except (TypeError,ValueError): return None
+        if f!=f: return None
+        return int(round(f))
     # ─── Canonicalisation marque (alias site → forme registry) ───
     # Les scrapers marketplace passent la marque brute du site (Seat, Skoda,
     # Citroen, Mercedes). Le validate exige la forme canonique exacte
@@ -412,12 +420,12 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
         'mo':        car.mo,
         'de':        getattr(car, 'de', None),
         'yr':        car.yr,
-        'km':        car.km,
-        'px':        car.px,
+        'km':        _as_int(car.km),
+        'px':        _as_int(car.px),
         'fu':        car.fu,
         'ge':        car.ge,
-        'ci':        car.ci,
-        'co':        car.co,
+        'ci':        car.ci or '',
+        'co':        car.co or '',
         'lat':       lat,
         'lng':       lng,
         'src':       car.src,
