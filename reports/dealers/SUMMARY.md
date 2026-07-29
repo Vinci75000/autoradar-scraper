@@ -1,7 +1,7 @@
 # DEALERS — Summary
 
-> Generated at `2026-07-28T13:36:02.411574`  
-> Period: `2026-07-25T13:00:18.988997` → `2026-07-28T13:29:39.338537` (7 runs)
+> Generated at `2026-07-29T01:37:07.410631`  
+> Period: `2026-07-26T01:48:27.054938` → `2026-07-29T01:30:39.709331` (7 runs)
 
 ## Health: 🔴 4.8% sources OK (avg)
 
@@ -10,11 +10,11 @@
 | Sources OK avg | **4.8%** |
 | Sources OK range | 0.0% – 5.6% |
 | Sources total (max) | 18 |
-| Cards found (cumul) | 13,350 |
+| Cards found (cumul) | 13,311 |
 | Listings extracted (cumul) | 28 |
-| Cars new (cumul) | **1** |
-| Duplicates (cumul) | 5 |
-| Duration avg | 411s |
+| Cars new (cumul) | **0** |
+| Duplicates (cumul) | 6 |
+| Duration avg | 405s |
 | Alerts triggered | 7 / 7 |
 | Trend | ➡️ Stable |
 
@@ -22,3 +22,4 @@
 
 - ⚠️ Alertes dans 7/7 runs récents — investiguer les sources dégradées.
 - 🔴 Santé critique : la majorité des sources ne livrent pas. Vérifier Cloudflare/DNS/parsers.
+- ⚠️ Zéro nouvelle voiture sur la période — DB rattrapée ou scraper cassé ?
