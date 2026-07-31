@@ -123,6 +123,19 @@ SOURCES = {
         "img": r"photos\.crm360\.nextlane\.com/[^\"'\\ )\]]+\.jpg",
         "open": None, "scroll": True, "dedup": "nextlane", "stealth": "light",
     },
+    "Kleinanzeigen.de": {
+        # DataDome : ne cede qu au CDP attach sur le Chrome reel
+        "img": r"img\.kleinanzeigen\.de/api/v1/prod-ads/images/[0-9a-f]{2}/[0-9a-f-]{36}",
+        "open": None, "scroll": True, "dedup": "ka_uuid", "stealth": "cdp",
+        "img_exclude": r"(logo|icon|flag|sprite|placeholder|avatar|banner|favicon|watermark|/static/|badge)",
+    },
+    "mobile.de": {
+        # DataDome/Parkplatz : CDP attach obligatoire
+        # ATTENTION CDN = classistatic.de, ne porte PAS le nom du domaine
+        # -> l auto peut rendre 0 ; le --probe tranchera, on posera le regex explicite ensuite
+        "img": None, "open": None, "scroll": True, "dedup": "filename", "stealth": "cdp",
+        "img_exclude": r"(logo|icon|flag|sprite|placeholder|avatar|banner|favicon|watermark|/static/|badge)",
+    },
     "_default": {
         # img=None -> auto : capte les images du domaine de l'annonce (voir visit()).
         "img": None, "open": None, "scroll": True, "dedup": "filename", "stealth": "light",
@@ -195,7 +208,10 @@ def dedup_photos(urls, mode, oid, require_id, exclude_re):
             continue
         if require_id and oid and (("-%s-" % oid) not in u) and (("/%s/" % oid) not in u):
             continue
-        if mode == "dyler_photoid":
+        if mode == "ka_uuid":
+            m = re.search(r"/prod-ads/images/[0-9a-f]{2}/([0-9a-f-]{36})", u)
+            key = m.group(1) if m else u
+        elif mode == "dyler_photoid":
             m = re.search(r"/uploads/cars/\d+/(\d+)/", u)
             key = m.group(1) if m else u
         elif mode == "jimcdn":  # Jimdo : id image dans /image/i<hash>/
@@ -295,16 +311,26 @@ def visit(page, url, c):
 
 
 def mark_dead(ids):
-    if not ids: return
+    """Doctrine Sly 30.07.2026 : flagge = supprime. Les mortes dead_refresh
+    n'ont aucune valeur analytique (pas de prix de vente constate) -> DELETE sec.
+    Les tables filles suivent via ON DELETE CASCADE. data_lineage n'a pas de FK
+    -> purge explicite avant."""
+    if not ids:
+        return
     base, hdrs = _supa()
-    now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    body = json.dumps({"status": "expired", "exit_reason": "dead_refresh", "expires_at": now}).encode()
-    for i in range(0, len(ids), 100):
-        flt = "(" + ",".join(ids[i:i+100]) + ")"
-        url = base + "/rest/v1/cars?id=in." + urllib.parse.quote(flt, safe="(),")
-        req = urllib.request.Request(url, data=body, headers=hdrs, method="PATCH")
-        with urllib.request.urlopen(req, timeout=60) as r: r.read()
-
+    for cid in ids:
+        q = urllib.parse.quote(str(cid))
+        try:
+            url = (base + "/rest/v1/data_lineage?entity=eq.car&entity_id=eq." + q)
+            req = urllib.request.Request(url, headers=hdrs, method="DELETE")
+            with urllib.request.urlopen(req, timeout=60) as r:
+                r.read()
+        except Exception as e:
+            print("   lineage skip %s : %r" % (cid, e), flush=True)
+        url = base + "/rest/v1/cars?id=eq." + q
+        req = urllib.request.Request(url, headers=hdrs, method="DELETE")
+        with urllib.request.urlopen(req, timeout=60) as r:
+            r.read()
 
 def write_photos(car_id, photos):
     base, hdrs = _supa()
@@ -366,7 +392,21 @@ def run_one_source(src, args):
 
     headless = not args.headful
     use_lib = _HAS_STEALTH and c["stealth"] == "strong"
-    if use_lib:
+    if c["stealth"] == "cdp":
+        port = getattr(args, "cdp_port", 9222)
+        print(f">> CDP attach sur 127.0.0.1:{port} (Chrome debug doit etre ouvert)", flush=True)
+        with sync_playwright() as p:
+            b = p.chromium.connect_over_cdp(f"http://127.0.0.1:{port}")
+            ctx = b.contexts[0] if b.contexts else b.new_context()
+            page = ctx.new_page()
+            try:
+                dead_ids, hist, verdicts = run_page_loop(page, targets, args, c)
+            finally:
+                try:
+                    page.close()
+                except Exception:
+                    pass
+    elif use_lib:
         loc = src if src in ("dyler", "elferspot", "classicdriver") else "classicdriver"
         with get_stealth_browser(loc, headless=headless) as (_b, _ctx, page):
             dead_ids, hist, verdicts = run_page_loop(page, targets, args, c)
@@ -393,6 +433,8 @@ def main():
     ap.add_argument("--apply", action="store_true", help="écrit (purge + photos). Sinon probe.")
     ap.add_argument("--probe", action="store_true", help="explicite (défaut si pas --apply)")
     ap.add_argument("--headful", action="store_true")
+    ap.add_argument("--cdp-port", type=int, default=9222,
+                    help="port debug du Chrome reel (sources stealth=cdp)")
     ap.add_argument("--all-active", action="store_true",
                     help="repasse toutes les actives (défaut : seulement <=1 photo)")
     ap.add_argument("--skip", default="", help="sources à ignorer (virgules), ex. 'Auto Selection'")
