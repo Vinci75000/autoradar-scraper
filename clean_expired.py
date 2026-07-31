@@ -4,7 +4,7 @@ clean_expired.py — Auto wash des annonces expirées (cron daily 03h UTC)
 Pour chaque car en status='active' avec last_seen_at > MAX_AGE_DAYS jours :
   1. Ping src_url (HEAD → GET si nécessaire)
   2. Détecte HTTP 404/410 OU markers de vente dans le HTML
-  3. Marque status='expired' + expires_at = now() si mort
+  3. Archive la vente (sold_history) si prix constate, puis SUPPRIME
   4. Refresh last_seen_at si vivante (évite re-check au prochain run)
 
 Env :
@@ -243,7 +243,7 @@ def main():
     while len(cars) < BATCH_SIZE:
         want = min(PAGE, BATCH_SIZE - len(cars))
         q = (supa.table("cars")
-             .select("id, src_url, mk, mo, last_checked_at")
+             .select("id, src_url, mk, mo, yr, km, px, co, ci, src, price_log, last_checked_at")
              .eq("status", "active"))
         try:
             q = q.order("last_checked_at", desc=False, nullsfirst=True)
@@ -293,14 +293,48 @@ def main():
     )
 
     if DRY_RUN:
-        print(f"[wash] DRY_RUN — would mark {len(expired)} cars expired")
+        print(f"[wash] DRY_RUN — would DELETE {len(expired)} cars (sold archivees)")
         print(f"[wash] DRY_RUN — would refresh last_seen_at on {len(alive)} cars")
         return
 
     now_iso = datetime.now(timezone.utc).isoformat()
 
-    # Apply expired
+    # Doctrine Sly 30.07.2026 : flagge = supprime.
+    # On archive d'abord les VRAIES ventes (prix constate = seule donnee de
+    # marche exploitable par la cote), puis on supprime la ligne.
+    _archived = 0
     for car in expired:
+        _r = (car.get("check_result") or {}).get("reason") or ""
+        if not _r.startswith("marker:"):
+            continue
+        _px = car.get("px")
+        if not _px:
+            continue
+        try:
+            supa.table("sold_history").upsert({
+                "id": car["id"], "mk": car.get("mk"), "mo": car.get("mo"),
+                "yr": car.get("yr"), "km": car.get("km"), "px": _px,
+                "co": car.get("co"), "ci": car.get("ci"),
+                "src": car.get("src"), "src_url": car.get("src_url"),
+                "price_log": car.get("price_log"),
+                "sold_seen_at": datetime.now(timezone.utc).isoformat(),
+            }).execute()
+            _archived += 1
+        except Exception as e:
+            print(f"[wash] archive KO {car['id']} : {e!r}", file=sys.stderr)
+    if _archived:
+        print(f"[wash] {_archived} ventes archivees dans sold_history")
+
+    for car in expired:
+        try:
+            (supa.table("data_lineage").delete()
+                 .eq("entity", "car").eq("entity_id", str(car["id"])).execute())
+        except Exception:
+            pass
+        supa.table("cars").delete().eq("id", car["id"]).execute()
+
+    # Ancien chemin (marquage) conserve mort : voir bak_v2 si besoin de revenir
+    for car in []:
         reason = car["check_result"]["reason"]
         exit_reason = "sold" if reason.startswith("marker:") else "gone"
         supa.table("cars").update(
@@ -313,7 +347,7 @@ def main():
             }
         ).eq("id", car["id"]).execute()
     if expired:
-        print(f"[wash] {len(expired)} cars marked expired")
+        print(f"[wash] {len(expired)} cars supprimees")
 
     # Marque last_checked_at sur les vivantes (curseur du wash — les fait sortir
     # de la tête de file jusqu'au prochain tour, indépendamment du scraper).
