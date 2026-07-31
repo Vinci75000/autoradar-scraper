@@ -1031,6 +1031,7 @@ GENERATIONS_EXT.setdefault("seat", {}).update({
     "ateca": [("ateca", 2016, 2031)], "arona": [("arona", 2017, 2031)], "tarraco": [("tarraco", 2018, 2031)],
     "marbella": [("marbella", 1986, 1998)], "malaga": [("malaga", 1984, 1991)], "ronda": [("ronda", 1982, 1986)],
 })
+"austin": "Austin",
 GENERATIONS_EXT.setdefault("austin-healey", {}).update({
     "3000": [("ah3000", 1959, 1967)], "100": [("ah100", 1953, 1959)], "100 6": [("ah1006", 1956, 1959)],
     "sprite": [("ahsprite", 1958, 1971)], "100 4": [("ah1004", 1953, 1956)],

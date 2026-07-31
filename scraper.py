@@ -244,27 +244,36 @@ def is_country_name(city):
     return _geo_norm(city) in _COUNTRY_STOP
 
 
-def geocode(city: str, country: str) -> tuple[Optional[float], Optional[float]]:
-    if is_country_name(city):
+def geocode(city: str, country: str) -> tuple:
+    """Ville -> (lat, lng) via Photon (Komoot/OSM). Nominatim rend 429 sur notre IP
+    quel que soit l'UA : abandonne. Echec = (None, None) — jamais de punaise au
+    centre d'un pays (garde-fou is_country_name)."""
+    if not city or is_country_name(city):
         return None, None
-    key = f"{city}|{country}"
+    cc = (country or "").lower()
+    cc = cc if (len(cc) == 2 and cc.isalpha()) else ""
+    key = "%s|%s" % (city, country)
     if key in GEO_CACHE:
         return GEO_CACHE[key]
     try:
-        cc = {'France': 'fr', 'Belgique': 'be', 'Suisse': 'ch'}.get(country, '')
-        r = requests.get(
-            'https://nominatim.openstreetmap.org/search',
-            params={'q': city, 'countrycodes': cc, 'format': 'json', 'limit': 1},
-            headers={'User-Agent': 'AutoRadar/1.0 contact@autoradar.org'},
-            timeout=5
-        )
-        data = r.json()
-        if data:
-            lat, lng = float(data[0]['lat']), float(data[0]['lon'])
-            GEO_CACHE[key] = (lat, lng)
-            return lat, lng
+        r = requests.get("https://photon.komoot.io/api/",
+                         params={"q": city, "limit": 3},
+                         headers={"User-Agent": "CARNET-registre/1.0 (contact: schaillout@gmail.com)"},
+                         timeout=8)
+        if r.status_code == 200:
+            for f in ((r.json() or {}).get("features") or []):
+                p = f.get("properties") or {}
+                if cc and (p.get("countrycode") or "").lower() != cc:
+                    continue
+                co = (f.get("geometry") or {}).get("coordinates") or []
+                if len(co) == 2:
+                    res = (float(co[1]), float(co[0]))
+                    GEO_CACHE[key] = res
+                    return res
+        else:
+            log.warning("Geocode %s: HTTP %s" % (city, r.status_code))
     except Exception as e:
-        log.warning(f'Geocoding failed for {city}: {e}')
+        log.warning("Geocode %s: %r" % (city, e))
     GEO_CACHE[key] = (None, None)
     return None, None
 
@@ -375,6 +384,19 @@ def trim_model_desc(mo):
 
 
 # ── Insert to Supabase ───────────────────────────────────────────────────────
+def _px_moved(old, new, tol=0.02):
+    """True si le prix a VRAIMENT bouge. En dessous de 2%, c'est du bruit de taux
+    de change (conversion GBP->EUR au taux du jour) : on ne reecrit pas px, sinon
+    price_log se remplit de fausses variations a chaque run."""
+    try:
+        o, n = float(old), float(new)
+    except (TypeError, ValueError):
+        return old != new
+    if o <= 0:
+        return n > 0
+    return abs(n - o) / o >= tol
+
+
 def insert_car(db: Client, car: CarListing) -> Optional[str]:
     def _as_int(v):
         # JSON-LD & co livrent px/km en float ('31500.0') ou str ; la colonne
@@ -422,7 +444,7 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
         _seen = (_exist.data[0].get('times_seen') or 0) + 1
         _upd = {'last_seen_at': datetime.utcnow().isoformat() + 'Z',
                 'status': 'active', 'expires_at': None, 'times_seen': _seen}
-        if car.px is not None and car.px != _old_px:
+        if car.px is not None and _px_moved(_old_px, car.px):
             _upd['px'] = _as_int(car.px)
             log.info(f'↻ Updated: {car.mk} {car.mo} {car.yr} — {_old_px} → {car.px}€')
         else:
@@ -442,7 +464,7 @@ def insert_car(db: Client, car: CarListing) -> Optional[str]:
         _upd = {'last_seen_at': datetime.utcnow().isoformat() + 'Z',
                 'status': 'active', 'expires_at': None,
                 'times_seen': (_dup.get('times_seen') or 0) + 1}
-        if car.px is not None and car.px != _dup.get('px'):
+        if car.px is not None and _px_moved(_dup.get('px'), car.px):
             _upd['px'] = _as_int(car.px)
         db.table('cars').update(_upd).eq('id', _dup['id']).execute()
         log.info(f'\u21bb Doublon rafraichi (source {_dup.get("src")}): '
