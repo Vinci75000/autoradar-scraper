@@ -33,13 +33,18 @@ async (url) => {
     // garde, par annonce, le lien qui a le PLUS de texte = le lien-titre (pas l'image)
     if (byId[id] && t.length <= byId[id].title.length) continue;
     const card = a.closest('article, li, [class*="aditem"], [class*="ad-listitem"]') || a.parentElement;
-    let txt = a.textContent; let price = '';
+    let txt = a.textContent; let price = ''; let loc = '';
     if (card) {
       const cl=card.cloneNode(true); cl.querySelectorAll('script,style').forEach(e=>e.remove()); txt=cl.textContent;
       const pe = card.querySelector('[class*="price"], p[class*="price"]');
       if (pe) price = (pe.textContent||'').replace(/\s+/g,' ').trim();
+      for (const el of card.querySelectorAll('*')) {
+        if (el.children.length) continue;
+        const lt = (el.textContent||'').replace(/\s+/g,' ').trim();
+        if (lt && lt.length < 90 && /^\d{5}\s+\S/.test(lt)) { loc = lt; break; }
+      }
     }
-    byId[id] = { adid:id, url:href, title:t, text:txt.replace(/\s+/g,' ').trim(), price:price };
+    byId[id] = { adid:id, url:href, title:t, text:txt.replace(/\s+/g,' ').trim(), price:price, loc:loc };
   }
   return Object.values(byId);
 }
@@ -78,6 +83,32 @@ def _ka_price(s):
         if 500<=v<=200000: return v
     return None
 
+_KA_CITY_TOK = re.compile(r"^[A-Za-z\u00c4\u00d6\u00dc\u00e4\u00f6\u00fc\u00df][\w\u00c4\u00d6\u00dc\u00e4\u00f6\u00fc\u00df.\-]*$")
+
+def _ka_place(loc_el):
+    """(ville, plz) depuis l'ELEMENT locality de la carte, scope au card.
+    Volontairement pas de fallback sur le texte agrege : il colle les noeuds DOM
+    ("1287616 Marktoberdorf", "321.200 EUR") et a deja produit deux bugs.
+    (None, None) au moindre doute -> l'appelant garde son defaut."""
+    if not loc_el:
+        return None, None
+    s = " ".join(str(loc_el).split())
+    for m in re.finditer(r"(\d{5})\s+(.{2,80})", s):
+        plz, rest = m.group(1), m.group(2)
+        if " - " in rest:
+            rest = rest.split(" - ", 1)[1]
+        toks = []
+        for t in rest.split(" "):
+            if not _KA_CITY_TOK.match(t):
+                break
+            toks.append(t)
+            if len(toks) >= 4:
+                break
+        city = " ".join(toks).strip(" ,-.")
+        if city and 2 <= len(city) <= 40:
+            return city, plz
+    return None, None
+
 def map_item(c):
     title=(c.get("title") or "").strip(); text=c.get("text") or ""
     if not title: title=text
@@ -93,8 +124,8 @@ def map_item(c):
     if px is not None and km is not None and px==km: px=None   # km chopé comme prix
     fu="Diesel" if re.search(r"diesel|tdi|hdi|cdi|dci",text,re.I) else ("Électrique" if re.search(r"elektro|\bev\b",text,re.I) else ("Hybride" if re.search(r"hybrid",text,re.I) else "Essence"))
     ge="Automatique" if re.search(r"automat|\bdsg\b|tiptronic",text,re.I) else "Manuelle"
-    loc=re.search(r"\b(\d{5})\s+([A-ZÄÖÜ][\wäöüß.\- ]+?)(?:\s{2,}|$)",text)
-    ci=(loc.group(2).strip() if loc else "Allemagne")[:40]
+    ka_city, ka_plz = _ka_place(c.get("loc"))
+    ci=(ka_city or "Allemagne")[:40]
     url=c.get("url") or ""
     if url.startswith("/"): url="https://www.kleinanzeigen.de"+url
     if not url: return None
