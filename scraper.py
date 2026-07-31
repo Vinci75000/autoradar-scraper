@@ -208,7 +208,45 @@ import requests
 
 GEO_CACHE = {}
 
+
+# ── GARDE-FOU CARNET : jamais de punaise au centre d'un pays ────────────────
+# Geocoder un nom de pays rend son centroide : un point au milieu d'un champ,
+# qui n'est la realite de personne. On prefere lat/lng vides. Ville ou region
+# seulement. Monaco / Luxembourg restent geocodables (pays ET villes).
+import unicodedata as _ud
+
+_COUNTRY_STOP = set()
+for _n in (
+    "france", "allemagne", "germany", "deutschland", "italie", "italy", "italia",
+    "espagne", "spain", "espana", "royaume-uni", "royaume uni", "united kingdom",
+    "uk", "gb", "great britain", "angleterre", "england", "scotland", "ecosse",
+    "wales", "pays de galles", "pays-bas", "pays bas", "netherlands", "nederland",
+    "holland", "hollande", "belgique", "belgium", "belgie", "suisse", "switzerland",
+    "schweiz", "svizzera", "autriche", "austria", "osterreich", "portugal",
+    "suede", "sweden", "sverige", "danemark", "denmark", "danmark", "irlande",
+    "ireland", "eire", "pologne", "poland", "polska", "etats-unis", "etats unis",
+    "united states", "usa", "us", "japon", "japan", "australie", "australia",
+    "norvege", "norway", "finlande", "finland", "tchequie", "czech republic",
+    "czechia", "grece", "greece", "hongrie", "hungary", "roumanie", "romania",
+    "croatie", "croatia", "slovenie", "slovenia", "europe", "international",
+    "inconnue", "inconnu", "unknown", "n/a", "autre", "other", "divers",
+):
+    _COUNTRY_STOP.add(_n)
+
+
+def _geo_norm(s):
+    s = _ud.normalize("NFKD", str(s or "")).encode("ascii", "ignore").decode()
+    return re.sub(r"\s+", " ", s).strip().lower().strip(".,;-")
+
+
+def is_country_name(city):
+    """True si 'city' est en fait un nom de pays / zone -> ne pas geocoder."""
+    return _geo_norm(city) in _COUNTRY_STOP
+
+
 def geocode(city: str, country: str) -> tuple[Optional[float], Optional[float]]:
+    if is_country_name(city):
+        return None, None
     key = f"{city}|{country}"
     if key in GEO_CACHE:
         return GEO_CACHE[key]
