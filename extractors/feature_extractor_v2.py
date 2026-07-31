@@ -17,6 +17,7 @@ from typing import Any
 from extractors.keywords_multilang import (
     BOOLEAN_FEATURES_BY_AXIS,
     KEYWORDS_BY_LANG,
+    negated,
 )
 from extractors.lang_detect import detect_language_segments
 
@@ -66,8 +67,13 @@ def _apply_keywords(
             if features.get(feat_name):
                 continue  # déjà True, skip
             for pattern in patterns:
-                if _compile(pattern).search(chunk):
-                    features[feat_name] = True
+                # Chaque occurrence est testee : 'sans factures' ne doit pas
+                # compter comme 'factures'. Sans ca, tout comptage est un majorant.
+                for _m in _compile(pattern).finditer(chunk):
+                    if not negated(chunk, _m.start()):
+                        features[feat_name] = True
+                        break
+                if features.get(feat_name):
                     break
 
 
@@ -95,11 +101,11 @@ def extract_features_v2(de: str, mo: str = "") -> dict[str, Any]:
     if not de or not de.strip():
         return features
 
-    segments = detect_language_segments(de)
-    for lang, chunk in segments:
-        lang_keywords = KEYWORDS_BY_LANG.get(lang)
-        if not lang_keywords:
-            continue
-        _apply_keywords(chunk, lang_keywords, features)
+    # Union des 5 langues sur le texte entier. La detection par segments rendait
+    # 0 flag sur DE et IT alors que leurs 52 et 46 patterns existent : une couche
+    # qui echouait en silence. Les patterns sont assez specifiques pour qu'un
+    # croisement inter-langue ne produise pas de faux positif.
+    for _lang_kw in KEYWORDS_BY_LANG.values():
+        _apply_keywords(de, _lang_kw, features)
 
     return features
