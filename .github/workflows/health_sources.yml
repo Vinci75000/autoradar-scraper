@@ -15,7 +15,7 @@ on:
       max_silent:
         description: 'Sources muettes tolerees avant echec'
         required: false
-        default: '3'
+        default: '5'
 
 jobs:
   sante:
@@ -37,4 +37,4 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
           python -u health_sources.py \
-            --max-silent ${{ github.event.inputs.max_silent || '3' }}
+            --max-silent ${{ github.event.inputs.max_silent || '5' }}
