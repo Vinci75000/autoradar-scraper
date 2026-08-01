@@ -235,32 +235,32 @@ _ETAPE3 = {
     'carnet': {
       'feat_carnet_present': [
         'carnet\\s+de\\s+bord',
-        "suivi\\s+d[\\'\\u2019]?entretien",
+        "suivi\\s+d[\\'’]?entretien",
         'historique\\s+complet',
       ],
       'feat_carnet_complet': [
-        "historique\\s+(?:d[\\'\\u2019]?entretien\\s+)?complet",
+        "historique\\s+(?:d[\\'’]?entretien\\s+)?complet",
         'tous\\s+les\\s+entretiens',
-        'entretiens?\\s+(?:a\\s+jour|\\u00e0\\s+jour)',
+        'entretiens?\\s+(?:a\\s+jour|à\\s+jour)',
       ],
       'feat_factures_completes': [
-        "factures?\\s+(?:d[\\'\\u2019]?entretien|disponibles?|\\u00e0\\s+l[\\'\\u2019]?appui|jointes?)",
+        "factures?\\s+(?:d[\\'’]?entretien|disponibles?|à\\s+l[\\'’]?appui|jointes?)",
         'toutes\\s+les\\s+factures',
         'nombreuses\\s+factures',
         'classeur\\s+de\\s+factures',
       ],
       'feat_first_owner': [
-        '\\b1\\s*(?:\\u00e8re|ere|re)\\s+main\\b',
-        'un\\s+seul\\s+propri\\u00e9taire',
-        'premier\\s+propri\\u00e9taire',
+        '\\b1\\s*(?:ère|ere|re)\\s+main\\b',
+        'un\\s+seul\\s+propriétaire',
+        'premier\\s+propriétaire',
       ],
     },
     'suivi': {
       'feat_suivi_specialiste': [
-        'sp\\u00e9cialiste\\s+(?:de\\s+la\\s+)?marque',
-        'garage\\s+sp\\u00e9cialis\\u00e9',
-        'atelier\\s+sp\\u00e9cialis\\u00e9',
-        'pr\\u00e9parateur\\s+reconnu',
+        'spécialiste\\s+(?:de\\s+la\\s+)?marque',
+        'garage\\s+spécialisé',
+        'atelier\\s+spécialisé',
+        'préparateur\\s+reconnu',
       ],
     },
     'garantie': {
@@ -270,29 +270,29 @@ _ETAPE3 = {
       ],
       'feat_garantie_extension': [
         'extension\\s+de\\s+garantie',
-        'garantie\\s+prolong\\u00e9e',
+        'garantie\\s+prolongée',
       ],
     },
     'stockage': {
       'feat_garage_climatise': [
-        'garage\\s+climatis\\u00e9',
-        'stockage\\s+climatis\\u00e9',
+        'garage\\s+climatisé',
+        'stockage\\s+climatisé',
       ],
       'feat_stockage_exterieur': [
-        'stationn\\u00e9e?\\s+dehors',
-        "gar\\u00e9e?\\s+\\u00e0\\s+l[\\'\\u2019]?ext\\u00e9rieur",
+        'stationnée?\\s+dehors',
+        "garée?\\s+à\\s+l[\\'’]?extérieur",
       ],
     },
     'etat': {
       'feat_etat_concours': [
-        '\\u00e9tat\\s+concours',
+        'état\\s+concours',
         'niveau\\s+concours',
-        "concours\\s+d[\\'\\u2019]?\\u00e9l\\u00e9gance",
+        "concours\\s+d[\\'’]?élégance",
         'restauration\\s+concours',
       ],
       'feat_peinture_origine': [
-        "peinture\\s+(?:d[\\'\\u2019])?origine",
-        "teinte\\s+d[\\'\\u2019]?origine",
+        "peinture\\s+(?:d[\\'’])?origine",
+        "teinte\\s+d[\\'’]?origine",
       ],
       'feat_peinture_refaite': [
         'peinture\\s+(?:refaite|neuve)',
@@ -303,26 +303,26 @@ _ETAPE3 = {
         'train\\s+de\\s+pneus\\s+neuf',
       ],
       'feat_revision_recente': [
-        'r\\u00e9vision\\s+(?:r\\u00e9cente|effectu\\u00e9e)',
-        'grand\\s+entretien\\s+(?:fait|r\\u00e9alis\\u00e9)',
+        'révision\\s+(?:récente|effectuée)',
+        'grand\\s+entretien\\s+(?:fait|réalisé)',
       ],
     },
     'origine': {
       'feat_matching_numbers': [
         'matching\\s+numbers?',
-        'num\\u00e9ros\\s+concordants',
-        "moteur\\s+(?:et\\s+bo\\u00eete\\s+)?d[\\'\\u2019]?origine",
+        'numéros\\s+concordants',
+        "moteur\\s+(?:et\\s+boîte\\s+)?d[\\'’]?origine",
       ],
       'feat_certificat_constructeur': [
-        "certificat\\s+(?:d[\\'\\u2019]?authenticit\\u00e9|constructeur)",
+        "certificat\\s+(?:d[\\'’]?authenticité|constructeur)",
         'attestation\\s+constructeur',
         'fiche\\s+de\\s+production',
       ],
       'feat_serie_limitee': [
-        's\\u00e9rie\\s+limit\\u00e9e',
-        '\\u00e9dition\\s+limit\\u00e9e',
-        '\\b\\d{1,4}\\s+exemplaires?\\b',
-        'num\\u00e9rot\\u00e9e?\\s+\\d',
+        'série\\s+limitée',
+        'édition\\s+limitée',
+        '(?:seulement|que|produite?s?\\s+a|limitee?\\s+a)\\s+\\d{1,4}\\s+exemplaires?\\b',
+        'numérotée?\\s+\\d',
       ],
     },
   },
@@ -428,8 +428,8 @@ _ETAPE3 = {
       'feat_serie_limitee': [
         'limited\\s+edition',
         'one\\s+of\\s+(?:just\\s+|only\\s+)?\\d+',
-        '\\b\\d{1,4}\\s+(?:ever\\s+)?(?:made|built|produced)\\b',
-        'special\\s+edition',
+        '(?:only|just|merely)\\s+\\d{1,4}\\s+(?:ever\\s+)?(?:made|built|produced)\\b',
+        
       ],
     },
   },
@@ -441,12 +441,12 @@ _ETAPE3 = {
         'servicehistorie',
       ],
       'feat_carnet_complet': [
-        'l\\u00fcckenlos(?:e[rns]?)?\\s+(?:scheckheft|historie|service)',
-        'l\\u00fcckenlose\\s+wartung',
+        'lückenlos(?:e[rns]?)?\\s+(?:scheckheft|historie|service)',
+        'lückenlose\\s+wartung',
         'komplette\\s+historie',
       ],
       'feat_factures_completes': [
-        'rechnungen\\s+(?:vorhanden|liegen\\s+vor|verf\\u00fcgbar)',
+        'rechnungen\\s+(?:vorhanden|liegen\\s+vor|verfügbar)',
         'alle\\s+rechnungen',
         'rechnungsordner',
         'belege\\s+vorhanden',
@@ -458,8 +458,8 @@ _ETAPE3 = {
     },
     'suivi': {
       'feat_suivi_constructeur': [
-        '(?:vertrags)?h\\u00e4ndler\\s+gewartet',
-        'beim\\s+(?:vertrags)?h\\u00e4ndler',
+        '(?:vertrags)?händler\\s+gewartet',
+        'beim\\s+(?:vertrags)?händler',
       ],
       'feat_suivi_specialiste': [
         'fachwerkstatt',
@@ -472,7 +472,7 @@ _ETAPE3 = {
         'herstellergarantie',
       ],
       'feat_garantie_extension': [
-        'garantieverl\\u00e4ngerung',
+        'garantieverlängerung',
         'anschlussgarantie',
       ],
     },
@@ -506,7 +506,7 @@ _ETAPE3 = {
         'reifen\\s+neu',
       ],
       'feat_revision_recente': [
-        'gro\\u00dfe\\s+inspektion',
+        'große\\s+inspektion',
         'frisch\\s+gewartet',
         'service\\s+neu',
       ],
@@ -525,7 +525,7 @@ _ETAPE3 = {
       'feat_serie_limitee': [
         'limitierte?\\s+(?:auflage|edition)',
         'sondermodell',
-        '\\b\\d{1,4}\\s+st\\u00fcck\\s+gebaut',
+        '\\b\\d{1,4}\\s+stück\\s+gebaut',
         'eines\\s+von\\s+\\d+',
       ],
     },
@@ -581,7 +581,7 @@ _ETAPE3 = {
     'etat': {
       'feat_etat_concours': [
         'da\\s+concorso',
-        "concorso\\s+d[\\'\\u2019]?eleganza",
+        "concorso\\s+d[\\'’]?eleganza",
         'restauro\\s+da\\s+concorso',
       ],
       'feat_etat_origine': [
@@ -612,8 +612,8 @@ _ETAPE3 = {
       ],
       'feat_certificat_constructeur': [
         'certificato\\s+di\\s+origine',
-        'certificat[oa]\\s+(?:classiche|autenticit\\u00e0)',
-        'attestato\\s+di\\s+storicit\\u00e0',
+        'certificat[oa]\\s+(?:classiche|autenticità)',
+        'attestato\\s+di\\s+storicità',
       ],
       'feat_serie_limitee': [
         'serie\\s+limitata',
@@ -642,7 +642,7 @@ _ETAPE3 = {
       ],
       'feat_first_owner': [
         'eerste\\s+eigenaar',
-        '\\u00e9\\u00e9n\\s+eigenaar',
+        'één\\s+eigenaar',
       ],
     },
     'suivi': {
@@ -704,7 +704,7 @@ _ETAPE3 = {
       'feat_serie_limitee': [
         'limited\\s+edition',
         'gelimiteerde\\s+oplage',
-        '\\u00e9\\u00e9n\\s+van\\s+\\d+',
+        'één\\s+van\\s+\\d+',
       ],
     },
   },

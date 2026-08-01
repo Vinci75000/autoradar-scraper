@@ -267,17 +267,17 @@ CERTIFICAT_CONSTRUCTEUR_KW = [
 SERIE_LIMITEE_KW = [
     "série limitée", "serie limitee", "limited edition", "édition spéciale",
     "edition speciale", "édition limitée", "edition limitee",
-    "exemplaires", "limited", "numbered", "numéroté", "numerote",
+    "numbered", "numéroté", "numerote",
     "/500 exemplaires", "/100 exemplaires",
     "sondermodell", "sonderedition", "final edition", "einzelstück", "einzelstuck",
-    "one of", "1 of ", "1of", "collector's edition",
+    "1 of ", "1of", "collector's edition",
 ]
 
 # Notation "1 of N" / "1/750" / "Final Edition 200" -> nombre d'exemplaires.
 # Sert a (a) allumer feat_serie_limitee, (b) alimenter production_total du
 # referentiel quand il est vide (les halo cars le portent souvent : 1/2, 1/25...).
 _LIMITED_OF_RX = re.compile(
-    r"\b(?:\d{1,3}|one)\s*(?:/|\bof\b|\bvon\b|\bsur\b)\s*(\d{1,4})\b", re.IGNORECASE)
+    r"\b(?:\d{1,3}|one)\s*(?:\bof\b|\bvon\b|\bsur\b)\s*(\d{1,4})\b", re.IGNORECASE)
 _FINAL_ED_RX = re.compile(
     r"\b(?:final|special|limited|jubil[aä]ums?)\s*edition\s+(\d{1,4})\b", re.IGNORECASE)
 
@@ -291,7 +291,7 @@ def limited_edition_of(text: str):
     for rx in (_LIMITED_OF_RX, _FINAL_ED_RX):
         for m in rx.finditer(text):
             n = int(m.group(1))
-            if 2 <= n <= 9999 and not (1900 <= n <= 2099):
+            if 20 <= n <= 9999 and not (1900 <= n <= 2099):
                 return n
     return None
 FIRST_OWNER_KW = [
