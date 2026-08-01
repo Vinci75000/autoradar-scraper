@@ -81,7 +81,7 @@ somme = sum(k[c] for c in ("n_px_null", "n_px_lt25k", "n_px_25_100k", "n_px_100_
 print("")
 print("=== KPI ===")
 for c in sorted(k):
-    print("  %-20s %12s" % (c, format(k[c], ",").replace(",", " ")))
+    print("  %-20s %12s" % (c, format(k[c], ",").replace(",", " ") if isinstance(k[c], int) else k[c]))
 print("  %-20s %12s" % ("(actives totales)", format(tot_act, ",").replace(",", " ")))
 print("  coherence paliers : %d vs %d -> %s" % (somme, tot_act, "OK" if somme == tot_act else "ECART"))
 
