@@ -47,6 +47,13 @@ def scan(db):
 
 
 def geocode(city, co):
+    # GARDE-FOU CARNET : jamais de punaise au centre d'un pays.
+    try:
+        from scraper import is_country_name as _icn
+    except Exception:
+        _icn = lambda _x: False
+    if _icn(city):
+        return None
     cc = co.lower() if (co and len(co) == 2 and co.isalpha()) else ""
     for attempt in range(3):
         try:
