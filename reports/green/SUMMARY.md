@@ -1,7 +1,7 @@
 # GREEN — Summary
 
-> Generated at `2026-09-15T00:23:14.130411`  
-> Period: `2026-09-08T23:47:22.487233` → `2026-09-15T00:07:21.999928` (7 runs)
+> Generated at `2026-09-16T00:09:12.923107`  
+> Period: `2026-09-09T23:44:20.036652` → `2026-09-15T23:53:22.195952` (7 runs)
 
 ## Health: 🔴 11.8% sources OK (avg)
 
@@ -11,10 +11,10 @@
 | Sources OK range | 11.8% – 11.8% |
 | Sources total (max) | 17 |
 | Cards found (cumul) | 2,541 |
-| Listings extracted (cumul) | 833 |
-| Cars new (cumul) | **149** |
-| Duplicates (cumul) | 619 |
-| Duration avg | 938s |
+| Listings extracted (cumul) | 834 |
+| Cars new (cumul) | **148** |
+| Duplicates (cumul) | 627 |
+| Duration avg | 937s |
 | Alerts triggered | 7 / 7 |
 | Trend | ➡️ Stable |
 
