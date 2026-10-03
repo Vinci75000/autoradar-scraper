@@ -1,7 +1,7 @@
 # YELLOW — Summary
 
-> Generated at `2026-10-02T10:36:17.252571`  
-> Period: `2026-09-26T09:05:43.842084` → `2026-10-02T10:18:23.259187` (7 runs)
+> Generated at `2026-10-03T09:58:57.295042`  
+> Period: `2026-09-27T09:48:38.163818` → `2026-10-03T09:40:25.114424` (7 runs)
 
 ## Health: 🔴 0.0% sources OK (avg)
 
@@ -14,7 +14,7 @@
 | Listings extracted (cumul) | 0 |
 | Cars new (cumul) | **0** |
 | Duplicates (cumul) | 0 |
-| Duration avg | 992s |
+| Duration avg | 1004s |
 | Alerts triggered | 7 / 7 |
 | Trend | ➡️ Stable |
 
