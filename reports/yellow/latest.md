@@ -1,6 +1,6 @@
 # AutoRadar — Batch YELLOW Report
 
-**Date :** 2026-10-10 10:25:04 UTC
+**Date :** 2026-10-11 10:36:04 UTC
 **Description :** Sources grand public (risque modéré)
 **Sources testées :** 20
 **Sources OK :** 0/20 (0.0%)
@@ -14,12 +14,12 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 
 | Métrique | Valeur |
 |---|---|
-| Cards trouvées | 3 |
+| Cards trouvées | 6 |
 | Listings extraits | 0 |
 | **Nouvelles entrées DB** | **0** |
 | Doublons (déjà en DB) | 0 |
 | Rejetés (validation) | 0 |
-| Durée totale | 939s (15.7 min) |
+| Durée totale | 885s (14.8 min) |
 
 ## Tableau récapitulatif
 
@@ -35,7 +35,7 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 | 🟠 | `otomoto` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `blocket` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `gocar` | 0 | 0 | 0 | 0 | — |
-| 🟡 | `autolive` | 3 | 0 | 0 | 0 | — |
+| 🟡 | `autolive` | 6 | 0 | 0 | 0 | — |
 | 🟠 | `tutti` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `anibis` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `car4you` | 0 | 0 | 0 | 0 | — |
@@ -48,27 +48,27 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 
 ## 🟡 PARTIELLES (cards mais 0 extr., ou que duplicates) (1)
 
-- **`autolive`** — cards: 3, extraits: 0, new: 0, dup: 0, durée: 87.7s
+- **`autolive`** — cards: 6, extraits: 0, new: 0, dup: 0, durée: 18.9s
 
 ## 🟠 VIDES (0 cards — listing inaccessible) (19)
 
-- **`autoscout24`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 112.7s
-- **`mobile`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.9s
-- **`kleinanzeigen`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 109.9s
-- **`marktplaats`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 22.5s
-- **`subito`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 19.8s
-- **`wallapop`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 18.7s
-- **`willhaben`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 108.8s
-- **`otomoto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 28.6s
-- **`blocket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 2.0s
-- **`gocar`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 20.2s
-- **`tutti`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 109.9s
-- **`anibis`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 108.2s
-- **`car4you`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 11.1s
-- **`luxauto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 2.0s
-- **`automarket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 29.5s
-- **`autolu`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 14.7s
-- **`ebay-fr`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 19.1s
-- **`ebay-be`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 20.8s
-- **`ebay-ch`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 71.2s
+- **`autoscout24`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 110.8s
+- **`mobile`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 17.9s
+- **`kleinanzeigen`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 106.0s
+- **`marktplaats`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.4s
+- **`subito`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 20.0s
+- **`wallapop`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 17.2s
+- **`willhaben`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 107.7s
+- **`otomoto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 27.2s
+- **`blocket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 1.2s
+- **`gocar`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 20.0s
+- **`tutti`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 110.2s
+- **`anibis`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 108.9s
+- **`car4you`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 8.6s
+- **`luxauto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 1.5s
+- **`automarket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 26.1s
+- **`autolu`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 14.6s
+- **`ebay-fr`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 66.6s
+- **`ebay-be`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 15.8s
+- **`ebay-ch`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 64.9s
 
