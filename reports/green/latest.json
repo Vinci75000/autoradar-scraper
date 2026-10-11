@@ -1,15 +1,15 @@
 {
-  "timestamp": "2026-10-10T01:25:44.575313",
+  "timestamp": "2026-10-11T00:37:02.195260",
   "batch": "green",
   "sources_total": 17,
-  "sources_ok": 2,
-  "sources_ok_pct": 11.8,
-  "cards_found": 363,
-  "listings_extracted": 114,
-  "new_in_db": 28,
-  "duplicates": 81,
-  "duration_sec": 979.1000000000001,
+  "sources_ok": 1,
+  "sources_ok_pct": 5.9,
+  "cards_found": 63,
+  "listings_extracted": 53,
+  "new_in_db": 1,
+  "duplicates": 50,
+  "duration_sec": 881.4000000000001,
   "threshold_pct": 50,
   "alert": true,
-  "report_path": "reports/green/green_20261010_012544.md"
+  "report_path": "reports/green/green_20261011_003702.md"
 }
