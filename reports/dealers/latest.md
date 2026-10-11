@@ -1,9 +1,9 @@
 # AutoRadar — Batch DEALERS Report
 
-**Date :** 2026-10-10 16:34:21 UTC
+**Date :** 2026-10-11 02:50:05 UTC
 **Description :** Concessions luxe FR/BE/CH/LU
 **Sources testées :** 18
-**Sources OK :** 0/18 (0.0%)
+**Sources OK :** 1/18 (5.6%)
 **Pages par source :** 1
 
 ## ⚠️ ALERTE
@@ -17,9 +17,9 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 | Cards trouvées | 1572 |
 | Listings extraits | 4 |
 | **Nouvelles entrées DB** | **0** |
-| Doublons (déjà en DB) | 0 |
+| Doublons (déjà en DB) | 1 |
 | Rejetés (validation) | 3 |
-| Durée totale | 729s (12.2 min) |
+| Durée totale | 399s (6.7 min) |
 
 ## Tableau récapitulatif
 
@@ -29,7 +29,7 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 | 🟠 | Excel Car | France | 0 | 0 | 0 | 0 | générique | — |
 | 🟡 | DB7 Autos | France | 6 | 0 | 0 | 0 | générique | — |
 | 🟠 | Eliandre Automobile | France | 0 | 0 | 0 | 0 | générique | — |
-| 🟡 | EvoCars | France | 16 | 1 | 0 | 0 | générique | — |
+| 🟡 | EvoCars | France | 16 | 1 | 0 | 1 | générique | dup-only |
 | 🔴 | BStore Auto Prestige | France | 0 | 0 | 0 | 0 | générique | DNS error |
 | 🟠 | e-Concession Bordeaux | France | 0 | 0 | 0 | 0 | générique | — |
 | 🟠 | Bavaria Motors | Belgique | 0 | 0 | 0 | 0 | dédié | — |
@@ -41,33 +41,33 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 | 🟡 | Modena Cars | Suisse | 60 | 0 | 0 | 0 | générique | — |
 | 🔴 | Rolls-Royce Motor Cars Geneva | Suisse | 0 | 0 | 0 | 0 | générique | DNS error |
 | 🟠 | Schumacher Motors | Luxembourg | 0 | 0 | 0 | 0 | générique | — |
-| 🔴 | LuxSELLect | Luxembourg | 1 | 0 | 0 | 0 | générique | exit 1: 2026-10-10 16:44:01,087 INFO 🏎️  Scraping concession : LuxSELLect (Luxembourg) | 2026-10-10 16:44:01,088 INFO    (override pages = 1) | 2026-10-10 16:44:01,107 INFO === LuxSELLect (Luxembourg) — Parser 🟡  |
-| 🔴 | Deal & Drive | Luxembourg | 0 | 0 | 0 | 0 | générique | exit 1: 2026-10-10 16:45:03,008 INFO 🏎️  Scraping concession : Deal & Drive (Luxembourg) | 2026-10-10 16:45:03,009 INFO    (override pages = 1) | 2026-10-10 16:45:03,028 INFO === Deal & Drive (Luxembourg) — Parse |
+| 🟡 | LuxSELLect | Luxembourg | 1 | 0 | 0 | 0 | générique | — |
+| 🟠 | Deal & Drive | Luxembourg | 0 | 0 | 0 | 0 | générique | — |
 
-## 🟡 PARTIELLES (cards mais 0 extr., ou que duplicates) (7)
+## 🟡 PARTIELLES (cards mais 0 extr., ou que duplicates) (8)
 
-- **`Moteur & Sens`** — cards: 1473, extraits: 3, new: 0, dup: 0, durée: 79.5s
-- **`DB7 Autos`** — cards: 6, extraits: 0, new: 0, dup: 0, durée: 25.9s
-- **`EvoCars`** — cards: 16, extraits: 1, new: 0, dup: 0, durée: 112.0s
-- **`Carugati Automobiles`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 21.2s
-- **`Lamborghini Genève`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 30.1s
-- **`Garage R. Affolter`** — cards: 14, extraits: 0, new: 0, dup: 0, durée: 30.7s
-- **`Modena Cars`** — cards: 60, extraits: 0, new: 0, dup: 0, durée: 22.6s
+- **`Moteur & Sens`** — cards: 1473, extraits: 3, new: 0, dup: 0, durée: 30.1s
+- **`DB7 Autos`** — cards: 6, extraits: 0, new: 0, dup: 0, durée: 24.7s
+- **`EvoCars`** — cards: 16, extraits: 1, new: 0, dup: 1, durée: 24.7s
+- **`Carugati Automobiles`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 15.5s
+- **`Lamborghini Genève`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 17.3s
+- **`Garage R. Affolter`** — cards: 14, extraits: 0, new: 0, dup: 0, durée: 19.8s
+- **`Modena Cars`** — cards: 60, extraits: 0, new: 0, dup: 0, durée: 20.3s
+- **`LuxSELLect`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 24.0s
 
-## 🟠 VIDES (0 cards — listing inaccessible) (7)
+## 🟠 VIDES (0 cards — listing inaccessible) (8)
 
-- **`Excel Car`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 68.2s
-- **`Eliandre Automobile`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 27.2s
-- **`e-Concession Bordeaux`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 27.5s
-- **`Bavaria Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 32.2s
-- **`Kuurne Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 22.3s
-- **`Perego Cars`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 27.1s
-- **`Schumacher Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 27.7s
+- **`Excel Car`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 50.7s
+- **`Eliandre Automobile`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 26.5s
+- **`e-Concession Bordeaux`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 22.2s
+- **`Bavaria Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 25.0s
+- **`Kuurne Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 23.6s
+- **`Perego Cars`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 24.0s
+- **`Schumacher Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 16.3s
+- **`Deal & Drive`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.2s
 
-## 🔴 EN ERREUR (4)
+## 🔴 EN ERREUR (2)
 
-- **`BStore Auto Prestige`** — erreur : `DNS error`, durée: 15.3s
-- **`Rolls-Royce Motor Cars Geneva`** — erreur : `DNS error`, durée: 8.8s
-- **`LuxSELLect`** — erreur : `exit 1: 2026-10-10 16:44:01,087 INFO 🏎️  Scraping concession : LuxSELLect (Luxembourg) | 2026-10-10 16:44:01,088 INFO    (override pages = 1) | 2026-10-10 16:44:01,107 INFO === LuxSELLect (Luxembourg) — Parser 🟡 `, durée: 61.9s
-- **`Deal & Drive`** — erreur : `exit 1: 2026-10-10 16:45:03,008 INFO 🏎️  Scraping concession : Deal & Drive (Luxembourg) | 2026-10-10 16:45:03,009 INFO    (override pages = 1) | 2026-10-10 16:45:03,028 INFO === Deal & Drive (Luxembourg) — Parse`, durée: 89.1s
+- **`BStore Auto Prestige`** — erreur : `DNS error`, durée: 6.0s
+- **`Rolls-Royce Motor Cars Geneva`** — erreur : `DNS error`, durée: 7.1s
 
