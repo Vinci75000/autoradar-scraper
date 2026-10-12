@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-11T16:59:11.479132",
+  "timestamp": "2026-10-12T03:13:26.278395",
   "batch": "dealers",
   "sources_total": 18,
   "sources_ok": 0,
@@ -8,8 +8,8 @@
   "listings_extracted": 4,
   "new_in_db": 0,
   "duplicates": 0,
-  "duration_sec": 575.0999999999999,
+  "duration_sec": 414.1,
   "threshold_pct": 50,
   "alert": true,
-  "report_path": "reports/dealers/dealers_20261011_165911.md"
+  "report_path": "reports/dealers/dealers_20261012_031326.md"
 }
