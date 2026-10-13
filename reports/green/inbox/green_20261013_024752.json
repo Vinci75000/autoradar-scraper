@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-10-13T02:47:52.079889",
+  "batch": "green",
+  "sources_total": 17,
+  "sources_ok": 0,
+  "sources_ok_pct": 0.0,
+  "cards_found": 0,
+  "listings_extracted": 0,
+  "new_in_db": 0,
+  "duplicates": 0,
+  "duration_sec": 981.5999999999998,
+  "threshold_pct": 50,
+  "alert": true,
+  "report_path": "reports/green/green_20261013_024752.md"
+}
