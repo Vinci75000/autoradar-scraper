@@ -1,6 +1,6 @@
 # AutoRadar — Batch GREEN Report
 
-**Date :** 2026-10-13 02:47:52 UTC
+**Date :** 2026-10-14 00:48:36 UTC
 **Description :** Sources collection / niche (faible risque)
 **Sources testées :** 17
 **Sources OK :** 0/17 (0.0%)
@@ -19,47 +19,47 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 | **Nouvelles entrées DB** | **0** |
 | Doublons (déjà en DB) | 0 |
 | Rejetés (validation) | 0 |
-| Durée totale | 982s (16.4 min) |
+| Durée totale | 1023s (17.1 min) |
 
 ## Tableau récapitulatif
 
 | | Source | Cards | Extr. | New | Dup. | Note |
 |---|---|---|---|---|---|---|
-| 🔴 | `classicnumber` | 0 | 0 | 0 | 0 | exit 1: 2026-10-13 02:47:53,941 INFO  | === Scraping classicnumber (3 pages) === | 2026-10-13 02:47:54,557 INFO ClassicNumber page 1 | 2026-10-13 02:47:57,867 INFO   Found 0 cards | 2026-10-13 02:48:01,399 INFO Class |
-| 🔴 | `gotothegrid` | 0 | 0 | 0 | 0 | exit 1: 2026-10-13 02:48:16,446 INFO  | === Scraping gotothegrid (3 pages) === | 2026-10-13 02:48:16,892 INFO GoToTheGrid page 1 | 2026-10-13 02:48:22,117 INFO   Found 0 cards | 2026-10-13 02:48:25,301 INFO GoToTheGr |
-| 🔴 | `racemarket` | 0 | 0 | 0 | 0 | exit 1: 2026-10-13 02:48:42,008 INFO  | === Scraping racemarket (3 pages) === | 2026-10-13 02:48:42,463 INFO Racemarket page 1 | 2026-10-13 02:49:32,465 ERROR Racemarket p1: Page.goto: Timeout 50000ms exceeded. | Cal |
-| 🔴 | `plethore` | 0 | 0 | 0 | 0 | exit 1: 2026-10-13 02:51:24,173 INFO  | === Scraping plethore (3 pages) === | 2026-10-13 02:51:24,612 INFO PlethoreCars page 1 | 2026-10-13 02:51:31,367 INFO   Found 0 cards | 2026-10-13 02:51:33,590 INFO PlethoreCar |
-| 🔴 | `classicdriver` | 0 | 0 | 0 | 0 | exit 1: 2026-10-13 02:51:56,219 INFO  | === Scraping classicdriver (3 pages) === | 2026-10-13 02:51:56,677 INFO ClassicDriver page 1 | 2026-10-13 02:52:46,679 ERROR ClassicDriver p1: Page.goto: Timeout 50000ms exce |
+| 🔴 | `classicnumber` | 0 | 0 | 0 | 0 | exit 1: 2026-10-14 00:48:38,324 INFO  | === Scraping classicnumber (3 pages) === | 2026-10-14 00:48:41,924 INFO ClassicNumber page 1 | 2026-10-14 00:48:44,758 INFO   Found 0 cards | 2026-10-14 00:48:48,072 INFO Class |
+| 🔴 | `gotothegrid` | 0 | 0 | 0 | 0 | exit 1: 2026-10-14 00:49:01,379 INFO  | === Scraping gotothegrid (3 pages) === | 2026-10-14 00:49:01,695 INFO GoToTheGrid page 1 | 2026-10-14 00:49:07,391 INFO   Found 0 cards | 2026-10-14 00:49:09,605 INFO GoToTheGr |
+| 🔴 | `racemarket` | 0 | 0 | 0 | 0 | exit 1: 2026-10-14 00:49:25,794 INFO  | === Scraping racemarket (3 pages) === | 2026-10-14 00:49:26,113 INFO Racemarket page 1 | 2026-10-14 00:50:16,116 ERROR Racemarket p1: Page.goto: Timeout 50000ms exceeded. | Cal |
+| 🔴 | `plethore` | 0 | 0 | 0 | 0 | exit 1: 2026-10-14 00:52:07,695 INFO  | === Scraping plethore (3 pages) === | 2026-10-14 00:52:08,012 INFO PlethoreCars page 1 | 2026-10-14 00:52:15,317 INFO   Found 0 cards | 2026-10-14 00:52:18,303 INFO PlethoreCar |
+| 🔴 | `classicdriver` | 0 | 0 | 0 | 0 | exit 1: 2026-10-14 00:52:39,449 INFO  | === Scraping classicdriver (3 pages) === | 2026-10-14 00:52:39,781 INFO ClassicDriver page 1 | 2026-10-14 00:53:29,783 ERROR ClassicDriver p1: Page.goto: Timeout 50000ms exce |
 | 🔴 | `lesanciennes` | 0 | 0 | 0 | 0 | timeout |
-| 🔴 | `goodtimers` | 0 | 0 | 0 | 0 | exit 1: 2026-10-13 02:57:41,321 INFO  | === Scraping goodtimers (3 pages) === | 2026-10-13 02:57:41,762 INFO GoodTimers page 1 | 2026-10-13 02:57:45,844 INFO   Found 0 cards | 2026-10-13 02:57:48,082 INFO GoodTimers  |
-| 🔴 | `carjager` | 0 | 0 | 0 | 0 | exit 1: 2026-10-13 02:58:03,671 INFO  | === Scraping carjager (3 pages) === | 2026-10-13 02:58:04,107 INFO CarJager page 1 | 2026-10-13 02:58:10,972 INFO   Found 0 cards | 2026-10-13 02:58:15,277 INFO CarJager page 2 |
-| 🔴 | `classictrader` | 0 | 0 | 0 | 0 | exit 1: 2026-10-13 02:58:38,144 INFO  | === Scraping classictrader (3 pages) === | 2026-10-13 02:58:38,584 INFO ClassicTrader page 1 | 2026-10-13 02:58:45,075 INFO   Found 0 cards | 2026-10-13 02:58:49,560 INFO Class |
-| 🔴 | `oldtimerfarm` | 0 | 0 | 0 | 0 | exit 1: 2026-10-13 02:59:14,725 INFO HTTP Request: POST https://qqbssqcuxllmtapqkmkz.supabase.co/rest/v1/scraper_runs "HTTP/2 503 Service Unavailable" | Traceback (most recent call last): |   File "/home/runner/w |
-| 🔴 | `collectingcars` | 0 | 0 | 0 | 0 | exit 1: 2026-10-13 02:59:16,440 INFO  | === Scraping collectingcars (3 pages) === | 2026-10-13 02:59:16,886 INFO CollectingCars page 1 | 2026-10-13 02:59:24,440 INFO   CollectingCars: 0 cards | 2026-10-13 02:59:26,81 |
-| 🔴 | `superclassics` | 0 | 0 | 0 | 0 | exit 1: 2026-10-13 03:01:15,884 INFO  | === Scraping superclassics (3 pages) === | 2026-10-13 03:01:16,322 INFO SuperClassics page 1 | 2026-10-13 03:01:25,855 INFO   SuperClassics: 10 cards | 2026-10-13 03:01:29,514  |
-| 🔴 | `jenden` | 0 | 0 | 0 | 0 | exit 1: 2026-10-13 03:01:55,498 INFO  | === Scraping jenden (3 pages) === | 2026-10-13 03:01:55,941 INFO Jenden.eu page 1 | 2026-10-13 03:02:02,108 INFO   Jenden.eu: 0 cards | 2026-10-13 03:02:04,906 INFO Jenden.eu p |
-| 🔴 | `carandclassic` | 0 | 0 | 0 | 0 | exit 1: 2026-10-13 03:02:23,332 INFO  | === Scraping carandclassic (3 pages) === | 2026-10-13 03:02:23,773 INFO Car&Classic page 1 | 2026-10-13 03:02:29,620 INFO   Car&Classic: 0 cards | 2026-10-13 03:02:31,668 INFO  |
-| 🔴 | `pistonheads` | 0 | 0 | 0 | 0 | exit 1: 2026-10-13 03:02:52,723 INFO  | === Scraping pistonheads (3 pages) === | 2026-10-13 03:02:53,170 INFO PistonHeads page 1 | 2026-10-13 03:03:02,377 INFO   PistonHeads: 0 cards | 2026-10-13 03:03:04,463 INFO Pi |
-| 🔴 | `dyler` | 0 | 0 | 0 | 0 | exit 1: 2026-10-13 03:03:30,397 INFO  | === Scraping dyler (3 pages) === | 2026-10-13 03:03:30,832 INFO Dyler page 1 | 2026-10-13 03:03:40,126 INFO   Dyler: 0 cards | 2026-10-13 03:03:43,659 INFO Dyler page 2 | 2026-10 |
-| 🔴 | `annoncesauto` | 0 | 0 | 0 | 0 | exit 1: 2026-10-13 03:04:13,426 INFO HTTP Request: POST https://qqbssqcuxllmtapqkmkz.supabase.co/rest/v1/scraper_runs "HTTP/2 503 Service Unavailable" | Traceback (most recent call last): |   File "/home/runner/w |
+| 🔴 | `goodtimers` | 0 | 0 | 0 | 0 | exit 1: 2026-10-14 00:58:24,430 INFO  | === Scraping goodtimers (3 pages) === | 2026-10-14 00:58:24,755 INFO GoodTimers page 1 | 2026-10-14 00:58:28,542 INFO   Found 0 cards | 2026-10-14 00:58:30,543 INFO GoodTimers  |
+| 🔴 | `carjager` | 0 | 0 | 0 | 0 | exit 1: 2026-10-14 00:58:46,124 INFO  | === Scraping carjager (3 pages) === | 2026-10-14 00:58:46,473 INFO CarJager page 1 | 2026-10-14 00:58:51,851 INFO   Found 0 cards | 2026-10-14 00:58:56,668 INFO CarJager page 2 |
+| 🔴 | `classictrader` | 0 | 0 | 0 | 0 | exit 1: 2026-10-14 00:59:18,382 INFO  | === Scraping classictrader (3 pages) === | 2026-10-14 00:59:18,713 INFO ClassicTrader page 1 | 2026-10-14 00:59:25,927 INFO   Found 0 cards | 2026-10-14 00:59:28,989 INFO Class |
+| 🔴 | `oldtimerfarm` | 0 | 0 | 0 | 0 | exit 1: 2026-10-14 00:59:54,898 INFO HTTP Request: POST https://qqbssqcuxllmtapqkmkz.supabase.co/rest/v1/scraper_runs "HTTP/2 503 Service Unavailable" | Traceback (most recent call last): |   File "/home/runner/w |
+| 🔴 | `collectingcars` | 0 | 0 | 0 | 0 | exit 1: 2026-10-14 00:59:56,116 INFO  | === Scraping collectingcars (3 pages) === | 2026-10-14 00:59:56,456 INFO CollectingCars page 1 | 2026-10-14 01:00:04,686 INFO   CollectingCars: 0 cards | 2026-10-14 01:00:07,64 |
+| 🔴 | `superclassics` | 0 | 0 | 0 | 0 | exit 1: 2026-10-14 01:01:56,095 INFO  | === Scraping superclassics (3 pages) === | 2026-10-14 01:01:56,417 INFO SuperClassics page 1 | 2026-10-14 01:02:06,540 INFO   SuperClassics: 10 cards | 2026-10-14 01:02:10,496  |
+| 🔴 | `jenden` | 0 | 0 | 0 | 0 | exit 1: 2026-10-14 01:02:37,839 INFO  | === Scraping jenden (3 pages) === | 2026-10-14 01:02:38,160 INFO Jenden.eu page 1 | 2026-10-14 01:02:44,798 INFO   Jenden.eu: 0 cards | 2026-10-14 01:02:47,852 INFO Jenden.eu p |
+| 🔴 | `carandclassic` | 0 | 0 | 0 | 0 | exit 1: 2026-10-14 01:03:08,256 INFO  | === Scraping carandclassic (3 pages) === | 2026-10-14 01:03:08,570 INFO Car&Classic page 1 | 2026-10-14 01:03:58,573 ERROR Car&Classic p1: Page.goto: Timeout 50000ms exceeded |
+| 🔴 | `pistonheads` | 0 | 0 | 0 | 0 | exit 1: 2026-10-14 01:04:21,876 INFO  | === Scraping pistonheads (3 pages) === | 2026-10-14 01:04:22,191 INFO PistonHeads page 1 | 2026-10-14 01:04:29,689 INFO   PistonHeads: 0 cards | 2026-10-14 01:04:33,604 INFO Pi |
+| 🔴 | `dyler` | 0 | 0 | 0 | 0 | exit 1: 2026-10-14 01:04:58,393 INFO  | === Scraping dyler (3 pages) === | 2026-10-14 01:04:58,718 INFO Dyler page 1 | 2026-10-14 01:05:08,196 INFO   Dyler: 0 cards | 2026-10-14 01:05:11,020 INFO Dyler page 2 | 2026-10 |
+| 🔴 | `annoncesauto` | 0 | 0 | 0 | 0 | exit 1: 2026-10-14 01:05:39,294 INFO HTTP Request: POST https://qqbssqcuxllmtapqkmkz.supabase.co/rest/v1/scraper_runs "HTTP/2 503 Service Unavailable" | Traceback (most recent call last): |   File "/home/runner/w |
 
 ## 🔴 EN ERREUR (17)
 
-- **`classicnumber`** — erreur : `exit 1: 2026-10-13 02:47:53,941 INFO  | === Scraping classicnumber (3 pages) === | 2026-10-13 02:47:54,557 INFO ClassicNumber page 1 | 2026-10-13 02:47:57,867 INFO   Found 0 cards | 2026-10-13 02:48:01,399 INFO Class`, durée: 22.9s
-- **`gotothegrid`** — erreur : `exit 1: 2026-10-13 02:48:16,446 INFO  | === Scraping gotothegrid (3 pages) === | 2026-10-13 02:48:16,892 INFO GoToTheGrid page 1 | 2026-10-13 02:48:22,117 INFO   Found 0 cards | 2026-10-13 02:48:25,301 INFO GoToTheGr`, durée: 25.6s
-- **`racemarket`** — erreur : `exit 1: 2026-10-13 02:48:42,008 INFO  | === Scraping racemarket (3 pages) === | 2026-10-13 02:48:42,463 INFO Racemarket page 1 | 2026-10-13 02:49:32,465 ERROR Racemarket p1: Page.goto: Timeout 50000ms exceeded. | Cal`, durée: 162.2s
-- **`plethore`** — erreur : `exit 1: 2026-10-13 02:51:24,173 INFO  | === Scraping plethore (3 pages) === | 2026-10-13 02:51:24,612 INFO PlethoreCars page 1 | 2026-10-13 02:51:31,367 INFO   Found 0 cards | 2026-10-13 02:51:33,590 INFO PlethoreCar`, durée: 32.0s
-- **`classicdriver`** — erreur : `exit 1: 2026-10-13 02:51:56,219 INFO  | === Scraping classicdriver (3 pages) === | 2026-10-13 02:51:56,677 INFO ClassicDriver page 1 | 2026-10-13 02:52:46,679 ERROR ClassicDriver p1: Page.goto: Timeout 50000ms exce`, durée: 165.1s
+- **`classicnumber`** — erreur : `exit 1: 2026-10-14 00:48:38,324 INFO  | === Scraping classicnumber (3 pages) === | 2026-10-14 00:48:41,924 INFO ClassicNumber page 1 | 2026-10-14 00:48:44,758 INFO   Found 0 cards | 2026-10-14 00:48:48,072 INFO Class`, durée: 24.2s
+- **`gotothegrid`** — erreur : `exit 1: 2026-10-14 00:49:01,379 INFO  | === Scraping gotothegrid (3 pages) === | 2026-10-14 00:49:01,695 INFO GoToTheGrid page 1 | 2026-10-14 00:49:07,391 INFO   Found 0 cards | 2026-10-14 00:49:09,605 INFO GoToTheGr`, durée: 24.5s
+- **`racemarket`** — erreur : `exit 1: 2026-10-14 00:49:25,794 INFO  | === Scraping racemarket (3 pages) === | 2026-10-14 00:49:26,113 INFO Racemarket page 1 | 2026-10-14 00:50:16,116 ERROR Racemarket p1: Page.goto: Timeout 50000ms exceeded. | Cal`, durée: 161.9s
+- **`plethore`** — erreur : `exit 1: 2026-10-14 00:52:07,695 INFO  | === Scraping plethore (3 pages) === | 2026-10-14 00:52:08,012 INFO PlethoreCars page 1 | 2026-10-14 00:52:15,317 INFO   Found 0 cards | 2026-10-14 00:52:18,303 INFO PlethoreCar`, durée: 31.7s
+- **`classicdriver`** — erreur : `exit 1: 2026-10-14 00:52:39,449 INFO  | === Scraping classicdriver (3 pages) === | 2026-10-14 00:52:39,781 INFO ClassicDriver page 1 | 2026-10-14 00:53:29,783 ERROR ClassicDriver p1: Page.goto: Timeout 50000ms exce`, durée: 165.0s
 - **`lesanciennes`** — erreur : `timeout`, durée: 180s
-- **`goodtimers`** — erreur : `exit 1: 2026-10-13 02:57:41,321 INFO  | === Scraping goodtimers (3 pages) === | 2026-10-13 02:57:41,762 INFO GoodTimers page 1 | 2026-10-13 02:57:45,844 INFO   Found 0 cards | 2026-10-13 02:57:48,082 INFO GoodTimers `, durée: 22.3s
-- **`carjager`** — erreur : `exit 1: 2026-10-13 02:58:03,671 INFO  | === Scraping carjager (3 pages) === | 2026-10-13 02:58:04,107 INFO CarJager page 1 | 2026-10-13 02:58:10,972 INFO   Found 0 cards | 2026-10-13 02:58:15,277 INFO CarJager page 2`, durée: 34.5s
-- **`classictrader`** — erreur : `exit 1: 2026-10-13 02:58:38,144 INFO  | === Scraping classictrader (3 pages) === | 2026-10-13 02:58:38,584 INFO ClassicTrader page 1 | 2026-10-13 02:58:45,075 INFO   Found 0 cards | 2026-10-13 02:58:49,560 INFO Class`, durée: 34.8s
-- **`oldtimerfarm`** — erreur : `exit 1: 2026-10-13 02:59:14,725 INFO HTTP Request: POST https://qqbssqcuxllmtapqkmkz.supabase.co/rest/v1/scraper_runs "HTTP/2 503 Service Unavailable" | Traceback (most recent call last): |   File "/home/runner/w`, durée: 3.5s
-- **`collectingcars`** — erreur : `exit 1: 2026-10-13 02:59:16,440 INFO  | === Scraping collectingcars (3 pages) === | 2026-10-13 02:59:16,886 INFO CollectingCars page 1 | 2026-10-13 02:59:24,440 INFO   CollectingCars: 0 cards | 2026-10-13 02:59:26,81`, durée: 119.4s
-- **`superclassics`** — erreur : `exit 1: 2026-10-13 03:01:15,884 INFO  | === Scraping superclassics (3 pages) === | 2026-10-13 03:01:16,322 INFO SuperClassics page 1 | 2026-10-13 03:01:25,855 INFO   SuperClassics: 10 cards | 2026-10-13 03:01:29,514 `, durée: 39.6s
-- **`jenden`** — erreur : `exit 1: 2026-10-13 03:01:55,498 INFO  | === Scraping jenden (3 pages) === | 2026-10-13 03:01:55,941 INFO Jenden.eu page 1 | 2026-10-13 03:02:02,108 INFO   Jenden.eu: 0 cards | 2026-10-13 03:02:04,906 INFO Jenden.eu p`, durée: 27.9s
-- **`carandclassic`** — erreur : `exit 1: 2026-10-13 03:02:23,332 INFO  | === Scraping carandclassic (3 pages) === | 2026-10-13 03:02:23,773 INFO Car&Classic page 1 | 2026-10-13 03:02:29,620 INFO   Car&Classic: 0 cards | 2026-10-13 03:02:31,668 INFO `, durée: 29.4s
-- **`pistonheads`** — erreur : `exit 1: 2026-10-13 03:02:52,723 INFO  | === Scraping pistonheads (3 pages) === | 2026-10-13 03:02:53,170 INFO PistonHeads page 1 | 2026-10-13 03:03:02,377 INFO   PistonHeads: 0 cards | 2026-10-13 03:03:04,463 INFO Pi`, durée: 37.7s
-- **`dyler`** — erreur : `exit 1: 2026-10-13 03:03:30,397 INFO  | === Scraping dyler (3 pages) === | 2026-10-13 03:03:30,832 INFO Dyler page 1 | 2026-10-13 03:03:40,126 INFO   Dyler: 0 cards | 2026-10-13 03:03:43,659 INFO Dyler page 2 | 2026-10`, durée: 41.3s
-- **`annoncesauto`** — erreur : `exit 1: 2026-10-13 03:04:13,426 INFO HTTP Request: POST https://qqbssqcuxllmtapqkmkz.supabase.co/rest/v1/scraper_runs "HTTP/2 503 Service Unavailable" | Traceback (most recent call last): |   File "/home/runner/w`, durée: 3.4s
+- **`goodtimers`** — erreur : `exit 1: 2026-10-14 00:58:24,430 INFO  | === Scraping goodtimers (3 pages) === | 2026-10-14 00:58:24,755 INFO GoodTimers page 1 | 2026-10-14 00:58:28,542 INFO   Found 0 cards | 2026-10-14 00:58:30,543 INFO GoodTimers `, durée: 21.6s
+- **`carjager`** — erreur : `exit 1: 2026-10-14 00:58:46,124 INFO  | === Scraping carjager (3 pages) === | 2026-10-14 00:58:46,473 INFO CarJager page 1 | 2026-10-14 00:58:51,851 INFO   Found 0 cards | 2026-10-14 00:58:56,668 INFO CarJager page 2`, durée: 32.3s
+- **`classictrader`** — erreur : `exit 1: 2026-10-14 00:59:18,382 INFO  | === Scraping classictrader (3 pages) === | 2026-10-14 00:59:18,713 INFO ClassicTrader page 1 | 2026-10-14 00:59:25,927 INFO   Found 0 cards | 2026-10-14 00:59:28,989 INFO Class`, durée: 34.9s
+- **`oldtimerfarm`** — erreur : `exit 1: 2026-10-14 00:59:54,898 INFO HTTP Request: POST https://qqbssqcuxllmtapqkmkz.supabase.co/rest/v1/scraper_runs "HTTP/2 503 Service Unavailable" | Traceback (most recent call last): |   File "/home/runner/w`, durée: 2.9s
+- **`collectingcars`** — erreur : `exit 1: 2026-10-14 00:59:56,116 INFO  | === Scraping collectingcars (3 pages) === | 2026-10-14 00:59:56,456 INFO CollectingCars page 1 | 2026-10-14 01:00:04,686 INFO   CollectingCars: 0 cards | 2026-10-14 01:00:07,64`, durée: 119.9s
+- **`superclassics`** — erreur : `exit 1: 2026-10-14 01:01:56,095 INFO  | === Scraping superclassics (3 pages) === | 2026-10-14 01:01:56,417 INFO SuperClassics page 1 | 2026-10-14 01:02:06,540 INFO   SuperClassics: 10 cards | 2026-10-14 01:02:10,496 `, durée: 41.8s
+- **`jenden`** — erreur : `exit 1: 2026-10-14 01:02:37,839 INFO  | === Scraping jenden (3 pages) === | 2026-10-14 01:02:38,160 INFO Jenden.eu page 1 | 2026-10-14 01:02:44,798 INFO   Jenden.eu: 0 cards | 2026-10-14 01:02:47,852 INFO Jenden.eu p`, durée: 30.4s
+- **`carandclassic`** — erreur : `exit 1: 2026-10-14 01:03:08,256 INFO  | === Scraping carandclassic (3 pages) === | 2026-10-14 01:03:08,570 INFO Car&Classic page 1 | 2026-10-14 01:03:58,573 ERROR Car&Classic p1: Page.goto: Timeout 50000ms exceeded`, durée: 73.6s
+- **`pistonheads`** — erreur : `exit 1: 2026-10-14 01:04:21,876 INFO  | === Scraping pistonheads (3 pages) === | 2026-10-14 01:04:22,191 INFO PistonHeads page 1 | 2026-10-14 01:04:29,689 INFO   PistonHeads: 0 cards | 2026-10-14 01:04:33,604 INFO Pi`, durée: 36.5s
+- **`dyler`** — erreur : `exit 1: 2026-10-14 01:04:58,393 INFO  | === Scraping dyler (3 pages) === | 2026-10-14 01:04:58,718 INFO Dyler page 1 | 2026-10-14 01:05:08,196 INFO   Dyler: 0 cards | 2026-10-14 01:05:11,020 INFO Dyler page 2 | 2026-10`, durée: 40.0s
+- **`annoncesauto`** — erreur : `exit 1: 2026-10-14 01:05:39,294 INFO HTTP Request: POST https://qqbssqcuxllmtapqkmkz.supabase.co/rest/v1/scraper_runs "HTTP/2 503 Service Unavailable" | Traceback (most recent call last): |   File "/home/runner/w`, durée: 2.1s
 
