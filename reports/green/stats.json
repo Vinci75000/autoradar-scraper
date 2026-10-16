@@ -1,18 +1,18 @@
 {
   "batch": "green",
-  "generated_at": "2026-10-15T00:30:32.791860",
+  "generated_at": "2026-10-16T00:16:01.478641",
   "runs_analyzed": 7,
-  "period_start": "2026-10-09T01:37:21.020664",
-  "period_end": "2026-10-15T00:13:33.000990",
+  "period_start": "2026-10-10T01:25:44.575313",
+  "period_end": "2026-10-15T23:59:57.681860",
   "sources_total_max": 17,
-  "sources_ok_pct_avg": 4.2,
+  "sources_ok_pct_avg": 3.4,
   "sources_ok_pct_min": 0.0,
   "sources_ok_pct_max": 11.8,
-  "cards_found_total": 789,
-  "listings_extracted_total": 282,
-  "cars_new_total": 60,
-  "duplicates_total": 206,
-  "duration_avg_sec": 982.9,
+  "cards_found_total": 489,
+  "listings_extracted_total": 224,
+  "cars_new_total": 35,
+  "duplicates_total": 179,
+  "duration_avg_sec": 977.7,
   "alerts_triggered": 7,
-  "trend": "degrading"
+  "trend": "stable"
 }
