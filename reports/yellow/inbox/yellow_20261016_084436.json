@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-10-16T08:44:36.007436",
+  "batch": "yellow",
+  "sources_total": 20,
+  "sources_ok": 0,
+  "sources_ok_pct": 0.0,
+  "cards_found": 3,
+  "listings_extracted": 0,
+  "new_in_db": 0,
+  "duplicates": 0,
+  "duration_sec": 1245.3,
+  "threshold_pct": 50,
+  "alert": true,
+  "report_path": "reports/yellow/yellow_20261016_084436.md"
+}
