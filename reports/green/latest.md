@@ -1,6 +1,6 @@
 # AutoRadar — Batch GREEN Report
 
-**Date :** 2026-10-17 00:05:35 UTC
+**Date :** 2026-10-17 23:41:29 UTC
 **Description :** Sources collection / niche (faible risque)
 **Sources testées :** 17
 **Sources OK :** 1/17 (5.9%)
@@ -15,11 +15,11 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 | Métrique | Valeur |
 |---|---|
 | Cards trouvées | 63 |
-| Listings extraits | 53 |
-| **Nouvelles entrées DB** | **7** |
-| Doublons (déjà en DB) | 42 |
-| Rejetés (validation) | 4 |
-| Durée totale | 878s (14.6 min) |
+| Listings extraits | 55 |
+| **Nouvelles entrées DB** | **12** |
+| Doublons (déjà en DB) | 40 |
+| Rejetés (validation) | 3 |
+| Durée totale | 916s (15.3 min) |
 
 ## Tableau récapitulatif
 
@@ -30,7 +30,7 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 | 🟠 | `racemarket` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `plethore` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `classicdriver` | 0 | 0 | 0 | 0 | — |
-| 🟢 | `lesanciennes` | 63 | 53 | 7 | 42 | ✓ |
+| 🟢 | `lesanciennes` | 63 | 55 | 12 | 40 | ✓ |
 | 🟠 | `goodtimers` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `carjager` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `classictrader` | 0 | 0 | 0 | 0 | — |
@@ -45,24 +45,24 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 
 ## 🟢 OPÉRATIONNELLES (nouvelles entrées DB) (1)
 
-- **`lesanciennes`** — cards: 63, extraits: 53, new: 7, dup: 42, durée: 73.6s
+- **`lesanciennes`** — cards: 63, extraits: 55, new: 12, dup: 40, durée: 68.2s
 
 ## 🟠 VIDES (0 cards — listing inaccessible) (16)
 
-- **`classicnumber`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.6s
-- **`gotothegrid`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 24.8s
-- **`racemarket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 163.6s
-- **`plethore`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 32.7s
-- **`classicdriver`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 165.4s
-- **`goodtimers`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 22.5s
-- **`carjager`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 29.6s
-- **`classictrader`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 36.5s
-- **`oldtimerfarm`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 1.9s
-- **`collectingcars`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 122.3s
-- **`superclassics`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 38.5s
-- **`jenden`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 28.6s
-- **`carandclassic`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 31.4s
-- **`pistonheads`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 39.2s
-- **`dyler`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 43.4s
-- **`annoncesauto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 2.9s
+- **`classicnumber`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 19.8s
+- **`gotothegrid`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 27.7s
+- **`racemarket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 162.4s
+- **`plethore`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 35.1s
+- **`classicdriver`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 167.0s
+- **`goodtimers`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 23.2s
+- **`carjager`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 33.9s
+- **`classictrader`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 35.3s
+- **`oldtimerfarm`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 2.0s
+- **`collectingcars`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 119.7s
+- **`superclassics`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 39.6s
+- **`jenden`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 27.3s
+- **`carandclassic`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 75.1s
+- **`pistonheads`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 39.7s
+- **`dyler`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 37.9s
+- **`annoncesauto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 2.1s
 
