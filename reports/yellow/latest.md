@@ -1,6 +1,6 @@
 # AutoRadar — Batch YELLOW Report
 
-**Date :** 2026-10-16 08:44:36 UTC
+**Date :** 2026-10-17 08:15:24 UTC
 **Description :** Sources grand public (risque modéré)
 **Sources testées :** 20
 **Sources OK :** 0/20 (0.0%)
@@ -14,12 +14,12 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 
 | Métrique | Valeur |
 |---|---|
-| Cards trouvées | 3 |
+| Cards trouvées | 6 |
 | Listings extraits | 0 |
 | **Nouvelles entrées DB** | **0** |
 | Doublons (déjà en DB) | 0 |
 | Rejetés (validation) | 0 |
-| Durée totale | 1245s (20.8 min) |
+| Durée totale | 1190s (19.8 min) |
 
 ## Tableau récapitulatif
 
@@ -29,15 +29,15 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 | 🟠 | `mobile` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `kleinanzeigen` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `marktplaats` | 0 | 0 | 0 | 0 | — |
-| 🔴 | `subito` | 0 | 0 | 0 | 0 | exit 1: 2026-10-16 08:50:22,930 INFO  | === Scraping subito (2 pages) === | 2026-10-16 08:50:23,321 INFO Subito.it page 1 | 2026-10-16 08:50:29,917 INFO   Subito.it: 0 cards | 2026-10-16 08:50:33,536 INFO Subito.it p |
-| 🟠 | `wallapop` | 0 | 0 | 0 | 0 | — |
+| 🟠 | `subito` | 0 | 0 | 0 | 0 | — |
+| 🔴 | `wallapop` | 0 | 0 | 0 | 0 | timeout |
 | 🔴 | `willhaben` | 0 | 0 | 0 | 0 | timeout |
-| 🟠 | `otomoto` | 0 | 0 | 0 | 0 | — |
+| 🔴 | `otomoto` | 0 | 0 | 0 | 0 | exit 1: 2026-10-17 08:24:11,340 INFO  | === Scraping otomoto (2 pages) === | 2026-10-17 08:24:11,643 INFO Otomoto.pl page 1 | 2026-10-17 08:24:21,699 INFO   Otomoto.pl: 72 cards | 2026-10-17 08:24:25,564 INFO Otomoto |
 | 🟠 | `blocket` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `gocar` | 0 | 0 | 0 | 0 | — |
-| 🟡 | `autolive` | 3 | 0 | 0 | 0 | — |
-| 🔴 | `tutti` | 0 | 0 | 0 | 0 | timeout |
-| 🔴 | `anibis` | 0 | 0 | 0 | 0 | timeout |
+| 🟡 | `autolive` | 6 | 0 | 0 | 0 | — |
+| 🟠 | `tutti` | 0 | 0 | 0 | 0 | — |
+| 🟠 | `anibis` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `car4you` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `luxauto` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `automarket` | 0 | 0 | 0 | 0 | — |
@@ -48,30 +48,30 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 
 ## 🟡 PARTIELLES (cards mais 0 extr., ou que duplicates) (1)
 
-- **`autolive`** — cards: 3, extraits: 0, new: 0, dup: 0, durée: 84.9s
+- **`autolive`** — cards: 6, extraits: 0, new: 0, dup: 0, durée: 22.7s
 
-## 🟠 VIDES (0 cards — listing inaccessible) (14)
+## 🟠 VIDES (0 cards — listing inaccessible) (15)
 
-- **`mobile`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 90.4s
-- **`kleinanzeigen`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 114.3s
-- **`marktplaats`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.3s
-- **`wallapop`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 104.3s
-- **`otomoto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 51.4s
-- **`blocket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 26.8s
-- **`gocar`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 36.7s
-- **`car4you`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 9.6s
-- **`luxauto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 2.3s
-- **`automarket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 29.5s
-- **`autolu`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 20.5s
-- **`ebay-fr`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 23.7s
-- **`ebay-be`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 35.2s
-- **`ebay-ch`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 30.9s
+- **`mobile`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 19.5s
+- **`kleinanzeigen`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 106.7s
+- **`marktplaats`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.7s
+- **`subito`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 19.7s
+- **`blocket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 38.5s
+- **`gocar`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 29.0s
+- **`tutti`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 114.4s
+- **`anibis`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 114.1s
+- **`car4you`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 10.1s
+- **`luxauto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 1.5s
+- **`automarket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 53.9s
+- **`autolu`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 45.6s
+- **`ebay-fr`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 29.5s
+- **`ebay-be`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 78.7s
+- **`ebay-ch`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 25.8s
 
-## 🔴 EN ERREUR (5)
+## 🔴 EN ERREUR (4)
 
-- **`autoscout24`** — erreur : `timeout`, durée: 120s
-- **`subito`** — erreur : `exit 1: 2026-10-16 08:50:22,930 INFO  | === Scraping subito (2 pages) === | 2026-10-16 08:50:23,321 INFO Subito.it page 1 | 2026-10-16 08:50:29,917 INFO   Subito.it: 0 cards | 2026-10-16 08:50:33,536 INFO Subito.it p`, durée: 84.4s
+- **`autoscout24`** — erreur : `timeout`, durée: 118.0s
+- **`wallapop`** — erreur : `timeout`, durée: 120s
 - **`willhaben`** — erreur : `timeout`, durée: 120s
-- **`tutti`** — erreur : `timeout`, durée: 120s
-- **`anibis`** — erreur : `timeout`, durée: 119.1s
+- **`otomoto`** — erreur : `exit 1: 2026-10-17 08:24:11,340 INFO  | === Scraping otomoto (2 pages) === | 2026-10-17 08:24:11,643 INFO Otomoto.pl page 1 | 2026-10-17 08:24:21,699 INFO   Otomoto.pl: 72 cards | 2026-10-17 08:24:25,564 INFO Otomoto`, durée: 100.1s
 
