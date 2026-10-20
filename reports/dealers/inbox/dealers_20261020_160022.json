@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-10-20T16:00:22.550201",
+  "batch": "dealers",
+  "sources_total": 18,
+  "sources_ok": 1,
+  "sources_ok_pct": 5.6,
+  "cards_found": 1600,
+  "listings_extracted": 4,
+  "new_in_db": 1,
+  "duplicates": 0,
+  "duration_sec": 402.0,
+  "threshold_pct": 50,
+  "alert": true,
+  "report_path": "reports/dealers/dealers_20261020_160022.md"
+}
