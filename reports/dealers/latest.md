@@ -1,6 +1,6 @@
 # AutoRadar — Batch DEALERS Report
 
-**Date :** 2026-10-21 02:28:24 UTC
+**Date :** 2026-10-21 16:17:32 UTC
 **Description :** Concessions luxe FR/BE/CH/LU
 **Sources testées :** 18
 **Sources OK :** 1/18 (5.6%)
@@ -14,18 +14,18 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 
 | Métrique | Valeur |
 |---|---|
-| Cards trouvées | 1600 |
+| Cards trouvées | 1574 |
 | Listings extraits | 4 |
 | **Nouvelles entrées DB** | **1** |
 | Doublons (déjà en DB) | 0 |
 | Rejetés (validation) | 3 |
-| Durée totale | 404s (6.7 min) |
+| Durée totale | 396s (6.6 min) |
 
 ## Tableau récapitulatif
 
 | | Concession | Pays | Cards | Extr. | New | Dup. | Mode | Note |
 |---|---|---|---|---|---|---|---|---|
-| 🟡 | Moteur & Sens | France | 1499 | 3 | 0 | 0 | générique | — |
+| 🟡 | Moteur & Sens | France | 1473 | 3 | 0 | 0 | générique | — |
 | 🟠 | Excel Car | France | 0 | 0 | 0 | 0 | générique | — |
 | 🟡 | DB7 Autos | France | 6 | 0 | 0 | 0 | générique | — |
 | 🟠 | Eliandre Automobile | France | 0 | 0 | 0 | 0 | générique | — |
@@ -46,31 +46,31 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 
 ## 🟢 OPÉRATIONNELLES (nouvelles entrées DB) (1)
 
-- **`EvoCars`** — cards: 18, extraits: 1, new: 1, dup: 0, durée: 30.7s
+- **`EvoCars`** — cards: 18, extraits: 1, new: 1, dup: 0, durée: 27.9s
 
 ## 🟡 PARTIELLES (cards mais 0 extr., ou que duplicates) (7)
 
-- **`Moteur & Sens`** — cards: 1499, extraits: 3, new: 0, dup: 0, durée: 30.9s
-- **`DB7 Autos`** — cards: 6, extraits: 0, new: 0, dup: 0, durée: 25.6s
-- **`Carugati Automobiles`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 15.8s
-- **`Lamborghini Genève`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 17.0s
-- **`Garage R. Affolter`** — cards: 14, extraits: 0, new: 0, dup: 0, durée: 19.4s
-- **`Modena Cars`** — cards: 60, extraits: 0, new: 0, dup: 0, durée: 21.1s
-- **`LuxSELLect`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 23.5s
+- **`Moteur & Sens`** — cards: 1473, extraits: 3, new: 0, dup: 0, durée: 29.5s
+- **`DB7 Autos`** — cards: 6, extraits: 0, new: 0, dup: 0, durée: 25.4s
+- **`Carugati Automobiles`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 13.8s
+- **`Lamborghini Genève`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 16.9s
+- **`Garage R. Affolter`** — cards: 14, extraits: 0, new: 0, dup: 0, durée: 19.8s
+- **`Modena Cars`** — cards: 60, extraits: 0, new: 0, dup: 0, durée: 20.9s
+- **`LuxSELLect`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 24.6s
 
 ## 🟠 VIDES (0 cards — listing inaccessible) (8)
 
-- **`Excel Car`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 51.8s
-- **`Eliandre Automobile`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 25.9s
-- **`e-Concession Bordeaux`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 22.6s
-- **`Bavaria Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 23.5s
-- **`Kuurne Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 22.4s
-- **`Perego Cars`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 23.4s
-- **`Schumacher Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 15.3s
-- **`Deal & Drive`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.5s
+- **`Excel Car`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 50.2s
+- **`Eliandre Automobile`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 25.1s
+- **`e-Concession Bordeaux`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 23.8s
+- **`Bavaria Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 23.9s
+- **`Kuurne Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 20.6s
+- **`Perego Cars`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 22.2s
+- **`Schumacher Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 15.2s
+- **`Deal & Drive`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.7s
 
 ## 🔴 EN ERREUR (2)
 
-- **`BStore Auto Prestige`** — erreur : `DNS error`, durée: 5.9s
-- **`Rolls-Royce Motor Cars Geneva`** — erreur : `DNS error`, durée: 7.3s
+- **`BStore Auto Prestige`** — erreur : `DNS error`, durée: 6.2s
+- **`Rolls-Royce Motor Cars Geneva`** — erreur : `DNS error`, durée: 8.2s
 
