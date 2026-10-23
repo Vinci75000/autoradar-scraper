@@ -1,6 +1,6 @@
 # AutoRadar — Batch DEALERS Report
 
-**Date :** 2026-10-23 02:29:25 UTC
+**Date :** 2026-10-23 16:06:09 UTC
 **Description :** Concessions luxe FR/BE/CH/LU
 **Sources testées :** 18
 **Sources OK :** 1/18 (5.6%)
@@ -14,18 +14,18 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 
 | Métrique | Valeur |
 |---|---|
-| Cards trouvées | 1574 |
+| Cards trouvées | 1588 |
 | Listings extraits | 4 |
 | **Nouvelles entrées DB** | **1** |
 | Doublons (déjà en DB) | 0 |
 | Rejetés (validation) | 3 |
-| Durée totale | 381s (6.4 min) |
+| Durée totale | 395s (6.6 min) |
 
 ## Tableau récapitulatif
 
 | | Concession | Pays | Cards | Extr. | New | Dup. | Mode | Note |
 |---|---|---|---|---|---|---|---|---|
-| 🟡 | Moteur & Sens | France | 1473 | 3 | 0 | 0 | générique | — |
+| 🟡 | Moteur & Sens | France | 1486 | 3 | 0 | 0 | générique | — |
 | 🟠 | Excel Car | France | 0 | 0 | 0 | 0 | générique | — |
 | 🟡 | DB7 Autos | France | 6 | 0 | 0 | 0 | générique | — |
 | 🟠 | Eliandre Automobile | France | 0 | 0 | 0 | 0 | générique | — |
@@ -38,7 +38,7 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 | 🟠 | Perego Cars | Suisse | 0 | 0 | 0 | 0 | générique | — |
 | 🟡 | Lamborghini Genève | Suisse | 1 | 0 | 0 | 0 | générique | — |
 | 🟡 | Garage R. Affolter | Suisse | 14 | 0 | 0 | 0 | dédié | — |
-| 🟡 | Modena Cars | Suisse | 60 | 0 | 0 | 0 | générique | — |
+| 🟡 | Modena Cars | Suisse | 61 | 0 | 0 | 0 | générique | — |
 | 🔴 | Rolls-Royce Motor Cars Geneva | Suisse | 0 | 0 | 0 | 0 | générique | DNS error |
 | 🟠 | Schumacher Motors | Luxembourg | 0 | 0 | 0 | 0 | générique | — |
 | 🟡 | LuxSELLect | Luxembourg | 1 | 0 | 0 | 0 | générique | — |
@@ -46,31 +46,31 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 
 ## 🟢 OPÉRATIONNELLES (nouvelles entrées DB) (1)
 
-- **`EvoCars`** — cards: 18, extraits: 1, new: 1, dup: 0, durée: 27.0s
+- **`EvoCars`** — cards: 18, extraits: 1, new: 1, dup: 0, durée: 26.8s
 
 ## 🟡 PARTIELLES (cards mais 0 extr., ou que duplicates) (7)
 
-- **`Moteur & Sens`** — cards: 1473, extraits: 3, new: 0, dup: 0, durée: 28.0s
-- **`DB7 Autos`** — cards: 6, extraits: 0, new: 0, dup: 0, durée: 21.9s
-- **`Carugati Automobiles`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 13.9s
-- **`Lamborghini Genève`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 17.0s
-- **`Garage R. Affolter`** — cards: 14, extraits: 0, new: 0, dup: 0, durée: 18.5s
-- **`Modena Cars`** — cards: 60, extraits: 0, new: 0, dup: 0, durée: 20.8s
-- **`LuxSELLect`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 21.6s
+- **`Moteur & Sens`** — cards: 1486, extraits: 3, new: 0, dup: 0, durée: 29.8s
+- **`DB7 Autos`** — cards: 6, extraits: 0, new: 0, dup: 0, durée: 24.1s
+- **`Carugati Automobiles`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 17.7s
+- **`Lamborghini Genève`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 15.3s
+- **`Garage R. Affolter`** — cards: 14, extraits: 0, new: 0, dup: 0, durée: 20.0s
+- **`Modena Cars`** — cards: 61, extraits: 0, new: 0, dup: 0, durée: 17.8s
+- **`LuxSELLect`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 24.9s
 
 ## 🟠 VIDES (0 cards — listing inaccessible) (8)
 
-- **`Excel Car`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 51.1s
-- **`Eliandre Automobile`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 24.3s
-- **`e-Concession Bordeaux`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 22.9s
-- **`Bavaria Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 23.2s
-- **`Kuurne Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.4s
-- **`Perego Cars`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 23.1s
-- **`Schumacher Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 14.3s
-- **`Deal & Drive`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 20.6s
+- **`Excel Car`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 50.6s
+- **`Eliandre Automobile`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 25.3s
+- **`e-Concession Bordeaux`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 23.1s
+- **`Bavaria Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 23.4s
+- **`Kuurne Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 20.7s
+- **`Perego Cars`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 24.9s
+- **`Schumacher Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 16.9s
+- **`Deal & Drive`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.4s
 
 ## 🔴 EN ERREUR (2)
 
-- **`BStore Auto Prestige`** — erreur : `DNS error`, durée: 5.8s
-- **`Rolls-Royce Motor Cars Geneva`** — erreur : `DNS error`, durée: 5.9s
+- **`BStore Auto Prestige`** — erreur : `DNS error`, durée: 4.9s
+- **`Rolls-Royce Motor Cars Geneva`** — erreur : `DNS error`, durée: 7.8s
 
