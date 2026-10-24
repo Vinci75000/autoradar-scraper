@@ -1,15 +1,15 @@
 {
-  "timestamp": "2026-10-23T16:06:09.329236",
+  "timestamp": "2026-10-24T02:27:45.565322",
   "batch": "dealers",
   "sources_total": 18,
   "sources_ok": 1,
   "sources_ok_pct": 5.6,
-  "cards_found": 1588,
+  "cards_found": 1601,
   "listings_extracted": 4,
   "new_in_db": 1,
   "duplicates": 0,
-  "duration_sec": 395.4,
+  "duration_sec": 407.5,
   "threshold_pct": 50,
   "alert": true,
-  "report_path": "reports/dealers/dealers_20261023_160609.md"
+  "report_path": "reports/dealers/dealers_20261024_022745.md"
 }
