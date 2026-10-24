@@ -1,15 +1,15 @@
 {
-  "timestamp": "2026-10-23T00:18:50.289980",
+  "timestamp": "2026-10-24T00:10:38.068734",
   "batch": "green",
   "sources_total": 17,
   "sources_ok": 1,
   "sources_ok_pct": 5.9,
-  "cards_found": 63,
+  "cards_found": 72,
   "listings_extracted": 56,
-  "new_in_db": 11,
-  "duplicates": 42,
-  "duration_sec": 895.0000000000001,
+  "new_in_db": 8,
+  "duplicates": 44,
+  "duration_sec": 998.1999999999998,
   "threshold_pct": 50,
   "alert": true,
-  "report_path": "reports/green/green_20261023_001850.md"
+  "report_path": "reports/green/green_20261024_001038.md"
 }
