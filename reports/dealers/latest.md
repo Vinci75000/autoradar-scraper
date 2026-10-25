@@ -1,6 +1,6 @@
 # AutoRadar — Batch DEALERS Report
 
-**Date :** 2026-10-24 15:03:02 UTC
+**Date :** 2026-10-25 02:15:02 UTC
 **Description :** Concessions luxe FR/BE/CH/LU
 **Sources testées :** 18
 **Sources OK :** 1/18 (5.6%)
@@ -14,7 +14,7 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 
 | Métrique | Valeur |
 |---|---|
-| Cards trouvées | 1601 |
+| Cards trouvées | 1627 |
 | Listings extraits | 4 |
 | **Nouvelles entrées DB** | **1** |
 | Doublons (déjà en DB) | 0 |
@@ -25,7 +25,7 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 
 | | Concession | Pays | Cards | Extr. | New | Dup. | Mode | Note |
 |---|---|---|---|---|---|---|---|---|
-| 🟡 | Moteur & Sens | France | 1499 | 3 | 0 | 0 | générique | — |
+| 🟡 | Moteur & Sens | France | 1525 | 3 | 0 | 0 | générique | — |
 | 🟠 | Excel Car | France | 0 | 0 | 0 | 0 | générique | — |
 | 🟡 | DB7 Autos | France | 6 | 0 | 0 | 0 | générique | — |
 | 🟠 | Eliandre Automobile | France | 0 | 0 | 0 | 0 | générique | — |
@@ -46,31 +46,31 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 
 ## 🟢 OPÉRATIONNELLES (nouvelles entrées DB) (1)
 
-- **`EvoCars`** — cards: 18, extraits: 1, new: 1, dup: 0, durée: 29.3s
+- **`EvoCars`** — cards: 18, extraits: 1, new: 1, dup: 0, durée: 27.1s
 
 ## 🟡 PARTIELLES (cards mais 0 extr., ou que duplicates) (7)
 
-- **`Moteur & Sens`** — cards: 1499, extraits: 3, new: 0, dup: 0, durée: 29.6s
-- **`DB7 Autos`** — cards: 6, extraits: 0, new: 0, dup: 0, durée: 24.7s
-- **`Carugati Automobiles`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 15.7s
-- **`Lamborghini Genève`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 15.4s
-- **`Garage R. Affolter`** — cards: 14, extraits: 0, new: 0, dup: 0, durée: 20.0s
-- **`Modena Cars`** — cards: 61, extraits: 0, new: 0, dup: 0, durée: 18.5s
-- **`LuxSELLect`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 24.5s
+- **`Moteur & Sens`** — cards: 1525, extraits: 3, new: 0, dup: 0, durée: 33.2s
+- **`DB7 Autos`** — cards: 6, extraits: 0, new: 0, dup: 0, durée: 23.1s
+- **`Carugati Automobiles`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 15.3s
+- **`Lamborghini Genève`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 15.7s
+- **`Garage R. Affolter`** — cards: 14, extraits: 0, new: 0, dup: 0, durée: 18.5s
+- **`Modena Cars`** — cards: 61, extraits: 0, new: 0, dup: 0, durée: 17.1s
+- **`LuxSELLect`** — cards: 1, extraits: 0, new: 0, dup: 0, durée: 22.7s
 
 ## 🟠 VIDES (0 cards — listing inaccessible) (8)
 
-- **`Excel Car`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 49.5s
-- **`Eliandre Automobile`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 24.3s
-- **`e-Concession Bordeaux`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 22.2s
-- **`Bavaria Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 24.6s
-- **`Kuurne Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.0s
-- **`Perego Cars`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 22.7s
-- **`Schumacher Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 17.0s
-- **`Deal & Drive`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.1s
+- **`Excel Car`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 51.6s
+- **`Eliandre Automobile`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 24.9s
+- **`e-Concession Bordeaux`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.9s
+- **`Bavaria Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 22.9s
+- **`Kuurne Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.6s
+- **`Perego Cars`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 22.6s
+- **`Schumacher Motors`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 17.9s
+- **`Deal & Drive`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.3s
 
 ## 🔴 EN ERREUR (2)
 
-- **`BStore Auto Prestige`** — erreur : `DNS error`, durée: 4.6s
-- **`Rolls-Royce Motor Cars Geneva`** — erreur : `DNS error`, durée: 7.3s
+- **`BStore Auto Prestige`** — erreur : `DNS error`, durée: 6.9s
+- **`Rolls-Royce Motor Cars Geneva`** — erreur : `DNS error`, durée: 7.6s
 
