@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-25T08:56:47.778158",
+  "timestamp": "2026-10-26T09:41:26.207552",
   "batch": "yellow",
   "sources_total": 20,
   "sources_ok": 0,
@@ -8,8 +8,8 @@
   "listings_extracted": 0,
   "new_in_db": 0,
   "duplicates": 0,
-  "duration_sec": 1511.3,
+  "duration_sec": 1373.7,
   "threshold_pct": 50,
   "alert": true,
-  "report_path": "reports/yellow/yellow_20261025_085647.md"
+  "report_path": "reports/yellow/yellow_20261026_094126.md"
 }
