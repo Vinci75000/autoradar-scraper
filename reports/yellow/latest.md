@@ -1,6 +1,6 @@
 # AutoRadar — Batch YELLOW Report
 
-**Date :** 2026-10-26 09:41:26 UTC
+**Date :** 2026-10-27 09:35:32 UTC
 **Description :** Sources grand public (risque modéré)
 **Sources testées :** 20
 **Sources OK :** 0/20 (0.0%)
@@ -19,15 +19,15 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 | **Nouvelles entrées DB** | **0** |
 | Doublons (déjà en DB) | 0 |
 | Rejetés (validation) | 0 |
-| Durée totale | 1374s (22.9 min) |
+| Durée totale | 909s (15.1 min) |
 
 ## Tableau récapitulatif
 
 | | Source | Cards | Extr. | New | Dup. | Note |
 |---|---|---|---|---|---|---|
-| 🔴 | `autoscout24` | 0 | 0 | 0 | 0 | timeout |
+| 🟠 | `autoscout24` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `mobile` | 0 | 0 | 0 | 0 | — |
-| 🔴 | `kleinanzeigen` | 0 | 0 | 0 | 0 | timeout |
+| 🟠 | `kleinanzeigen` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `marktplaats` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `subito` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `wallapop` | 0 | 0 | 0 | 0 | — |
@@ -35,40 +35,37 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 | 🟠 | `otomoto` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `blocket` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `gocar` | 0 | 0 | 0 | 0 | — |
-| 🔴 | `autolive` | 0 | 0 | 0 | 0 | timeout |
-| 🔴 | `tutti` | 0 | 0 | 0 | 0 | timeout |
-| 🔴 | `anibis` | 0 | 0 | 0 | 0 | timeout |
-| 🔴 | `car4you` | 0 | 0 | 0 | 0 | timeout |
+| 🟠 | `autolive` | 0 | 0 | 0 | 0 | — |
+| 🟠 | `tutti` | 0 | 0 | 0 | 0 | — |
+| 🟠 | `anibis` | 0 | 0 | 0 | 0 | — |
+| 🟠 | `car4you` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `luxauto` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `automarket` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `autolu` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `ebay-fr` | 0 | 0 | 0 | 0 | — |
-| 🔴 | `ebay-be` | 0 | 0 | 0 | 0 | exit 1: 2026-10-26 10:01:29,244 INFO  | === Scraping ebay-be (2 pages) === | 2026-10-26 10:01:29,680 INFO eBay BE page 1 | 2026-10-26 10:01:34,860 INFO   Found 0 items | 2026-10-26 10:01:38,068 INFO eBay BE page 2 | 20 |
+| 🟠 | `ebay-be` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `ebay-ch` | 0 | 0 | 0 | 0 | — |
 
-## 🟠 VIDES (0 cards — listing inaccessible) (13)
+## 🟠 VIDES (0 cards — listing inaccessible) (20)
 
-- **`mobile`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 66.3s
-- **`marktplaats`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 25.2s
-- **`subito`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 23.0s
-- **`wallapop`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 41.5s
-- **`willhaben`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 111.8s
-- **`otomoto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 32.9s
-- **`blocket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 4.3s
-- **`gocar`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 25.1s
-- **`luxauto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 43.0s
-- **`automarket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 41.7s
-- **`autolu`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 33.0s
-- **`ebay-fr`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 35.7s
-- **`ebay-ch`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 74.0s
-
-## 🔴 EN ERREUR (7)
-
-- **`autoscout24`** — erreur : `timeout`, durée: 120s
-- **`kleinanzeigen`** — erreur : `timeout`, durée: 117.7s
-- **`autolive`** — erreur : `timeout`, durée: 120s
-- **`tutti`** — erreur : `timeout`, durée: 120s
-- **`anibis`** — erreur : `timeout`, durée: 120s
-- **`car4you`** — erreur : `timeout`, durée: 120s
-- **`ebay-be`** — erreur : `exit 1: 2026-10-26 10:01:29,244 INFO  | === Scraping ebay-be (2 pages) === | 2026-10-26 10:01:29,680 INFO eBay BE page 1 | 2026-10-26 10:01:34,860 INFO   Found 0 items | 2026-10-26 10:01:38,068 INFO eBay BE page 2 | 20`, durée: 98.5s
+- **`autoscout24`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 69.1s
+- **`mobile`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 19.3s
+- **`kleinanzeigen`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 108.3s
+- **`marktplaats`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 22.4s
+- **`subito`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.1s
+- **`wallapop`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 19.3s
+- **`willhaben`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 110.0s
+- **`otomoto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 26.8s
+- **`blocket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 2.1s
+- **`gocar`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 19.3s
+- **`autolive`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 109.1s
+- **`tutti`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 108.9s
+- **`anibis`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 107.6s
+- **`car4you`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 7.9s
+- **`luxauto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 2.2s
+- **`automarket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 24.4s
+- **`autolu`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 16.4s
+- **`ebay-fr`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 66.0s
+- **`ebay-be`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 24.4s
+- **`ebay-ch`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 24.1s
 
