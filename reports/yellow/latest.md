@@ -1,6 +1,6 @@
 # AutoRadar — Batch YELLOW Report
 
-**Date :** 2026-10-27 09:35:32 UTC
+**Date :** 2026-10-28 10:21:00 UTC
 **Description :** Sources grand public (risque modéré)
 **Sources testées :** 20
 **Sources OK :** 0/20 (0.0%)
@@ -14,12 +14,12 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 
 | Métrique | Valeur |
 |---|---|
-| Cards trouvées | 0 |
+| Cards trouvées | 6 |
 | Listings extraits | 0 |
 | **Nouvelles entrées DB** | **0** |
 | Doublons (déjà en DB) | 0 |
 | Rejetés (validation) | 0 |
-| Durée totale | 909s (15.1 min) |
+| Durée totale | 826s (13.8 min) |
 
 ## Tableau récapitulatif
 
@@ -35,7 +35,7 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 | 🟠 | `otomoto` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `blocket` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `gocar` | 0 | 0 | 0 | 0 | — |
-| 🟠 | `autolive` | 0 | 0 | 0 | 0 | — |
+| 🟡 | `autolive` | 6 | 0 | 0 | 0 | — |
 | 🟠 | `tutti` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `anibis` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `car4you` | 0 | 0 | 0 | 0 | — |
@@ -46,26 +46,29 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 | 🟠 | `ebay-be` | 0 | 0 | 0 | 0 | — |
 | 🟠 | `ebay-ch` | 0 | 0 | 0 | 0 | — |
 
-## 🟠 VIDES (0 cards — listing inaccessible) (20)
+## 🟡 PARTIELLES (cards mais 0 extr., ou que duplicates) (1)
 
-- **`autoscout24`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 69.1s
-- **`mobile`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 19.3s
-- **`kleinanzeigen`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 108.3s
-- **`marktplaats`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 22.4s
-- **`subito`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.1s
-- **`wallapop`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 19.3s
+- **`autolive`** — cards: 6, extraits: 0, new: 0, dup: 0, durée: 22.0s
+
+## 🟠 VIDES (0 cards — listing inaccessible) (19)
+
+- **`autoscout24`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 69.8s
+- **`mobile`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 18.9s
+- **`kleinanzeigen`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 110.4s
+- **`marktplaats`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.0s
+- **`subito`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 19.8s
+- **`wallapop`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 19.6s
 - **`willhaben`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 110.0s
-- **`otomoto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 26.8s
-- **`blocket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 2.1s
-- **`gocar`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 19.3s
-- **`autolive`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 109.1s
-- **`tutti`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 108.9s
-- **`anibis`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 107.6s
-- **`car4you`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 7.9s
-- **`luxauto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 2.2s
-- **`automarket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 24.4s
-- **`autolu`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 16.4s
-- **`ebay-fr`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 66.0s
-- **`ebay-be`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 24.4s
-- **`ebay-ch`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 24.1s
+- **`otomoto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 29.3s
+- **`blocket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 2.4s
+- **`gocar`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 18.7s
+- **`tutti`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 109.5s
+- **`anibis`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 109.2s
+- **`car4you`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 10.1s
+- **`luxauto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 2.4s
+- **`automarket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 25.0s
+- **`autolu`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 16.7s
+- **`ebay-fr`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 20.9s
+- **`ebay-be`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 22.1s
+- **`ebay-ch`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 67.7s
 

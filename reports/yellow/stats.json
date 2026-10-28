@@ -1,9 +1,9 @@
 {
   "batch": "yellow",
-  "generated_at": "2026-10-27T09:50:59.932021",
+  "generated_at": "2026-10-28T10:35:15.632985",
   "runs_analyzed": 7,
-  "period_start": "2026-10-21T09:06:47.773641",
-  "period_end": "2026-10-27T09:35:32.839503",
+  "period_start": "2026-10-22T09:09:12.080327",
+  "period_end": "2026-10-28T10:21:00.769697",
   "sources_total_max": 20,
   "sources_ok_pct_avg": 0.0,
   "sources_ok_pct_min": 0.0,
@@ -12,7 +12,7 @@
   "listings_extracted_total": 0,
   "cars_new_total": 0,
   "duplicates_total": 0,
-  "duration_avg_sec": 1294.7,
+  "duration_avg_sec": 1200.8,
   "alerts_triggered": 7,
   "trend": "stable"
 }
