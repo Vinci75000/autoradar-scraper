@@ -1,6 +1,6 @@
 # AutoRadar — Batch YELLOW Report
 
-**Date :** 2026-10-31 10:10:41 UTC
+**Date :** 2026-11-01 11:01:00 UTC
 **Description :** Sources grand public (risque modéré)
 **Sources testées :** 20
 **Sources OK :** 0/20 (0.0%)
@@ -19,7 +19,7 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 | **Nouvelles entrées DB** | **0** |
 | Doublons (déjà en DB) | 0 |
 | Rejetés (validation) | 0 |
-| Durée totale | 968s (16.1 min) |
+| Durée totale | 930s (15.5 min) |
 
 ## Tableau récapitulatif
 
@@ -48,27 +48,27 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 
 ## 🟡 PARTIELLES (cards mais 0 extr., ou que duplicates) (1)
 
-- **`autolive`** — cards: 6, extraits: 0, new: 0, dup: 0, durée: 21.3s
+- **`autolive`** — cards: 6, extraits: 0, new: 0, dup: 0, durée: 24.0s
 
 ## 🟠 VIDES (0 cards — listing inaccessible) (19)
 
-- **`autoscout24`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 111.9s
-- **`mobile`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 19.6s
-- **`kleinanzeigen`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 109.1s
-- **`marktplaats`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 20.9s
-- **`subito`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 20.1s
-- **`wallapop`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 18.9s
-- **`willhaben`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 110.3s
-- **`otomoto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 31.7s
+- **`autoscout24`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 111.0s
+- **`mobile`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 20.6s
+- **`kleinanzeigen`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 107.4s
+- **`marktplaats`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 22.0s
+- **`subito`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 22.5s
+- **`wallapop`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 19.4s
+- **`willhaben`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 108.0s
+- **`otomoto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 31.9s
 - **`blocket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 2.3s
-- **`gocar`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 19.7s
-- **`tutti`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 109.4s
-- **`anibis`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 109.4s
-- **`car4you`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 108.9s
-- **`luxauto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 2.0s
-- **`automarket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 28.4s
-- **`autolu`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 15.5s
-- **`ebay-fr`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 67.1s
-- **`ebay-be`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 19.6s
-- **`ebay-ch`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.5s
+- **`gocar`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.5s
+- **`tutti`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 109.3s
+- **`anibis`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 108.4s
+- **`car4you`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 109.1s
+- **`luxauto`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 2.2s
+- **`automarket`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 28.8s
+- **`autolu`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 17.1s
+- **`ebay-fr`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.1s
+- **`ebay-be`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 21.4s
+- **`ebay-ch`** — cards: 0, extraits: 0, new: 0, dup: 0, durée: 22.2s
 
