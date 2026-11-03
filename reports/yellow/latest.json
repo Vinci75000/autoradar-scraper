@@ -1,15 +1,15 @@
 {
-  "timestamp": "2026-11-02T11:59:26.537917",
+  "timestamp": "2026-11-03T11:36:55.091913",
   "batch": "yellow",
   "sources_total": 20,
   "sources_ok": 0,
   "sources_ok_pct": 0.0,
-  "cards_found": 3,
+  "cards_found": 6,
   "listings_extracted": 0,
   "new_in_db": 0,
   "duplicates": 0,
-  "duration_sec": 984.7,
+  "duration_sec": 946.0,
   "threshold_pct": 50,
   "alert": true,
-  "report_path": "reports/yellow/yellow_20261102_115926.md"
+  "report_path": "reports/yellow/yellow_20261103_113655.md"
 }
