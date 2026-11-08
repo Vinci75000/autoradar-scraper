@@ -1,20 +1,20 @@
 # GREEN — Summary
 
-> Generated at `2026-11-07T01:48:14.151264`  
-> Period: `2026-11-01T00:36:21.891256` → `2026-11-07T01:29:46.898021` (7 runs)
+> Generated at `2026-11-08T01:18:01.200946`  
+> Period: `2026-11-02T01:10:07.656958` → `2026-11-08T00:59:23.703762` (7 runs)
 
-## Health: 🔴 0.8% sources OK (avg)
+## Health: 🔴 0.0% sources OK (avg)
 
 | Metric | Value |
 |---|---|
-| Sources OK avg | **0.8%** |
-| Sources OK range | 0.0% – 5.9% |
+| Sources OK avg | **0.0%** |
+| Sources OK range | 0.0% – 0.0% |
 | Sources total (max) | 17 |
-| Cards found (cumul) | 126 |
-| Listings extracted (cumul) | 56 |
-| Cars new (cumul) | **13** |
-| Duplicates (cumul) | 41 |
-| Duration avg | 1071s |
+| Cards found (cumul) | 63 |
+| Listings extracted (cumul) | 0 |
+| Cars new (cumul) | **0** |
+| Duplicates (cumul) | 0 |
+| Duration avg | 1099s |
 | Alerts triggered | 7 / 7 |
 | Trend | ➡️ Stable |
 
@@ -22,3 +22,4 @@
 
 - ⚠️ Alertes dans 7/7 runs récents — investiguer les sources dégradées.
 - 🔴 Santé critique : la majorité des sources ne livrent pas. Vérifier Cloudflare/DNS/parsers.
+- ⚠️ Zéro nouvelle voiture sur la période — DB rattrapée ou scraper cassé ?
