@@ -1,7 +1,7 @@
 # DEALERS — Summary
 
-> Generated at `2026-11-15T03:52:33.576878`  
-> Period: `2026-11-12T04:51:18.476233` → `2026-11-15T03:45:17.009242` (7 runs)
+> Generated at `2026-11-15T18:17:20.763746`  
+> Period: `2026-11-12T19:18:18.728163` → `2026-11-15T18:10:12.456442` (7 runs)
 
 ## Health: 🔴 0.0% sources OK (avg)
 
@@ -10,7 +10,7 @@
 | Sources OK avg | **0.0%** |
 | Sources OK range | 0.0% – 0.0% |
 | Sources total (max) | 18 |
-| Cards found (cumul) | 12,654 |
+| Cards found (cumul) | 12,667 |
 | Listings extracted (cumul) | 28 |
 | Cars new (cumul) | **0** |
 | Duplicates (cumul) | 0 |
