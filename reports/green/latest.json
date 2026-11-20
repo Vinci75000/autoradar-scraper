@@ -1,15 +1,15 @@
 {
-  "timestamp": "2026-11-19T02:54:18.725467",
+  "timestamp": "2026-11-20T02:47:58.962652",
   "batch": "green",
   "sources_total": 17,
   "sources_ok": 0,
   "sources_ok_pct": 0.0,
-  "cards_found": 9,
+  "cards_found": 0,
   "listings_extracted": 0,
   "new_in_db": 0,
   "duplicates": 0,
-  "duration_sec": 1054.1,
+  "duration_sec": 1130.6,
   "threshold_pct": 50,
   "alert": true,
-  "report_path": "reports/green/green_20261119_025418.md"
+  "report_path": "reports/green/green_20261120_024758.md"
 }
