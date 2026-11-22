@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-21T02:57:10.886246",
+  "timestamp": "2026-11-22T01:51:08.134070",
   "batch": "green",
   "sources_total": 17,
   "sources_ok": 0,
@@ -8,8 +8,8 @@
   "listings_extracted": 0,
   "new_in_db": 0,
   "duplicates": 0,
-  "duration_sec": 1016.6,
+  "duration_sec": 1020.8000000000001,
   "threshold_pct": 50,
   "alert": true,
-  "report_path": "reports/green/green_20261121_025710.md"
+  "report_path": "reports/green/green_20261122_015108.md"
 }
