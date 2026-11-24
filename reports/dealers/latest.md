@@ -1,6 +1,6 @@
 # AutoRadar — Batch DEALERS Report
 
-**Date :** 2026-11-24 07:32:29 UTC
+**Date :** 2026-11-24 21:42:26 UTC
 **Description :** Concessions luxe FR/BE/CH/LU
 **Sources testées :** 18
 **Sources OK :** 0/18 (0.0%)
