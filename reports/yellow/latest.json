@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-23T14:03:46.813365",
+  "timestamp": "2026-11-24T14:32:26.124553",
   "batch": "yellow",
   "sources_total": 20,
   "sources_ok": 0,
@@ -11,5 +11,5 @@
   "duration_sec": 2.2000000000000006,
   "threshold_pct": 50,
   "alert": true,
-  "report_path": "reports/yellow/yellow_20261123_140346.md"
+  "report_path": "reports/yellow/yellow_20261124_143226.md"
 }
