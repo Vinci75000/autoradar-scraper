@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-24T05:42:24.020820",
+  "timestamp": "2026-11-25T04:44:01.035762",
   "batch": "green",
   "sources_total": 17,
   "sources_ok": 0,
@@ -11,5 +11,5 @@
   "duration_sec": 3.400000000000001,
   "threshold_pct": 50,
   "alert": true,
-  "report_path": "reports/green/green_20261124_054224.md"
+  "report_path": "reports/green/green_20261125_044401.md"
 }
