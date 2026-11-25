@@ -1,6 +1,6 @@
 # AutoRadar — Batch DEALERS Report
 
-**Date :** 2026-11-25 06:00:53 UTC
+**Date :** 2026-11-25 20:49:51 UTC
 **Description :** Concessions luxe FR/BE/CH/LU
 **Sources testées :** 18
 **Sources OK :** 0/18 (0.0%)
@@ -46,7 +46,7 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 
 ## 🔴 EN ERREUR (18)
 
-- **`Moteur & Sens`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
+- **`Moteur & Sens`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.3s
 - **`Excel Car`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
 - **`DB7 Autos`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
 - **`Eliandre Automobile`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
