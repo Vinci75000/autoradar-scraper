@@ -1,6 +1,6 @@
 # AutoRadar — Batch GREEN Report
 
-**Date :** 2026-11-25 04:44:01 UTC
+**Date :** 2026-11-26 03:52:40 UTC
 **Description :** Sources collection / niche (faible risque)
 **Sources testées :** 17
 **Sources OK :** 0/17 (0.0%)
