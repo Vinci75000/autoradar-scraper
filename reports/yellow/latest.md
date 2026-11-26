@@ -1,6 +1,6 @@
 # AutoRadar — Batch YELLOW Report
 
-**Date :** 2026-11-25 13:53:07 UTC
+**Date :** 2026-11-26 13:31:44 UTC
 **Description :** Sources grand public (risque modéré)
 **Sources testées :** 20
 **Sources OK :** 0/20 (0.0%)
