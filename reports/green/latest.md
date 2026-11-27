@@ -1,6 +1,6 @@
 # AutoRadar — Batch GREEN Report
 
-**Date :** 2026-11-26 03:52:40 UTC
+**Date :** 2026-11-27 03:54:14 UTC
 **Description :** Sources collection / niche (faible risque)
 **Sources testées :** 17
 **Sources OK :** 0/17 (0.0%)
@@ -19,7 +19,7 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 | **Nouvelles entrées DB** | **0** |
 | Doublons (déjà en DB) | 0 |
 | Rejetés (validation) | 0 |
-| Durée totale | 3s (0.1 min) |
+| Durée totale | 2s (0.0 min) |
 
 ## Tableau récapitulatif
 
@@ -46,20 +46,20 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 ## 🔴 EN ERREUR (17)
 
 - **`classicnumber`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
-- **`gotothegrid`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
-- **`racemarket`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
-- **`plethore`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
-- **`classicdriver`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
-- **`lesanciennes`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
-- **`goodtimers`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
-- **`carjager`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
-- **`classictrader`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
-- **`oldtimerfarm`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
-- **`collectingcars`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
-- **`superclassics`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
-- **`jenden`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
-- **`carandclassic`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
-- **`pistonheads`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
-- **`dyler`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
-- **`annoncesauto`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
+- **`gotothegrid`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
+- **`racemarket`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
+- **`plethore`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
+- **`classicdriver`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
+- **`lesanciennes`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
+- **`goodtimers`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
+- **`carjager`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
+- **`classictrader`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
+- **`oldtimerfarm`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
+- **`collectingcars`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
+- **`superclassics`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
+- **`jenden`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
+- **`carandclassic`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
+- **`pistonheads`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
+- **`dyler`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
+- **`annoncesauto`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
 
