@@ -1,6 +1,6 @@
 # AutoRadar — Batch GREEN Report
 
-**Date :** 2026-11-27 03:54:14 UTC
+**Date :** 2026-11-28 03:40:25 UTC
 **Description :** Sources collection / niche (faible risque)
 **Sources testées :** 17
 **Sources OK :** 0/17 (0.0%)
@@ -46,13 +46,13 @@ Moins de **50%** des sources sont opérationnelles. Inspection requise.
 ## 🔴 EN ERREUR (17)
 
 - **`classicnumber`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
-- **`gotothegrid`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
-- **`racemarket`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
+- **`gotothegrid`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
+- **`racemarket`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
 - **`plethore`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
 - **`classicdriver`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
 - **`lesanciennes`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
-- **`goodtimers`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
-- **`carjager`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
+- **`goodtimers`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
+- **`carjager`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.2s
 - **`classictrader`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
 - **`oldtimerfarm`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
 - **`collectingcars`** — erreur : `exit 1: Traceback (most recent call last): |   File "/home/runner/work/autoradar-scraper/autoradar-scraper/scraper.py", line 26, in <module> |     init_sentry() |   File "/home/runner/work/autoradar-scraper/autorad`, durée: 0.1s
