@@ -1,9 +1,9 @@
 {
   "batch": "dealers",
-  "generated_at": "2026-11-28T05:28:38.791321",
+  "generated_at": "2026-11-28T19:17:52.508956",
   "runs_analyzed": 7,
-  "period_start": "2026-11-25T06:00:53.987641",
-  "period_end": "2026-11-28T05:28:32.765029",
+  "period_start": "2026-11-25T20:49:51.642113",
+  "period_end": "2026-11-28T19:17:46.582841",
   "sources_total_max": 18,
   "sources_ok_pct_avg": 0.0,
   "sources_ok_pct_min": 0.0,
